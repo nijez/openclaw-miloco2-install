@@ -489,15 +489,15 @@
       <main>
         <section id="agent">
           <h2>发给龙虾执行</h2>
-          <p>如果服务器已经有 OpenClaw 应用模板，推荐方式是：先点对话框左下角加号，上传 <code>install-miloco-openclaw-cloud.sh</code>，再复制下面这段指令发给龙虾。</p>
-          <div class="notice warn">如果本页面是 EdgeOne 的预览链接，龙虾直接下载脚本会遇到 401。只有绑定已备案自定义域名后，才建议使用“从网页下载脚本”的方式。</div>
+          <p>如果服务器已经有 OpenClaw 应用模板，推荐方式是：直接复制下面这段指令发给龙虾。它会从公开固定地址下载安装脚本并执行。</p>
+          <div class="notice">固定脚本地址已在腾讯云服务器实测通过。主地址是 GitHub Pages，备用地址是 jsDelivr 和 GitHub Raw。</div>
           <div class="cmd">
-            <div class="cmd-title"><span>给龙虾的附件执行指令</span><button class="copy-btn" data-copy-target="agentPromptCmd">复制指令</button></div>
-            <pre id="agentPromptCmd" data-template="我已经上传了 install-miloco-openclaw-cloud.sh。请把附件原样保存到 /tmp/install-miloco-openclaw-cloud.sh，不要修改脚本内容。不要自行搜索网络，不要改用源码、pip、pipx、Docker 或手工解包。先检查 grep '^SCRIPT_VERSION=' /tmp/install-miloco-openclaw-cloud.sh，版本必须不低于 2026-06-23.9。然后执行：chmod +x /tmp/install-miloco-openclaw-cloud.sh && INSTALL_ACTION=full INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh。失败时只允许重试一次：INSTALL_ACTION=repair RUN_SYSTEM_UPGRADE=0 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh。完成后汇报 OpenClaw 版本、Miloco 服务状态、gateway 状态、插件状态、总耗时和日志文件。"></pre>
+            <div class="cmd-title"><span>发给龙虾的一键部署指令</span><button class="copy-btn" data-copy-target="agentDownloadPromptCmd">复制指令</button></div>
+            <pre id="agentDownloadPromptCmd" data-template="请你在这台服务器上部署 OpenClaw + Miloco 2.0。不要自行搜索网络，不要改用源码、pip、pipx、Docker 或手工解包。请只执行下面这一份固定脚本：curl -fsSL {scriptUrl} -o /tmp/install-miloco-openclaw-cloud.sh || curl -fsSL {scriptUrlCdn} -o /tmp/install-miloco-openclaw-cloud.sh || curl -fsSL {scriptUrlRaw} -o /tmp/install-miloco-openclaw-cloud.sh。下载后执行 chmod +x /tmp/install-miloco-openclaw-cloud.sh。先检查 grep '^SCRIPT_VERSION=' /tmp/install-miloco-openclaw-cloud.sh，版本必须不低于 2026-06-23.9。然后执行：INSTALL_ACTION=full INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh。失败时只允许重试一次：INSTALL_ACTION=repair RUN_SYSTEM_UPGRADE=0 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh。完成后汇报 OpenClaw 版本、Miloco 服务状态、gateway 状态、插件状态、总耗时和日志文件。"></pre>
           </div>
           <div class="cmd">
-            <div class="cmd-title"><span>已绑定公开自定义域名时使用</span><button class="copy-btn" data-copy-target="agentDownloadPromptCmd">复制下载指令</button></div>
-            <pre id="agentDownloadPromptCmd" data-template="请你在这台服务器上部署 OpenClaw + Miloco 2.0。不要自行搜索网络，不要改用源码、pip、pipx、Docker 或手工解包。请只执行下面这一份固定脚本：curl -fsSL {scriptUrl} -o /tmp/install-miloco-openclaw-cloud.sh && chmod +x /tmp/install-miloco-openclaw-cloud.sh。先检查 grep '^SCRIPT_VERSION=' /tmp/install-miloco-openclaw-cloud.sh，版本必须不低于 2026-06-23.9。然后执行：INSTALL_ACTION=full INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh。失败时只允许重试一次：INSTALL_ACTION=repair RUN_SYSTEM_UPGRADE=0 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh。完成后汇报 OpenClaw 版本、Miloco 服务状态、gateway 状态、插件状态、总耗时和日志文件。"></pre>
+            <div class="cmd-title"><span>附件上传备用指令</span><button class="copy-btn" data-copy-target="agentPromptCmd">复制备用指令</button></div>
+            <pre id="agentPromptCmd" data-template="我已经上传了 install-miloco-openclaw-cloud.sh。请把附件原样保存到 /tmp/install-miloco-openclaw-cloud.sh，不要修改脚本内容。不要自行搜索网络，不要改用源码、pip、pipx、Docker 或手工解包。先检查 grep '^SCRIPT_VERSION=' /tmp/install-miloco-openclaw-cloud.sh，版本必须不低于 2026-06-23.9。然后执行：chmod +x /tmp/install-miloco-openclaw-cloud.sh && INSTALL_ACTION=full INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh。失败时只允许重试一次：INSTALL_ACTION=repair RUN_SYSTEM_UPGRADE=0 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh。完成后汇报 OpenClaw 版本、Miloco 服务状态、gateway 状态、插件状态、总耗时和日志文件。"></pre>
           </div>
           <div class="download-grid">
             <a class="download-card" href="install-miloco-openclaw-cloud.sh" download>
@@ -506,7 +506,7 @@
             </a>
             <a class="download-card" href="发给龙虾的部署指令.txt" download>
               <strong>下载龙虾指令</strong>
-              <span>附件上传模式的完整提示词</span>
+              <span>固定地址下载模式的完整提示词</span>
             </a>
             <a class="download-card" href="云服务器OpenClaw加Miloco2.0的一键部署包.zip" download>
               <strong>下载离线包</strong>
@@ -517,36 +517,40 @@
 
         <section id="quick">
           <h2>最短安装流程</h2>
-          <p>第一次安装推荐直接在 OpenClaw 对话框里上传脚本，然后复制执行指令。这样不需要用户会 SSH，也不会遇到预览链接 401。</p>
-          <div class="notice warn">如果使用 EdgeOne 默认预览域名，不要让服务器直接下载脚本；预览访问会校验 Cookie/Token，服务器直接下载会返回 401。此时请下载脚本后上传，或者在 OpenClaw 对话框里上传脚本附件。</div>
+          <p>第一次安装只需要打开 OpenClaw 对话框，复制一段话发给它。普通用户不需要会 SSH，也不需要自己上传文件。</p>
+          <div class="notice warn">EdgeOne 默认预览域名会返回 401，本教程已改用公开 GitHub Pages 地址。不要再把 EdgeOne 预览链接发给服务器下载。</div>
 
           <div class="step-row">
             <div class="step-num">1</div>
             <div>
-              <h3>下载一键脚本</h3>
-              <p>先把脚本保存到自己的电脑，再上传到 OpenClaw 对话框。</p>
-              <a class="download-card" href="install-miloco-openclaw-cloud.sh" download>
-                <strong>下载 install-miloco-openclaw-cloud.sh</strong>
-                <span>保存后不要改名、不要改内容</span>
-              </a>
+              <h3>复制一键部署指令</h3>
+              <p>把下面这段话直接发给 OpenClaw。</p>
+              <div class="cmd">
+                <div class="cmd-title"><span>发给 OpenClaw</span><button class="copy-btn" data-copy-target="agentDownloadPromptCmdQuick">复制指令</button></div>
+                <pre id="agentDownloadPromptCmdQuick" data-template="请你在这台服务器上部署 OpenClaw + Miloco 2.0。不要自行搜索网络，不要改用源码、pip、pipx、Docker 或手工解包。请只执行下面这一份固定脚本：curl -fsSL {scriptUrl} -o /tmp/install-miloco-openclaw-cloud.sh || curl -fsSL {scriptUrlCdn} -o /tmp/install-miloco-openclaw-cloud.sh || curl -fsSL {scriptUrlRaw} -o /tmp/install-miloco-openclaw-cloud.sh。下载后执行 chmod +x /tmp/install-miloco-openclaw-cloud.sh。先检查 grep '^SCRIPT_VERSION=' /tmp/install-miloco-openclaw-cloud.sh，版本必须不低于 2026-06-23.9。然后执行：INSTALL_ACTION=full INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh。失败时只允许重试一次：INSTALL_ACTION=repair RUN_SYSTEM_UPGRADE=0 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh。完成后汇报 OpenClaw 版本、Miloco 服务状态、gateway 状态、插件状态、总耗时和日志文件。"></pre>
+              </div>
             </div>
           </div>
 
           <div class="step-row">
             <div class="step-num">2</div>
             <div>
-              <h3>上传到 OpenClaw</h3>
-              <p>打开 OpenClaw 对话框，点输入框左下角加号，上传刚才下载的 <code>install-miloco-openclaw-cloud.sh</code>。</p>
+              <h3>等待完成</h3>
+              <p>看到 <code>Done</code> 和 <code>Timing: Total install took ...</code> 就完成。OpenClaw 会汇报版本、服务状态、插件状态和日志文件。</p>
             </div>
           </div>
 
           <div class="step-row">
             <div class="step-num">3</div>
             <div>
-              <h3>复制执行指令</h3>
-              <p>上传完成后，把下面这段话发给 OpenClaw。</p>
+              <h3>下载失败时用附件备用</h3>
+              <p>如果服务器临时无法访问公开地址，再下载脚本并上传到 OpenClaw 对话框。</p>
+              <a class="download-card" href="install-miloco-openclaw-cloud.sh" download>
+                <strong>下载 install-miloco-openclaw-cloud.sh</strong>
+                <span>保存后不要改名、不要改内容</span>
+              </a>
               <div class="cmd">
-                <div class="cmd-title"><span>发给 OpenClaw</span><button class="copy-btn" data-copy-target="agentPromptCmdQuick">复制指令</button></div>
+                <div class="cmd-title"><span>附件上传后发给 OpenClaw</span><button class="copy-btn" data-copy-target="agentPromptCmdQuick">复制备用指令</button></div>
                 <pre id="agentPromptCmdQuick" data-template="我已经上传了 install-miloco-openclaw-cloud.sh。请把附件原样保存到 /tmp/install-miloco-openclaw-cloud.sh，不要修改脚本内容。不要自行搜索网络，不要改用源码、pip、pipx、Docker 或手工解包。先检查 grep '^SCRIPT_VERSION=' /tmp/install-miloco-openclaw-cloud.sh，版本必须不低于 2026-06-23.9。然后执行：chmod +x /tmp/install-miloco-openclaw-cloud.sh && INSTALL_ACTION=full INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh。失败时只允许重试一次：INSTALL_ACTION=repair RUN_SYSTEM_UPGRADE=0 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh。完成后汇报 OpenClaw 版本、Miloco 服务状态、gateway 状态、插件状态、总耗时和日志文件。"></pre>
               </div>
             </div>
@@ -555,13 +559,17 @@
           <div class="step-row">
             <div class="step-num">4</div>
             <div>
-              <h3>等待完成</h3>
-              <p>看到 <code>Done</code> 和 <code>Timing: Total install took ...</code> 就完成。OpenClaw 会汇报版本、服务状态、插件状态和日志文件。</p>
+              <h3>需要重启时</h3>
+              <p>如果安装输出提示新内核等待重启，等全部完成后再执行。</p>
+              <div class="cmd">
+                <div class="cmd-title"><span>服务器终端执行</span><button class="copy-btn" data-copy-target="rebootCmd">复制命令</button></div>
+                <pre id="rebootCmd" data-template="sudo reboot"></pre>
+              </div>
             </div>
           </div>
 
-          <h3>已有公开自定义域名时的 SSH 备用方式</h3>
-          <p>只有脚本网页是公开可访问地址时，才使用下面的服务器下载命令。EdgeOne 默认预览域名不适合这条路线。</p>
+          <h3>SSH 备用方式</h3>
+          <p>懂终端的用户也可以自己登录服务器执行。脚本会下载到服务器自己的 <code>/tmp/</code>，不是下载到本机电脑。</p>
 
           <div class="step-row">
             <div class="step-num">A</div>
@@ -579,10 +587,10 @@
             <div class="step-num">B</div>
             <div>
               <h3>下载一键脚本</h3>
-              <p>登录服务器后执行。脚本会下载到服务器自己的 <code>/tmp/</code>，不是下载到本机电脑。</p>
+              <p>登录服务器后执行。</p>
               <div class="cmd">
                 <div class="cmd-title"><span>服务器终端执行</span><button class="copy-btn" data-copy-target="downloadCmd">复制命令</button></div>
-                <pre id="downloadCmd" data-template="curl -fsSL {scriptUrl} -o /tmp/install-miloco-openclaw-cloud.sh && chmod +x /tmp/install-miloco-openclaw-cloud.sh"></pre>
+                <pre id="downloadCmd" data-template="curl -fsSL {scriptUrl} -o /tmp/install-miloco-openclaw-cloud.sh || curl -fsSL {scriptUrlCdn} -o /tmp/install-miloco-openclaw-cloud.sh || curl -fsSL {scriptUrlRaw} -o /tmp/install-miloco-openclaw-cloud.sh&#10;chmod +x /tmp/install-miloco-openclaw-cloud.sh"></pre>
               </div>
             </div>
           </div>
@@ -599,17 +607,6 @@
             </div>
           </div>
 
-          <div class="step-row">
-            <div class="step-num">D</div>
-            <div>
-              <h3>需要重启时</h3>
-              <p>如果安装输出提示新内核等待重启，等全部完成后再执行。</p>
-              <div class="cmd">
-                <div class="cmd-title"><span>需要重启时执行</span><button class="copy-btn" data-copy-target="rebootCmd">复制命令</button></div>
-                <pre id="rebootCmd" data-template="sudo reboot"></pre>
-              </div>
-            </div>
-          </div>
         </section>
 
         <section id="screens">
@@ -831,17 +828,22 @@ Timing: Total install took <span class="term-yellow">00:09:52</span> (592s)
       ip: document.getElementById('serverIp'),
       user: document.getElementById('serverUser')
     };
+    const publicBaseUrl = 'https://nijez.github.io/openclaw-miloco2-install/';
     const targetText = document.getElementById('targetText');
     const commandBlocks = Array.from(document.querySelectorAll('[data-template]'));
 
     function values() {
-      const scriptUrl = new URL('install-miloco-openclaw-cloud.sh', window.location.href).href;
-      const promptUrl = new URL('发给龙虾的部署指令.txt', window.location.href).href;
-      const zipUrl = new URL('云服务器OpenClaw加Miloco2.0的一键部署包.zip', window.location.href).href;
+      const scriptUrl = new URL('install-miloco-openclaw-cloud.sh', publicBaseUrl).href;
+      const scriptUrlCdn = 'https://cdn.jsdelivr.net/gh/nijez/openclaw-miloco2-install@main/install-miloco-openclaw-cloud.sh';
+      const scriptUrlRaw = 'https://raw.githubusercontent.com/nijez/openclaw-miloco2-install/main/install-miloco-openclaw-cloud.sh';
+      const promptUrl = new URL('发给龙虾的部署指令.txt', publicBaseUrl).href;
+      const zipUrl = new URL('云服务器OpenClaw加Miloco2.0的一键部署包.zip', publicBaseUrl).href;
       return {
         ip: fields.ip.value.trim() || '服务器IP',
         user: fields.user.value.trim() || 'ubuntu',
         scriptUrl,
+        scriptUrlCdn,
+        scriptUrlRaw,
         promptUrl,
         zipUrl
       };
@@ -852,6 +854,8 @@ Timing: Total install took <span class="term-yellow">00:09:52</span> (592s)
         .replaceAll('{ip}', data.ip)
         .replaceAll('{user}', data.user)
         .replaceAll('{scriptUrl}', data.scriptUrl)
+        .replaceAll('{scriptUrlCdn}', data.scriptUrlCdn)
+        .replaceAll('{scriptUrlRaw}', data.scriptUrlRaw)
         .replaceAll('{promptUrl}', data.promptUrl)
         .replaceAll('{zipUrl}', data.zipUrl);
     }
