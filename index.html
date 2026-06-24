@@ -452,25 +452,17 @@
     <header class="topbar">
       <div class="brand">
         <h1>OpenClaw + Miloco 2.0 云服务器安装教程</h1>
-        <p>适用于新装 Ubuntu 腾讯云或阿里云服务器。先填服务器 IP，下面所有可复制命令会自动替换成你的地址。</p>
+        <p>适用于已通过腾讯云或阿里云 OpenClaw 应用模板创建的云服务器。默认直接在 OpenClaw 对话框里复制指令完成 Miloco 2.0 部署。</p>
       </div>
       <div class="version">脚本版本：2026-06-23.9</div>
     </header>
 
     <div class="setup-panel" id="command-builder">
-      <div class="setup-grid">
-        <div>
-          <label for="serverIp">服务器 IP</label>
-          <input id="serverIp" autocomplete="off" placeholder="例如：1.2.3.4" value="服务器IP">
-          <div class="ip-reminder">这里填入服务器 IP，下面就可以一键复制命令行。</div>
-        </div>
-        <div>
-          <label for="serverUser">SSH 用户名</label>
-          <input id="serverUser" autocomplete="off" value="ubuntu">
-          <div class="input-hint">Ubuntu 镜像通常是 ubuntu。</div>
-        </div>
+      <div class="checklist">
+        <div class="check"><span>✓</span><div>云服务器已选择 <strong>OpenClaw 应用模板</strong> 创建，能打开 AgentChat 对话页。</div></div>
+        <div class="check"><span>✓</span><div>本教程默认通过 OpenClaw 对话框部署，不要求普通用户使用 SSH。</div></div>
+        <div class="check"><span>✓</span><div>Miloco 2.0 安装完成后，再按提示配置 MiMo API Key 和绑定米家账号。</div></div>
       </div>
-      <div class="status-line">当前命令目标：<strong id="targetText">ubuntu@服务器IP</strong></div>
     </div>
 
     <div class="layout">
@@ -526,7 +518,6 @@
         <section id="quick">
           <h2>最短安装流程</h2>
           <p>第一次安装只需要打开 OpenClaw 对话框，复制一段话发给它。普通用户不需要会 SSH，也不需要自己上传文件。</p>
-          <div class="notice warn">EdgeOne 默认预览域名会返回 401，本教程已改用公开 GitHub Pages 地址。不要再把 EdgeOne 预览链接发给服务器下载。</div>
 
           <div class="step-row">
             <div class="step-num">1</div>
@@ -586,6 +577,27 @@
           <div class="step-row">
             <div class="step-num">A</div>
             <div>
+              <h3>确认 SSH 信息</h3>
+              <p>只有使用 SSH 备用方式时才需要填写。OpenClaw 应用模板底层通常是 Ubuntu，默认用户名一般是 <code>ubuntu</code>。</p>
+              <div class="setup-grid">
+                <div>
+                  <label for="serverIp">服务器 IP</label>
+                  <input id="serverIp" autocomplete="off" placeholder="例如：1.2.3.4" value="服务器IP">
+                  <div class="ip-reminder">这里填入服务器 IP，下面 SSH 命令会自动替换成你的地址。</div>
+                </div>
+                <div>
+                  <label for="serverUser">SSH 用户名</label>
+                  <input id="serverUser" autocomplete="off" value="ubuntu">
+                  <div class="input-hint">OpenClaw 应用模板通常使用 ubuntu。</div>
+                </div>
+              </div>
+              <div class="status-line">当前 SSH 目标：<strong id="targetText">ubuntu@服务器IP</strong></div>
+            </div>
+          </div>
+
+          <div class="step-row">
+            <div class="step-num">B</div>
+            <div>
               <h3>登录服务器</h3>
               <p>连接后进入服务器终端。</p>
               <div class="cmd">
@@ -596,7 +608,7 @@
           </div>
 
           <div class="step-row">
-            <div class="step-num">B</div>
+            <div class="step-num">C</div>
             <div>
               <h3>下载一键脚本</h3>
               <p>登录服务器后执行。</p>
@@ -608,7 +620,7 @@
           </div>
 
           <div class="step-row">
-            <div class="step-num">C</div>
+            <div class="step-num">D</div>
             <div>
               <h3>打开脚本菜单</h3>
               <p>菜单里选择 <strong>1) 一键傻瓜式部署</strong>。</p>
@@ -828,7 +840,6 @@ Timing: Total install took <span class="term-yellow">00:09:52</span> (592s)
             <li><a href="https://docs.openclaw.ai/install" target="_blank" rel="noreferrer">OpenClaw 官方安装文档</a></li>
             <li><a href="https://github.com/XiaoMi/xiaomi-miloco" target="_blank" rel="noreferrer">Xiaomi Miloco GitHub 仓库</a></li>
             <li><a href="https://github.com/XiaoMi/xiaomi-miloco/blob/main/user_guide_zh.md" target="_blank" rel="noreferrer">Miloco 中文使用手册</a></li>
-            <li><a href="https://github.com/MHSanaei/3x-ui/wiki/Installation" target="_blank" rel="noreferrer">3X-UI 一键安装教程示例</a></li>
           </ul>
         </section>
       </main>
