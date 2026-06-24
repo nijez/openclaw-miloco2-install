@@ -5,15 +5,40 @@
 ```bash
 PIDFILE=/tmp/openclaw-miloco-install.pid
 LOG=/tmp/openclaw-miloco-install-current.log
+NOW="$(date +%s)"
 
 if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
   echo "状态: RUNNING"
+  RUNNING=1
 else
   echo "状态: FINISHED_OR_NOT_RUNNING"
+  RUNNING=0
+fi
+
+if [ -f "$LOG" ]; then
+  LOG_MTIME="$(stat -c %Y "$LOG" 2>/dev/null || date +%s)"
+  IDLE="$((NOW - LOG_MTIME))"
+  STEP="$(grep -E 'Step [0-9]+/6|✓ Step [0-9]+/6 done|ERROR|Failed|Traceback|Timing:|All done|Done' "$LOG" 2>/dev/null | tail -n 1 || true)"
+else
+  IDLE=-1
+  STEP=""
+fi
+
+echo "当前进度: ${STEP:-尚未找到步骤日志}"
+if [ "$IDLE" -ge 0 ]; then
+  echo "日志最后更新: ${IDLE}s 前"
 fi
 
 echo "日志文件: $LOG"
 tail -n 120 "$LOG" 2>/dev/null || echo "暂未找到日志"
+
+if [ "$RUNNING" = 1 ] && [ "$IDLE" -ge 180 ]; then
+  echo "--- 无新日志提醒 ---"
+  echo "安装进程仍在运行，但日志已 ${IDLE}s 没有新增；可能正在下载、解压或解析依赖。下面是进程状态。"
+  PID="$(cat "$PIDFILE")"
+  ps -p "$PID" -o pid,etime,stat,pcpu,pmem,cmd 2>/dev/null || true
+  pgrep -af 'install-miloco|uv|curl|npm|node|openclaw|miloco' 2>/dev/null | head -n 20 || true
+fi
 
 echo "--- Miloco service ---"
 miloco-cli service status 2>/dev/null || true
@@ -30,8 +55,9 @@ openclaw plugins list 2>/dev/null | grep -i -C 2 miloco || true
 1. 当前是否仍在运行。
 2. 当前大概处于第几步。
 3. 最近日志里有没有 ERROR / Failed / Traceback。
-4. 我是否需要继续等待，还是需要处理异常。
-5. 如果已经完成，请按下面格式汇报：
+4. 如果日志 180 秒以上没有更新，请明确说明“仍在运行但暂无新日志”，不要只显示转圈。
+5. 我是否需要继续等待，还是需要处理异常。
+6. 如果已经完成，请按下面格式汇报：
 
 ```text
 馨光 AI 设计灯光部署结果
