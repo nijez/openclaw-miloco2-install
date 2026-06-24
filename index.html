@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>馨光 AI 设计灯光安装指导</title>
+  <title>馨光 AI 设计灯光安装指导：第一阶段 OpenClaw + Miloco 2.0 底座部署</title>
   <style>
     :root {
       color-scheme: light;
       --bg: #f5f7fb;
       --surface: #ffffff;
-      --surface-2: #eef3f8;
+      --surface-soft: #f0f6f4;
       --ink: #17202a;
       --muted: #5f6f7f;
       --line: #d8e1ea;
@@ -17,33 +17,28 @@
       --accent-2: #0b5e96;
       --danger: #a63d2a;
       --terminal: #111722;
-      --terminal-bar: #202938;
       --terminal-text: #dfe8f3;
       --terminal-muted: #95a2b3;
       --terminal-green: #59d68b;
       --terminal-blue: #57b7ff;
       --terminal-yellow: #ffd166;
-      --terminal-orange: #ff9f66;
       --shadow: 0 12px 30px rgba(20, 31, 47, 0.08);
       --radius: 8px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
       background: var(--bg);
       color: var(--ink);
-      line-height: 1.6;
+      line-height: 1.65;
     }
 
-    button,
-    input {
-      font: inherit;
-    }
+    button, input, textarea { font: inherit; }
+
+    a { color: var(--accent-2); }
 
     .shell {
       max-width: 1180px;
@@ -53,23 +48,25 @@
 
     .topbar {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      gap: 16px;
+      align-items: flex-start;
+      gap: 18px;
       margin-bottom: 18px;
     }
 
-    .brand h1 {
+    h1, h2, h3 { line-height: 1.28; }
+
+    h1 {
       margin: 0;
-      font-size: 28px;
-      line-height: 1.25;
+      font-size: 30px;
       letter-spacing: 0;
     }
 
-    .brand p {
-      margin: 8px 0 0;
+    .lead {
+      max-width: 860px;
+      margin: 10px 0 0;
       color: var(--muted);
-      max-width: 780px;
+      font-size: 17px;
     }
 
     .version {
@@ -82,64 +79,65 @@
       font-size: 14px;
     }
 
-    .setup-panel {
+    .layout {
+      display: grid;
+      grid-template-columns: 230px minmax(0, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    nav {
+      position: sticky;
+      top: 16px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px;
+      box-shadow: var(--shadow);
+    }
+
+    nav a {
+      display: block;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    nav a:hover { background: #f0f4f8; color: var(--ink); }
+
+    section {
       background: var(--surface);
       border: 1px solid var(--line);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      padding: 18px;
+      padding: 20px;
       margin-bottom: 18px;
     }
 
-    .setup-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
-      gap: 14px;
-      align-items: end;
+    section h2 { margin: 0 0 10px; font-size: 23px; }
+    section h3 { margin: 18px 0 8px; font-size: 17px; }
+    section p { margin: 8px 0; color: var(--muted); }
+
+    .hero {
+      background: linear-gradient(180deg, #ffffff 0%, #eef7f4 100%);
     }
 
-    label {
-      display: block;
-      font-weight: 650;
-      margin-bottom: 6px;
-    }
-
-    input {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 11px 12px;
-      background: #fbfdff;
-      color: var(--ink);
-      outline: none;
-    }
-
-    input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(18, 122, 103, 0.12);
-    }
-
-    .input-hint {
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .ip-reminder {
-      margin-top: 6px;
-      color: var(--danger);
-      font-size: 14px;
-      font-weight: 700;
-    }
-
-    .status-line {
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
       margin-top: 14px;
-      color: var(--muted);
-      font-size: 14px;
     }
 
-    .status-line strong {
-      color: var(--ink);
+    .pill {
+      border: 1px solid var(--line);
+      background: #f8fbfd;
+      border-radius: 999px;
+      padding: 6px 10px;
+      color: var(--muted);
+      font-size: 14px;
     }
 
     .notice {
@@ -147,7 +145,7 @@
       background: #edf8f5;
       padding: 12px 14px;
       border-radius: 0 var(--radius) var(--radius) 0;
-      margin: 16px 0 0;
+      margin: 14px 0;
     }
 
     .notice.warn {
@@ -155,11 +153,143 @@
       background: #fff4ef;
     }
 
-    .download-grid {
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .grid-3 {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 12px;
-      margin: 16px 0 0;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #f8fbfd;
+      padding: 14px;
+    }
+
+    .card strong { display: block; margin-bottom: 4px; }
+    .card span, .card p { color: var(--muted); font-size: 14px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+
+    th, td {
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th { background: #eef3f8; }
+    tr:last-child td { border-bottom: 0; }
+
+    .step {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+
+    .step:first-of-type { border-top: 0; padding-top: 4px; }
+
+    .step-num {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .cmd {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-top: 12px;
+      background: #f8fbfd;
+    }
+
+    .cmd-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #eef3f8;
+      font-weight: 650;
+    }
+
+    .copy-btn {
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #fff;
+      border-radius: 6px;
+      padding: 6px 10px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    pre, textarea.prompt-box {
+      margin: 0;
+      padding: 14px;
+      width: 100%;
+      border: 0;
+      background: #f8fbfd;
+      color: var(--ink);
+      white-space: pre-wrap;
+      overflow-x: auto;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    textarea.prompt-box {
+      min-height: 280px;
+      resize: vertical;
+    }
+
+    .terminal {
+      background: var(--terminal);
+      color: var(--terminal-text);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-top: 12px;
+    }
+
+    .terminal-bar {
+      background: #202938;
+      color: var(--terminal-muted);
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+
+    .terminal pre { background: transparent; color: inherit; }
+    .term-green { color: var(--terminal-green); }
+    .term-blue { color: var(--terminal-blue); }
+    .term-yellow { color: var(--terminal-yellow); }
+    .term-muted { color: var(--terminal-muted); }
+
+    .download-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
     }
 
     .download-card {
@@ -172,679 +302,469 @@
       text-decoration: none;
     }
 
-    .download-card strong {
-      display: block;
-      margin-bottom: 4px;
-    }
+    label { display: block; font-weight: 650; margin-bottom: 6px; }
 
-    .download-card span {
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .download-card:hover {
-      border-color: var(--accent);
-      background: #effaf6;
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: 260px minmax(0, 1fr);
-      gap: 22px;
-      align-items: start;
-    }
-
-    nav {
-      position: sticky;
-      top: 14px;
-      background: var(--surface);
+    input {
+      width: 100%;
       border: 1px solid var(--line);
       border-radius: var(--radius);
-      padding: 10px;
-      box-shadow: var(--shadow);
-    }
-
-    nav a {
-      display: block;
+      padding: 11px 12px;
+      background: #fbfdff;
       color: var(--ink);
-      text-decoration: none;
-      padding: 9px 10px;
-      border-radius: 6px;
+      outline: none;
+    }
+
+    .ip-reminder {
+      margin-top: 6px;
+      color: var(--danger);
       font-size: 14px;
+      font-weight: 700;
     }
 
-    nav a:hover {
-      background: var(--surface-2);
-    }
+    .status-line { margin-top: 12px; color: var(--muted); }
+    code { background: #edf1f5; padding: 1px 4px; border-radius: 4px; }
 
-    main {
-      min-width: 0;
-    }
-
-    section {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 22px;
-      margin-bottom: 18px;
-    }
-
-    h2 {
-      margin: 0 0 14px;
-      font-size: 21px;
-      letter-spacing: 0;
-    }
-
-    h3 {
-      margin: 20px 0 10px;
-      font-size: 17px;
-      letter-spacing: 0;
-    }
-
-    p {
-      margin: 10px 0;
-    }
-
-    ul,
-    ol {
-      padding-left: 22px;
-      margin: 10px 0;
-    }
-
-    .step-row {
-      display: grid;
-      grid-template-columns: 42px minmax(0, 1fr);
-      gap: 12px;
-      margin: 16px 0;
-    }
-
-    .step-num {
-      width: 34px;
-      height: 34px;
-      display: grid;
-      place-items: center;
-      border-radius: 50%;
-      background: var(--accent);
-      color: #fff;
-      font-weight: 800;
-    }
-
-    .cmd {
-      margin: 12px 0;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      overflow: hidden;
-      background: #f8fbfd;
-    }
-
-    .cmd-title {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 9px 10px;
-      border-bottom: 1px solid var(--line);
-      color: var(--muted);
-      font-size: 13px;
-      background: #f1f5f9;
-    }
-
-    .copy-btn {
-      border: 1px solid var(--accent);
-      background: var(--accent);
-      color: #fff;
-      padding: 6px 10px;
-      border-radius: 6px;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-
-    .copy-btn:hover {
-      background: #0f6858;
-    }
-
-    pre {
-      margin: 0;
-      padding: 13px 14px;
-      overflow-x: auto;
-      white-space: pre-wrap;
-      word-break: break-word;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-      font-size: 14px;
-      line-height: 1.55;
-    }
-
-    .cmd pre {
-      color: #0f2537;
-    }
-
-    .terminal-shot {
-      margin: 14px 0;
-      border-radius: var(--radius);
-      overflow: hidden;
-      background: var(--terminal);
-      border: 1px solid #263345;
-      box-shadow: 0 12px 26px rgba(15, 23, 42, 0.22);
-    }
-
-    .terminal-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      background: var(--terminal-bar);
-      padding: 9px 12px;
-      color: #b7c2d0;
-      font-size: 13px;
-    }
-
-    .dots {
-      display: inline-flex;
-      gap: 6px;
-      align-items: center;
-    }
-
-    .dot {
-      width: 11px;
-      height: 11px;
-      border-radius: 50%;
-      display: inline-block;
-    }
-
-    .red { background: #ff5f57; }
-    .yellow { background: #febc2e; }
-    .green { background: #28c840; }
-
-    .terminal-shot pre {
-      color: var(--terminal-text);
-      background: var(--terminal);
-    }
-
-    .term-muted { color: var(--terminal-muted); }
-    .term-green { color: var(--terminal-green); }
-    .term-blue { color: var(--terminal-blue); }
-    .term-yellow { color: var(--terminal-yellow); }
-    .term-orange { color: var(--terminal-orange); }
-
-    .result-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 12px;
-    }
-
-    .metric {
-      background: #f8fbfd;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 12px;
-    }
-
-    .metric b {
-      display: block;
-      font-size: 22px;
-      color: var(--accent-2);
-      line-height: 1.2;
-    }
-
-    .metric span {
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .warn {
-      border-left-color: var(--danger);
-      background: #fff4ef;
-    }
-
-    .small {
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .checklist {
-      display: grid;
-      gap: 8px;
-    }
-
-    .check {
-      display: grid;
-      grid-template-columns: 26px minmax(0, 1fr);
-      gap: 8px;
-      align-items: start;
-    }
-
-    .check span:first-child {
-      color: var(--accent);
-      font-weight: 900;
-    }
-
-    a {
-      color: var(--accent-2);
-    }
-
-    @media (max-width: 880px) {
-      .topbar {
-        display: block;
-      }
-
-      .version {
-        display: inline-block;
-        margin-top: 12px;
-      }
-
-      .setup-grid,
-      .layout,
-      .download-grid,
-      .result-grid {
-        grid-template-columns: 1fr;
-      }
-
-      nav {
-        position: static;
-      }
+    @media (max-width: 900px) {
+      .topbar, .layout { display: block; }
+      nav { position: static; margin-bottom: 18px; }
+      .grid-2, .grid-3, .download-grid { grid-template-columns: 1fr; }
+      .version { display: inline-block; margin-top: 12px; }
     }
   </style>
 </head>
 <body>
   <div class="shell">
     <header class="topbar">
-      <div class="brand">
-        <h1>馨光 AI 设计灯光安装指导</h1>
-        <p>适用于已通过腾讯云或阿里云 OpenClaw 应用模板创建的云服务器。默认直接在 OpenClaw 对话框里复制指令完成 Miloco 2.0 部署。</p>
+      <div>
+        <h1>馨光 AI 设计灯光安装指导：第一阶段 OpenClaw + Miloco 2.0 底座部署</h1>
+        <p class="lead">本教程默认使用腾讯云轻量应用服务器的 OpenClaw 应用模板。普通用户优先走龙虾对话里的傻瓜式部署流程，不需要手动 SSH，也不需要理解 Linux 命令。</p>
       </div>
-      <div class="version">脚本版本：2026-06-24.1</div>
+      <div class="version">脚本版本：2026-06-24.2</div>
     </header>
-
-    <div class="setup-panel" id="command-builder">
-      <div class="checklist">
-        <div class="check"><span>✓</span><div>云服务器已选择 <strong>OpenClaw 应用模板</strong> 创建，能打开 AgentChat 对话页。</div></div>
-        <div class="check"><span>✓</span><div>本教程默认通过 OpenClaw 对话框部署，不要求普通用户使用 SSH。</div></div>
-        <div class="check"><span>✓</span><div>安装完成后，再按提示配置 MiMo API Key、绑定米家账号，并确认馨光淡彩光设备可被识别。</div></div>
-      </div>
-    </div>
 
     <div class="layout">
       <nav aria-label="教程目录">
-        <a href="#agent">发给龙虾执行</a>
-        <a href="#quick">最短安装流程</a>
-        <a href="#screens">过程截图示意</a>
-        <a href="#sources">国内源和缓存</a>
-        <a href="#first-use">安装后第一次使用</a>
-        <a href="#maintain">维护菜单</a>
-        <a href="#verify">验证和访问</a>
-        <a href="#troubleshooting">常见问题</a>
-        <a href="#references">参考资料</a>
+        <a href="#goal">项目目标</a>
+        <a href="#stage">当前阶段</a>
+        <a href="#scenario">适用场景</a>
+        <a href="#server">服务器配置</a>
+        <a href="#create">创建服务器</a>
+        <a href="#agent">发给龙虾</a>
+        <a href="#progress">查看进度</a>
+        <a href="#first-use">首次配置</a>
+        <a href="#acceptance">第一阶段验收</a>
+        <a href="#phase2">第二阶段</a>
+        <a href="#advanced">高级维护附录</a>
       </nav>
 
       <main>
+        <section id="goal" class="hero">
+          <h2>项目目标</h2>
+          <p>最终目标是让用户通过龙虾 / OpenClaw 对话，用自然语言描述灯光场景，例如“马尔代夫凌晨”“森林清晨”“海边日落”。后续馨光 Skill 会提取适合淡彩光的两个颜色值，再通过 Miloco 2.0 控制馨光设备。</p>
+          <div class="pill-row">
+            <span class="pill">自然语言灯光场景</span>
+            <span class="pill">淡彩光双颜色输出</span>
+            <span class="pill">Miloco 2.0 控制米家设备</span>
+            <span class="pill">馨光 Skill 第二阶段补充</span>
+          </div>
+        </section>
+
+        <section id="stage">
+          <h2>当前阶段说明</h2>
+          <div class="notice">当前页面只完成第一阶段：OpenClaw + Miloco 2.0 底座部署。馨光智能 Skill、设备白名单、淡彩光颜色规则、dry-run 测试和真机控制验收还没有安装完成，会在第二阶段补充。</div>
+          <table>
+            <thead><tr><th>路径</th><th>适合谁</th><th>是否推荐</th></tr></thead>
+            <tbody>
+              <tr><td>OpenClaw 傻瓜式部署</td><td>普通用户、客户、演示部署</td><td>默认推荐</td></tr>
+              <tr><td>SSH 运维方式</td><td>开发者、技术人员、故障排查</td><td>高级备用</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="scenario">
+          <h2>适用场景</h2>
+          <div class="grid-3">
+            <div class="card"><strong>腾讯云轻量应用服务器</strong><span>创建服务器时选择 OpenClaw 应用模板。</span></div>
+            <div class="card"><strong>龙虾 / AgentChat 可打开</strong><span>能进入 OpenClaw 对话页，并能把指令发给龙虾执行。</span></div>
+            <div class="card"><strong>馨光淡彩光控制</strong><span>当前不启用摄像头视觉感知，重点是自然语言灯光控制底座。</span></div>
+          </div>
+        </section>
+
+        <section id="server">
+          <h2>服务器配置建议</h2>
+          <p>本项目主要用于馨光 AI 淡彩光控制，不启用摄像头视觉感知能力，因此服务器配置要求低于 Miloco 完整全屋 AI 方案。</p>
+          <table>
+            <thead><tr><th>用途</th><th>建议配置</th><th>说明</th></tr></thead>
+            <tbody>
+              <tr><td>测试 / 内测</td><td>2 核 2G 内存，40G 磁盘</td><td>可尝试部署。</td></tr>
+              <tr><td>稳定演示 / 客户试用</td><td>2 核 4G 内存，60G-80G 磁盘</td><td>推荐。</td></tr>
+              <tr><td>长期运行 / 多插件 / 多用户</td><td>4G 以上内存，80G 以上磁盘</td><td>根据实际运行反馈升级。</td></tr>
+            </tbody>
+          </table>
+          <p>如果只是馨光淡彩光控制，通常不需要高配服务器。如果后续启用摄像头识别、多模态感知、更多 OpenClaw 插件或多人同时使用，再提高配置。</p>
+        </section>
+
+        <section id="create">
+          <h2>创建腾讯云轻量应用服务器</h2>
+          <div class="step"><div class="step-num">1</div><div><h3>选择应用模板</h3><p>服务器重装系统或新建实例时选择 <strong>OpenClaw 应用模板</strong>。本教程默认 OpenClaw 已经预装。</p></div></div>
+          <div class="step"><div class="step-num">2</div><div><h3>打开 OpenClaw / AgentChat / 龙虾</h3><p>进入腾讯云提供的 OpenClaw 页面，确认能看到 AgentChat 对话框。</p></div></div>
+          <div class="step"><div class="step-num">3</div><div><h3>发出一键部署指令</h3><p>复制下一节的完整指令发给龙虾。它会下载固定脚本，后台执行，并主动汇报进度。</p></div></div>
+        </section>
+
         <section id="agent">
-          <h2>发给龙虾执行</h2>
-          <p>如果服务器已经有 OpenClaw 应用模板，推荐方式是：直接复制下面这段指令发给龙虾。它会从公开固定地址下载安装脚本，后台执行安装，并每 20 秒主动汇报进度。</p>
-          <div class="notice">固定脚本地址已在腾讯云服务器实测通过。主地址是 GitHub Pages，备用地址是 jsDelivr 和 GitHub Raw。</div>
+          <h2>把一键部署指令发给龙虾</h2>
+          <p>下面这份指令已经清理成单一流程：下载脚本、检查版本、轻量启动部署、观察进度和最终汇报都只保留一份。</p>
+          <div class="notice">默认参数：<code>RUN_SYSTEM_UPGRADE=0</code>、<code>OPENCLAW_UPDATE=0</code>、<code>INSTALL_EXTRA_PLUGINS=0</code>、<code>INSTALL_NONINTERACTIVE=1</code>。</div>
           <div class="cmd">
-            <div class="cmd-title"><span>发给龙虾的一键部署指令</span><button class="copy-btn" data-copy-target="agentDownloadPromptCmd">复制指令</button></div>
-            <pre id="agentDownloadPromptCmd" data-template="请你在这台服务器上执行「馨光 AI 设计灯光安装指导」部署流程，完成 OpenClaw 更新与 Miloco 2.0 部署。请严格按下面步骤执行，不要自行搜索网络、不要换安装路线、不要尝试源码安装、pip/pipx 安装、Docker 安装或手工解包安装。&#10;&#10;目标：&#10;1. 如果 OpenClaw 已预装，升级/配置 OpenClaw。&#10;2. 如果 OpenClaw 未安装，自动安装 OpenClaw。&#10;3. 安装并部署 Miloco 2.0。&#10;4. 默认跳过微信绑定、米家账号绑定、MiMo API Key 配置。&#10;5. 最后检查 OpenClaw gateway、Miloco 服务和插件状态。&#10;&#10;唯一安装入口：&#10;- 文件名：install-miloco-openclaw-cloud.sh&#10;- 目标位置：/tmp/install-miloco-openclaw-cloud.sh&#10;- 主下载地址：https://nijez.github.io/xingguang-ai-lighting-guide/install-miloco-openclaw-cloud.sh&#10;- 备用下载地址 1：https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/install-miloco-openclaw-cloud.sh&#10;- 备用下载地址 2：https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/install-miloco-openclaw-cloud.sh&#10;&#10;执行要求：&#10;1. 下载固定脚本：&#10;&#10;```bash&#10;TARGET=/tmp/install-miloco-openclaw-cloud.sh&#10;EXPECTED_VERSION=2026-06-24.1&#10;rm -f &quot;$TARGET&quot;&#10;for URL in \&#10;  https://nijez.github.io/xingguang-ai-lighting-guide/install-miloco-openclaw-cloud.sh \&#10;  https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/install-miloco-openclaw-cloud.sh \&#10;  https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/install-miloco-openclaw-cloud.sh&#10;do&#10;  echo &quot;尝试下载脚本: $URL&quot;&#10;  if curl -fsSL &quot;$URL&quot; -o &quot;$TARGET&quot;; then&#10;    if grep -q &quot;SCRIPT_VERSION=\&quot;$EXPECTED_VERSION\&quot;&quot; &quot;$TARGET&quot;; then&#10;      echo &quot;脚本下载成功，版本 $EXPECTED_VERSION&quot;&#10;      break&#10;    fi&#10;    echo &quot;脚本版本不匹配，继续尝试下一个源&quot;&#10;  else&#10;    echo &quot;下载失败，继续尝试下一个源&quot;&#10;  fi&#10;done&#10;grep -q &quot;SCRIPT_VERSION=\&quot;$EXPECTED_VERSION\&quot;&quot; &quot;$TARGET&quot; || { echo &quot;固定脚本下载失败或版本不正确&quot;; exit 1; }&#10;chmod +x &quot;$TARGET&quot;&#10;```&#10;&#10;2. 确认脚本是否存在、版本是否正确：&#10;&#10;```bash&#10;ls -l /tmp/install-miloco-openclaw-cloud.sh&#10;grep '^SCRIPT_VERSION=' /tmp/install-miloco-openclaw-cloud.sh&#10;```&#10;&#10;3. 如果脚本不存在，或者版本低于 2026-06-24.1，请停止并告诉我：固定脚本下载失败。不要自己去网上找替代脚本。&#10;&#10;4. 如果脚本存在且版本正确，后台启动安装，把所有输出写到固定日志文件，并按进程观察进度。观察期间每 20 秒汇报一次当前状态，最多观察 90 次；如果日志超过 180 秒没有变化，也必须主动汇报“进程仍在运行但暂无新日志”，并打印进程状态，避免用户误以为无响应。如果安装还没结束，不要中断进程，只告诉我安装仍在后台运行：&#10;&#10;```bash&#10;LOG=/tmp/openclaw-miloco-install-current.log&#10;PIDFILE=/tmp/openclaw-miloco-install.pid&#10;rm -f &quot;$LOG&quot;&#10;nohup bash -lc 'INSTALL_ACTION=full INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh || INSTALL_ACTION=repair RUN_SYSTEM_UPGRADE=0 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh' &gt; &quot;$LOG&quot; 2&gt;&amp;1 &amp;&#10;echo $! &gt; &quot;$PIDFILE&quot;&#10;PID=&quot;$(cat &quot;$PIDFILE&quot;)&quot;&#10;START_TS=&quot;$(date +%s)&quot;&#10;LAST_SIZE=0&#10;LAST_CHANGE=&quot;$START_TS&quot;&#10;echo &quot;安装进程已启动 PID=$PID 日志=$LOG&quot;&#10;&#10;for i in $(seq 1 90); do&#10;  NOW=&quot;$(date +%s)&quot;&#10;  if [ -f &quot;$LOG&quot; ]; then&#10;    SIZE=&quot;$(wc -c &lt; &quot;$LOG&quot; 2&gt;/dev/null || echo 0)&quot;&#10;  else&#10;    SIZE=0&#10;  fi&#10;  if [ &quot;$SIZE&quot; != &quot;$LAST_SIZE&quot; ]; then&#10;    LAST_SIZE=&quot;$SIZE&quot;&#10;    LAST_CHANGE=&quot;$NOW&quot;&#10;  fi&#10;  IDLE=&quot;$((NOW - LAST_CHANGE))&quot;&#10;  ELAPSED=&quot;$((NOW - START_TS))&quot;&#10;  STEP=&quot;$(grep -E 'Step [0-9]+/6|✓ Step [0-9]+/6 done|ERROR|Failed|Traceback|Timing:|All done|Done' &quot;$LOG&quot; 2&gt;/dev/null | tail -n 1 || true)&quot;&#10;&#10;  echo&#10;  echo &quot;===== 安装进度检查 $i/90 =====&quot;&#10;  if kill -0 &quot;$PID&quot; 2&gt;/dev/null; then&#10;    echo &quot;状态: RUNNING&quot;&#10;  else&#10;    echo &quot;状态: FINISHED&quot;&#10;  fi&#10;  echo &quot;已运行: ${ELAPSED}s&quot;&#10;  echo &quot;日志最后更新: ${IDLE}s 前&quot;&#10;  echo &quot;当前进度: ${STEP:-尚未写入步骤日志，可能正在初始化或下载}&quot;&#10;&#10;  echo &quot;--- 关键进度 ---&quot;&#10;  grep -E 'Step [0-9]+/6|✓ Step [0-9]+/6 done|ERROR|Failed|Traceback|Timing:|All done|Done' &quot;$LOG&quot; 2&gt;/dev/null | tail -n 40 || true&#10;&#10;  if kill -0 &quot;$PID&quot; 2&gt;/dev/null &amp;&amp; [ &quot;$IDLE&quot; -ge 180 ]; then&#10;    echo &quot;--- 无新日志提醒 ---&quot;&#10;    echo &quot;安装进程仍在运行，但日志已 ${IDLE}s 没有新增；可能正在下载、解压或解析依赖。下面是进程状态，用于判断是否卡住。&quot;&#10;    ps -p &quot;$PID&quot; -o pid,etime,stat,pcpu,pmem,cmd 2&gt;/dev/null || true&#10;    pgrep -af 'install-miloco|uv|curl|npm|node|openclaw|miloco' 2&gt;/dev/null | head -n 20 || true&#10;  fi&#10;&#10;  echo &quot;--- 最近日志 ---&quot;&#10;  tail -n 45 &quot;$LOG&quot; 2&gt;/dev/null || true&#10;&#10;  if ! kill -0 &quot;$PID&quot; 2&gt;/dev/null; then&#10;    break&#10;  fi&#10;  sleep 20&#10;done&#10;&#10;if kill -0 &quot;$PID&quot; 2&gt;/dev/null; then&#10;  echo &quot;安装仍在后台运行，稍后可发送查看安装进度指令继续查看。&quot;&#10;fi&#10;```&#10;&#10;5. 安装期间不要中途杀进程，不要并行启动第二个安装，不要切换到其他安装方法。如果对话窗口没有实时显示输出，安装也仍在后台运行；你必须按上面的 20 秒观察循环继续主动上报。如果之后我要看进度，我会发送“查看安装进度”的指令，你只需要读取 `/tmp/openclaw-miloco-install-current.log`。&#10;&#10;6. 完成后执行验证：&#10;&#10;```bash&#10;miloco-cli service status&#10;openclaw gateway status&#10;openclaw plugins list | grep -i -C 2 miloco&#10;ss -ltnp | grep -E ':(1810|18789)\b'&#10;```&#10;&#10;7. 最终只按下面格式回复我：&#10;&#10;```text&#10;馨光 AI 设计灯光部署结果&#10;&#10;脚本版本：&#10;OpenClaw 版本：&#10;Miloco 状态：&#10;Miloco 端口：&#10;OpenClaw gateway 状态：&#10;Miloco 插件状态：&#10;总耗时：&#10;日志文件：&#10;&#10;下一步需要人工处理：&#10;1. 配置 MiMo API Key：miloco-cli config set model.omni.api_key sk-你的Key&#10;2. 绑定米家账号：miloco-cli account bind&#10;3. 确认馨光淡彩光设备已出现在设备列表：miloco-cli device list&#10;4. 如需个人微信/企业微信/飞书绑定，重新运行脚本进入平台绑定菜单。&#10;```&#10;&#10;重要限制：&#10;- 不要把 Miloco 面板直接暴露到公网。&#10;- `127.0.0.1:1810` 是云服务器内部地址，不能在用户自己的电脑上直接打开。&#10;- 如果确实需要访问面板，只能先保持 SSH 隧道运行：ssh -L 1810:127.0.0.1:1810 用户名@服务器IP，然后本机浏览器再打开 http://127.0.0.1:1810/&#10;- 不要输出或保存 SSH 密码、token、MiMo API Key。"></pre>
-          </div>
-          <div class="cmd">
-            <div class="cmd-title"><span>查看安装进度指令</span><button class="copy-btn" data-copy-target="progressPromptCmd">复制进度指令</button></div>
-            <pre id="progressPromptCmd" data-template="请查看 馨光 AI 设计灯光安装进度。不要重新启动安装，不要修改脚本，不要切换安装方法。&#10;&#10;请只执行下面这些命令：&#10;&#10;```bash&#10;PIDFILE=/tmp/openclaw-miloco-install.pid&#10;LOG=/tmp/openclaw-miloco-install-current.log&#10;NOW=&quot;$(date +%s)&quot;&#10;&#10;if [ -f &quot;$PIDFILE&quot; ] &amp;&amp; kill -0 &quot;$(cat &quot;$PIDFILE&quot;)&quot; 2&gt;/dev/null; then&#10;  echo &quot;状态: RUNNING&quot;&#10;  RUNNING=1&#10;else&#10;  echo &quot;状态: FINISHED_OR_NOT_RUNNING&quot;&#10;  RUNNING=0&#10;fi&#10;&#10;if [ -f &quot;$LOG&quot; ]; then&#10;  LOG_MTIME=&quot;$(stat -c %Y &quot;$LOG&quot; 2&gt;/dev/null || date +%s)&quot;&#10;  IDLE=&quot;$((NOW - LOG_MTIME))&quot;&#10;  STEP=&quot;$(grep -E 'Step [0-9]+/6|✓ Step [0-9]+/6 done|ERROR|Failed|Traceback|Timing:|All done|Done' &quot;$LOG&quot; 2&gt;/dev/null | tail -n 1 || true)&quot;&#10;else&#10;  IDLE=-1&#10;  STEP=&quot;&quot;&#10;fi&#10;&#10;echo &quot;当前进度: ${STEP:-尚未找到步骤日志}&quot;&#10;if [ &quot;$IDLE&quot; -ge 0 ]; then&#10;  echo &quot;日志最后更新: ${IDLE}s 前&quot;&#10;fi&#10;&#10;echo &quot;日志文件: $LOG&quot;&#10;tail -n 120 &quot;$LOG&quot; 2&gt;/dev/null || echo &quot;暂未找到日志&quot;&#10;&#10;if [ &quot;$RUNNING&quot; = 1 ] &amp;&amp; [ &quot;$IDLE&quot; -ge 180 ]; then&#10;  echo &quot;--- 无新日志提醒 ---&quot;&#10;  echo &quot;安装进程仍在运行，但日志已 ${IDLE}s 没有新增；可能正在下载、解压或解析依赖。下面是进程状态。&quot;&#10;  PID=&quot;$(cat &quot;$PIDFILE&quot;)&quot;&#10;  ps -p &quot;$PID&quot; -o pid,etime,stat,pcpu,pmem,cmd 2&gt;/dev/null || true&#10;  pgrep -af 'install-miloco|uv|curl|npm|node|openclaw|miloco' 2&gt;/dev/null | head -n 20 || true&#10;fi&#10;&#10;echo &quot;--- Miloco service ---&quot;&#10;miloco-cli service status 2&gt;/dev/null || true&#10;&#10;echo &quot;--- OpenClaw gateway ---&quot;&#10;openclaw gateway status 2&gt;/dev/null || true&#10;&#10;echo &quot;--- Miloco plugin ---&quot;&#10;openclaw plugins list 2&gt;/dev/null | grep -i -C 2 miloco || true&#10;```&#10;&#10;然后用中文告诉我：&#10;&#10;1. 当前是否仍在运行。&#10;2. 当前大概处于第几步。&#10;3. 最近日志里有没有 ERROR / Failed / Traceback。&#10;4. 如果日志 180 秒以上没有更新，请明确说明“仍在运行但暂无新日志”，不要只显示转圈。&#10;5. 我是否需要继续等待，还是需要处理异常。&#10;6. 如果已经完成，请按下面格式汇报：&#10;&#10;```text&#10;馨光 AI 设计灯光部署结果&#10;&#10;脚本版本：&#10;OpenClaw 版本：&#10;Miloco 状态：&#10;Miloco 端口：&#10;OpenClaw gateway 状态：&#10;Miloco 插件状态：&#10;总耗时：&#10;日志文件：&#10;&#10;下一步需要人工处理：&#10;1. 配置 MiMo API Key：miloco-cli config set model.omni.api_key sk-你的Key&#10;2. 绑定米家账号：miloco-cli account bind&#10;3. 确认馨光淡彩光设备已出现在设备列表：miloco-cli device list&#10;4. 如需个人微信/企业微信/飞书绑定，重新运行脚本进入平台绑定菜单。&#10;```"></pre>
-          </div>
-          <div class="cmd">
-            <div class="cmd-title"><span>附件上传备用指令</span><button class="copy-btn" data-copy-target="agentPromptCmd">复制备用指令</button></div>
-            <pre id="agentPromptCmd" data-template="我已经上传了 install-miloco-openclaw-cloud.sh。请把附件原样保存到 /tmp/install-miloco-openclaw-cloud.sh，不要修改脚本内容。不要自行搜索网络，不要改用源码、pip、pipx、Docker 或手工解包。先检查 grep '^SCRIPT_VERSION=' /tmp/install-miloco-openclaw-cloud.sh，版本必须不低于 2026-06-24.1。然后执行：chmod +x /tmp/install-miloco-openclaw-cloud.sh && INSTALL_ACTION=full INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh。失败时只允许重试一次：INSTALL_ACTION=repair RUN_SYSTEM_UPGRADE=0 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh。完成后汇报 OpenClaw 版本、Miloco 服务状态、gateway 状态、插件状态、总耗时和日志文件。"></pre>
+            <div class="cmd-title"><span>发给龙虾的一键部署指令</span><button class="copy-btn" data-copy-textarea="agentPrompt">复制指令</button></div>
+            <textarea id="agentPrompt" class="prompt-box" readonly>请你在这台服务器上执行「馨光 AI 设计灯光安装指导：第一阶段 OpenClaw + Miloco 2.0 底座部署」。默认环境是腾讯云轻量应用服务器的 OpenClaw 应用模板，OpenClaw 已预装。请不要自行搜索网络，不要改用源码安装、pip/pipx 安装、Docker 安装或手工解包安装。
+
+目标：
+1. 检查已预装 OpenClaw 和 gateway 状态。
+2. 轻量部署 Miloco 2.0 底座。
+3. 默认跳过微信绑定、米家账号绑定、MiMo API Key 配置。
+4. 最后汇报 OpenClaw gateway、Miloco 服务和插件状态。
+
+当前阶段只部署底座，不安装馨光智能 Skill。馨光 Skill、设备白名单、淡彩光颜色规则和真机验收属于第二阶段。
+
+请只执行下面这一份固定流程：
+
+```bash
+TARGET=/tmp/install-miloco-openclaw-cloud.sh
+LOG=/tmp/openclaw-miloco-install-current.log
+PIDFILE=/tmp/openclaw-miloco-install.pid
+STATE=/tmp/openclaw-miloco-install.state
+EXPECTED_VERSION=2026-06-24.2
+rm -f "$TARGET"
+
+for URL in \
+  https://nijez.github.io/xingguang-ai-lighting-guide/install-miloco-openclaw-cloud.sh \
+  https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/install-miloco-openclaw-cloud.sh \
+  https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/install-miloco-openclaw-cloud.sh
+do
+  echo "尝试下载脚本: $URL"
+  if curl -fsSL "$URL" -o "$TARGET" && grep -q "SCRIPT_VERSION=\"$EXPECTED_VERSION\"" "$TARGET"; then
+    echo "脚本下载成功，版本 $EXPECTED_VERSION"
+    break
+  fi
+  echo "当前源失败或版本不匹配，继续尝试下一个源"
+done
+
+grep -q "SCRIPT_VERSION=\"$EXPECTED_VERSION\"" "$TARGET" || { echo "固定脚本下载失败或版本不正确"; exit 1; }
+chmod +x "$TARGET"
+
+rm -f "$LOG" "$PIDFILE"
+nohup bash -lc 'INSTALL_ACTION=full RUN_SYSTEM_UPGRADE=0 OPENCLAW_UPDATE=0 INSTALL_EXTRA_PLUGINS=0 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh || INSTALL_ACTION=continue RUN_SYSTEM_UPGRADE=0 OPENCLAW_UPDATE=0 INSTALL_EXTRA_PLUGINS=0 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh' > "$LOG" 2>&1 &
+echo $! > "$PIDFILE"
+PID="$(cat "$PIDFILE")"
+START_TS="$(date +%s)"
+LAST_SIZE=0
+LAST_CHANGE="$START_TS"
+
+echo "安装进程已启动 PID=$PID"
+echo "日志文件: $LOG"
+echo "状态文件: $STATE"
+
+for i in $(seq 1 90); do
+  NOW="$(date +%s)"
+  SIZE="$(wc -c < "$LOG" 2>/dev/null || echo 0)"
+  if [ "$SIZE" != "$LAST_SIZE" ]; then
+    LAST_SIZE="$SIZE"
+    LAST_CHANGE="$NOW"
+  fi
+  IDLE="$((NOW - LAST_CHANGE))"
+  ELAPSED="$((NOW - START_TS))"
+  STEP="$(grep -E 'Step [0-9]+/6|STATE: STEP_[0-9]+_DONE|ERROR|Failed|Traceback|timeout|Timing:|Done' "$LOG" 2>/dev/null | tail -n 1 || true)"
+
+  echo
+  echo "===== 安装进度检查 $i/90 ====="
+  if kill -0 "$PID" 2>/dev/null; then
+    echo "状态: RUNNING"
+  elif [ -f "$STATE" ] && grep -q '^STEP_6_DONE$' "$STATE"; then
+    echo "状态: FINISHED"
+  else
+    echo "状态: EXITED_BUT_INCOMPLETE"
+  fi
+  echo "已运行: ${ELAPSED}s"
+  echo "日志最后更新: ${IDLE}s 前"
+  echo "当前进度: ${STEP:-尚未写入步骤日志，可能正在初始化或下载}"
+
+  echo "--- 关键进度 ---"
+  grep -E 'Step [0-9]+/6|STATE: STEP_[0-9]+_DONE|ERROR|Failed|Traceback|timeout|Timing:|Done' "$LOG" 2>/dev/null | tail -n 40 || true
+
+  if kill -0 "$PID" 2>/dev/null && [ "$IDLE" -ge 180 ]; then
+    echo "--- 无新日志提醒 ---"
+    echo "安装进程仍在运行，但暂无新日志。可能正在下载、解压、解析依赖或等待 OpenClaw gateway 响应。"
+    ps -p "$PID" -o pid,etime,stat,pcpu,pmem,cmd 2>/dev/null || true
+    pgrep -af 'install-miloco|uv|curl|npm|node|openclaw|miloco' 2>/dev/null | head -n 20 || true
+  fi
+
+  if ! kill -0 "$PID" 2>/dev/null; then
+    break
+  fi
+  sleep 20
+done
+
+if kill -0 "$PID" 2>/dev/null; then
+  echo "安装仍在后台运行，稍后可发送查看安装进度指令继续查看。"
+fi
+```
+
+高级维护命令只在确实需要系统升级、OpenClaw 主动升级或额外插件时使用，不作为默认流程：
+
+```bash
+INSTALL_ACTION=full RUN_SYSTEM_UPGRADE=1 OPENCLAW_UPDATE=1 INSTALL_EXTRA_PLUGINS=1 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh
+```
+
+完成后请执行验证：
+
+```bash
+miloco-cli service status
+openclaw gateway status
+openclaw plugins list | grep -i -C 2 miloco
+ss -ltnp | grep -E ':(1810|18789)\b'
+```
+
+如果成功，请按这个模板回复：
+
+```text
+馨光 AI 设计灯光部署结果
+
+状态：成功
+脚本版本：
+OpenClaw CLI 版本：
+OpenClaw Gateway 版本：
+Miloco 状态：
+Miloco 端口：
+OpenClaw gateway 状态：
+Miloco 插件状态：
+总耗时：
+日志文件：
+
+下一步需要人工处理：
+1. 配置 MiMo API Key
+2. 绑定米家账号
+3. 确认馨光淡彩光设备已出现在设备列表
+4. 后续安装馨光 Skill
+```
+
+如果未完成，请按这个模板回复：
+
+```text
+馨光 AI 设计灯光部署结果
+
+状态：未完成 / 可继续
+脚本版本：
+最后完成步骤：
+中断位置：
+疑似原因：
+是否发现 ERROR / Failed / Traceback：
+建议继续命令：
+日志文件：
+```
+
+重要限制：
+- 不要把 Miloco 面板直接暴露到公网。
+- `127.0.0.1:1810` 是云服务器内部地址，不能在用户自己的电脑上直接打开。
+- 如果确实需要访问面板，只能通过 SSH 隧道。
+- 不要输出或保存 SSH 密码、token、MiMo API Key。
+- 默认跳过微信绑定、米家账号绑定、MiMo API Key 配置。</textarea>
           </div>
           <div class="download-grid">
-            <a class="download-card" href="install-miloco-openclaw-cloud.sh" download>
-              <strong>下载一键脚本</strong>
-              <span>手动上传或本地保存时使用</span>
-            </a>
-            <a class="download-card" href="发给龙虾的部署指令.txt" download>
-              <strong>下载龙虾指令</strong>
-              <span>固定地址下载模式的完整提示词</span>
-            </a>
-            <a class="download-card" href="查看安装进度的指令.txt" download>
-              <strong>下载进度指令</strong>
-              <span>让 OpenClaw 汇报最近安装日志</span>
-            </a>
-            <a class="download-card" href="馨光 AI 设计灯光安装指导.zip" download>
-              <strong>下载离线包</strong>
-              <span>教程、脚本、指令打包版</span>
-            </a>
+            <a class="download-card" href="install-miloco-openclaw-cloud.sh" download><strong>下载脚本</strong><span>手动上传或高级排查时使用</span></a>
+            <a class="download-card" href="发给龙虾的部署指令.txt" download><strong>下载龙虾指令</strong><span>完整提示词文本</span></a>
+            <a class="download-card" href="查看安装进度的指令.txt" download><strong>下载进度指令</strong><span>中断后继续查看</span></a>
+            <a class="download-card" href="馨光 AI 设计灯光安装指导.zip" download><strong>下载离线包</strong><span>教程、脚本、指令打包版</span></a>
           </div>
         </section>
 
-        <section id="quick">
-          <h2>最短安装流程</h2>
-          <p>第一次安装只需要打开 OpenClaw 对话框，复制一段话发给它。普通用户不需要会 SSH，也不需要自己上传文件。</p>
+        <section id="progress">
+          <h2>查看安装进度</h2>
+          <p>如果对话窗口没有实时刷新，安装仍可能在后台运行。发送下面这份指令可以区分 RUNNING、FINISHED 和 EXITED_BUT_INCOMPLETE。</p>
+          <div class="cmd">
+            <div class="cmd-title"><span>查看进度指令</span><button class="copy-btn" data-copy-textarea="progressPrompt">复制进度指令</button></div>
+            <textarea id="progressPrompt" class="prompt-box" readonly>请查看「馨光 AI 设计灯光」第一阶段底座部署进度。不要重新启动安装，不要修改脚本，不要切换安装方法。
 
-          <div class="step-row">
-            <div class="step-num">1</div>
-            <div>
-              <h3>复制一键部署指令</h3>
-              <p>把下面这段话直接发给 OpenClaw。</p>
-              <div class="cmd">
-                <div class="cmd-title"><span>发给 OpenClaw</span><button class="copy-btn" data-copy-target="agentDownloadPromptCmdQuick">复制指令</button></div>
-                <pre id="agentDownloadPromptCmdQuick" data-template="请你在这台服务器上执行「馨光 AI 设计灯光安装指导」部署流程，完成 OpenClaw 更新与 Miloco 2.0 部署。请严格按下面步骤执行，不要自行搜索网络、不要换安装路线、不要尝试源码安装、pip/pipx 安装、Docker 安装或手工解包安装。&#10;&#10;目标：&#10;1. 如果 OpenClaw 已预装，升级/配置 OpenClaw。&#10;2. 如果 OpenClaw 未安装，自动安装 OpenClaw。&#10;3. 安装并部署 Miloco 2.0。&#10;4. 默认跳过微信绑定、米家账号绑定、MiMo API Key 配置。&#10;5. 最后检查 OpenClaw gateway、Miloco 服务和插件状态。&#10;&#10;唯一安装入口：&#10;- 文件名：install-miloco-openclaw-cloud.sh&#10;- 目标位置：/tmp/install-miloco-openclaw-cloud.sh&#10;- 主下载地址：https://nijez.github.io/xingguang-ai-lighting-guide/install-miloco-openclaw-cloud.sh&#10;- 备用下载地址 1：https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/install-miloco-openclaw-cloud.sh&#10;- 备用下载地址 2：https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/install-miloco-openclaw-cloud.sh&#10;&#10;执行要求：&#10;1. 下载固定脚本：&#10;&#10;```bash&#10;TARGET=/tmp/install-miloco-openclaw-cloud.sh&#10;EXPECTED_VERSION=2026-06-24.1&#10;rm -f &quot;$TARGET&quot;&#10;for URL in \&#10;  https://nijez.github.io/xingguang-ai-lighting-guide/install-miloco-openclaw-cloud.sh \&#10;  https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/install-miloco-openclaw-cloud.sh \&#10;  https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/install-miloco-openclaw-cloud.sh&#10;do&#10;  echo &quot;尝试下载脚本: $URL&quot;&#10;  if curl -fsSL &quot;$URL&quot; -o &quot;$TARGET&quot;; then&#10;    if grep -q &quot;SCRIPT_VERSION=\&quot;$EXPECTED_VERSION\&quot;&quot; &quot;$TARGET&quot;; then&#10;      echo &quot;脚本下载成功，版本 $EXPECTED_VERSION&quot;&#10;      break&#10;    fi&#10;    echo &quot;脚本版本不匹配，继续尝试下一个源&quot;&#10;  else&#10;    echo &quot;下载失败，继续尝试下一个源&quot;&#10;  fi&#10;done&#10;grep -q &quot;SCRIPT_VERSION=\&quot;$EXPECTED_VERSION\&quot;&quot; &quot;$TARGET&quot; || { echo &quot;固定脚本下载失败或版本不正确&quot;; exit 1; }&#10;chmod +x &quot;$TARGET&quot;&#10;```&#10;&#10;2. 确认脚本是否存在、版本是否正确：&#10;&#10;```bash&#10;ls -l /tmp/install-miloco-openclaw-cloud.sh&#10;grep '^SCRIPT_VERSION=' /tmp/install-miloco-openclaw-cloud.sh&#10;```&#10;&#10;3. 如果脚本不存在，或者版本低于 2026-06-24.1，请停止并告诉我：固定脚本下载失败。不要自己去网上找替代脚本。&#10;&#10;4. 如果脚本存在且版本正确，后台启动安装，把所有输出写到固定日志文件，并按进程观察进度。观察期间每 20 秒汇报一次当前状态，最多观察 90 次；如果日志超过 180 秒没有变化，也必须主动汇报“进程仍在运行但暂无新日志”，并打印进程状态，避免用户误以为无响应。如果安装还没结束，不要中断进程，只告诉我安装仍在后台运行：&#10;&#10;```bash&#10;LOG=/tmp/openclaw-miloco-install-current.log&#10;PIDFILE=/tmp/openclaw-miloco-install.pid&#10;rm -f &quot;$LOG&quot;&#10;nohup bash -lc 'INSTALL_ACTION=full INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh || INSTALL_ACTION=repair RUN_SYSTEM_UPGRADE=0 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh' &gt; &quot;$LOG&quot; 2&gt;&amp;1 &amp;&#10;echo $! &gt; &quot;$PIDFILE&quot;&#10;PID=&quot;$(cat &quot;$PIDFILE&quot;)&quot;&#10;START_TS=&quot;$(date +%s)&quot;&#10;LAST_SIZE=0&#10;LAST_CHANGE=&quot;$START_TS&quot;&#10;echo &quot;安装进程已启动 PID=$PID 日志=$LOG&quot;&#10;&#10;for i in $(seq 1 90); do&#10;  NOW=&quot;$(date +%s)&quot;&#10;  if [ -f &quot;$LOG&quot; ]; then&#10;    SIZE=&quot;$(wc -c &lt; &quot;$LOG&quot; 2&gt;/dev/null || echo 0)&quot;&#10;  else&#10;    SIZE=0&#10;  fi&#10;  if [ &quot;$SIZE&quot; != &quot;$LAST_SIZE&quot; ]; then&#10;    LAST_SIZE=&quot;$SIZE&quot;&#10;    LAST_CHANGE=&quot;$NOW&quot;&#10;  fi&#10;  IDLE=&quot;$((NOW - LAST_CHANGE))&quot;&#10;  ELAPSED=&quot;$((NOW - START_TS))&quot;&#10;  STEP=&quot;$(grep -E 'Step [0-9]+/6|✓ Step [0-9]+/6 done|ERROR|Failed|Traceback|Timing:|All done|Done' &quot;$LOG&quot; 2&gt;/dev/null | tail -n 1 || true)&quot;&#10;&#10;  echo&#10;  echo &quot;===== 安装进度检查 $i/90 =====&quot;&#10;  if kill -0 &quot;$PID&quot; 2&gt;/dev/null; then&#10;    echo &quot;状态: RUNNING&quot;&#10;  else&#10;    echo &quot;状态: FINISHED&quot;&#10;  fi&#10;  echo &quot;已运行: ${ELAPSED}s&quot;&#10;  echo &quot;日志最后更新: ${IDLE}s 前&quot;&#10;  echo &quot;当前进度: ${STEP:-尚未写入步骤日志，可能正在初始化或下载}&quot;&#10;&#10;  echo &quot;--- 关键进度 ---&quot;&#10;  grep -E 'Step [0-9]+/6|✓ Step [0-9]+/6 done|ERROR|Failed|Traceback|Timing:|All done|Done' &quot;$LOG&quot; 2&gt;/dev/null | tail -n 40 || true&#10;&#10;  if kill -0 &quot;$PID&quot; 2&gt;/dev/null &amp;&amp; [ &quot;$IDLE&quot; -ge 180 ]; then&#10;    echo &quot;--- 无新日志提醒 ---&quot;&#10;    echo &quot;安装进程仍在运行，但日志已 ${IDLE}s 没有新增；可能正在下载、解压或解析依赖。下面是进程状态，用于判断是否卡住。&quot;&#10;    ps -p &quot;$PID&quot; -o pid,etime,stat,pcpu,pmem,cmd 2&gt;/dev/null || true&#10;    pgrep -af 'install-miloco|uv|curl|npm|node|openclaw|miloco' 2&gt;/dev/null | head -n 20 || true&#10;  fi&#10;&#10;  echo &quot;--- 最近日志 ---&quot;&#10;  tail -n 45 &quot;$LOG&quot; 2&gt;/dev/null || true&#10;&#10;  if ! kill -0 &quot;$PID&quot; 2&gt;/dev/null; then&#10;    break&#10;  fi&#10;  sleep 20&#10;done&#10;&#10;if kill -0 &quot;$PID&quot; 2&gt;/dev/null; then&#10;  echo &quot;安装仍在后台运行，稍后可发送查看安装进度指令继续查看。&quot;&#10;fi&#10;```&#10;&#10;5. 安装期间不要中途杀进程，不要并行启动第二个安装，不要切换到其他安装方法。如果对话窗口没有实时显示输出，安装也仍在后台运行；你必须按上面的 20 秒观察循环继续主动上报。如果之后我要看进度，我会发送“查看安装进度”的指令，你只需要读取 `/tmp/openclaw-miloco-install-current.log`。&#10;&#10;6. 完成后执行验证：&#10;&#10;```bash&#10;miloco-cli service status&#10;openclaw gateway status&#10;openclaw plugins list | grep -i -C 2 miloco&#10;ss -ltnp | grep -E ':(1810|18789)\b'&#10;```&#10;&#10;7. 最终只按下面格式回复我：&#10;&#10;```text&#10;馨光 AI 设计灯光部署结果&#10;&#10;脚本版本：&#10;OpenClaw 版本：&#10;Miloco 状态：&#10;Miloco 端口：&#10;OpenClaw gateway 状态：&#10;Miloco 插件状态：&#10;总耗时：&#10;日志文件：&#10;&#10;下一步需要人工处理：&#10;1. 配置 MiMo API Key：miloco-cli config set model.omni.api_key sk-你的Key&#10;2. 绑定米家账号：miloco-cli account bind&#10;3. 确认馨光淡彩光设备已出现在设备列表：miloco-cli device list&#10;4. 如需个人微信/企业微信/飞书绑定，重新运行脚本进入平台绑定菜单。&#10;```&#10;&#10;重要限制：&#10;- 不要把 Miloco 面板直接暴露到公网。&#10;- `127.0.0.1:1810` 是云服务器内部地址，不能在用户自己的电脑上直接打开。&#10;- 如果确实需要访问面板，只能先保持 SSH 隧道运行：ssh -L 1810:127.0.0.1:1810 用户名@服务器IP，然后本机浏览器再打开 http://127.0.0.1:1810/&#10;- 不要输出或保存 SSH 密码、token、MiMo API Key。"></pre>
-              </div>
-            </div>
+请只执行下面这些命令：
+
+```bash
+PIDFILE=/tmp/openclaw-miloco-install.pid
+LOG=/tmp/openclaw-miloco-install-current.log
+STATE=/tmp/openclaw-miloco-install.state
+NOW="$(date +%s)"
+CONTINUE_CMD='INSTALL_ACTION=continue RUN_SYSTEM_UPGRADE=0 OPENCLAW_UPDATE=0 INSTALL_EXTRA_PLUGINS=0 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh'
+
+if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+  STATUS=RUNNING
+elif [ -f "$STATE" ] && grep -q '^STEP_6_DONE$' "$STATE"; then
+  STATUS=FINISHED
+else
+  STATUS=EXITED_BUT_INCOMPLETE
+fi
+echo "状态: $STATUS"
+
+if [ -f "$STATE" ]; then
+  LAST_DONE="$(grep -E '^STEP_[0-9]+_DONE$' "$STATE" | tail -n 1 || true)"
+else
+  LAST_DONE=""
+fi
+
+NEXT_STEP=COMPLETE
+for n in 1 2 3 4 5 6; do
+  if ! grep -q "^STEP_${n}_DONE$" "$STATE" 2>/dev/null; then
+    NEXT_STEP="STEP_${n}"
+    break
+  fi
+done
+
+if [ -f "$LOG" ]; then
+  LOG_MTIME="$(stat -c %Y "$LOG" 2>/dev/null || date +%s)"
+  IDLE="$((NOW - LOG_MTIME))"
+  STEP="$(grep -E 'Step [0-9]+/6|STATE: STEP_[0-9]+_DONE|ERROR|Failed|Traceback|timeout|Timing:|Done' "$LOG" 2>/dev/null | tail -n 1 || true)"
+  ERRORS="$(grep -Ei 'ERROR|Failed|Traceback|timeout|timed out' "$LOG" 2>/dev/null | tail -n 20 || true)"
+else
+  IDLE=-1
+  STEP=""
+  ERRORS=""
+fi
+
+echo "最后完成步骤: ${LAST_DONE:-none}"
+echo "下一步: $NEXT_STEP"
+echo "当前进度: ${STEP:-尚未找到步骤日志}"
+if [ "$IDLE" -ge 0 ]; then
+  echo "日志最后更新: ${IDLE}s 前"
+fi
+echo "日志文件: $LOG"
+echo "状态文件: $STATE"
+
+if [ "$STATUS" = RUNNING ] && [ "$IDLE" -ge 180 ]; then
+  echo "--- 无新日志提醒 ---"
+  echo "安装进程仍在运行，但暂无新日志。可能正在下载、解压、解析依赖或等待 OpenClaw gateway 响应。"
+  PID="$(cat "$PIDFILE")"
+  ps -p "$PID" -o pid,etime,stat,pcpu,pmem,cmd 2>/dev/null || true
+  pgrep -af 'install-miloco|uv|curl|npm|node|openclaw|miloco' 2>/dev/null | head -n 20 || true
+fi
+
+if [ "$STATUS" = EXITED_BUT_INCOMPLETE ]; then
+  echo "--- 未完成状态 ---"
+  echo "安装进程已退出，但状态文件没有 STEP_6_DONE。"
+  echo "是否可以继续: 是"
+  echo "建议继续命令: $CONTINUE_CMD"
+fi
+
+if [ -n "$ERRORS" ]; then
+  echo "--- 最近异常关键词 ---"
+  printf '%s\n' "$ERRORS"
+fi
+
+echo "--- 最近日志 ---"
+tail -n 120 "$LOG" 2>/dev/null || echo "暂未找到日志"
+
+echo "--- Miloco service ---"
+miloco-cli service status 2>/dev/null || true
+
+echo "--- OpenClaw gateway ---"
+openclaw gateway status 2>/dev/null || true
+
+echo "--- Miloco plugin ---"
+openclaw plugins list 2>/dev/null | grep -i -C 2 miloco || true
+```
+
+然后用中文告诉我：
+
+1. 当前状态是 RUNNING、FINISHED 还是 EXITED_BUT_INCOMPLETE。
+2. 最后完成到哪一步，下一步是哪一步。
+3. 最近日志里有没有 ERROR / Failed / Traceback / timeout。
+4. 如果日志 180 秒以上没有更新，请明确说明“安装进程仍在运行，但暂无新日志”。
+5. 我是否需要继续等待，还是执行继续命令。</textarea>
           </div>
+          <div class="terminal">
+            <div class="terminal-bar">进度状态示意</div>
+            <pre><span class="term-blue">状态: RUNNING</span>
+最后完成步骤: STEP_2_DONE
+下一步: STEP_3
+日志最后更新: 42s 前
 
-          <div class="step-row">
-            <div class="step-num">2</div>
-            <div>
-              <h3>查看进度</h3>
-              <p>安装指令本身会自动上报进度。如果对话窗口中断，隔几分钟把下面这段话发给 OpenClaw，它会读取固定日志文件，告诉你正在跑哪一步。</p>
-              <div class="cmd">
-                <div class="cmd-title"><span>发给 OpenClaw</span><button class="copy-btn" data-copy-target="progressPromptCmdQuick">复制进度指令</button></div>
-                <pre id="progressPromptCmdQuick" data-template="请查看 馨光 AI 设计灯光安装进度。不要重新启动安装，不要修改脚本，不要切换安装方法。&#10;&#10;请只执行下面这些命令：&#10;&#10;```bash&#10;PIDFILE=/tmp/openclaw-miloco-install.pid&#10;LOG=/tmp/openclaw-miloco-install-current.log&#10;NOW=&quot;$(date +%s)&quot;&#10;&#10;if [ -f &quot;$PIDFILE&quot; ] &amp;&amp; kill -0 &quot;$(cat &quot;$PIDFILE&quot;)&quot; 2&gt;/dev/null; then&#10;  echo &quot;状态: RUNNING&quot;&#10;  RUNNING=1&#10;else&#10;  echo &quot;状态: FINISHED_OR_NOT_RUNNING&quot;&#10;  RUNNING=0&#10;fi&#10;&#10;if [ -f &quot;$LOG&quot; ]; then&#10;  LOG_MTIME=&quot;$(stat -c %Y &quot;$LOG&quot; 2&gt;/dev/null || date +%s)&quot;&#10;  IDLE=&quot;$((NOW - LOG_MTIME))&quot;&#10;  STEP=&quot;$(grep -E 'Step [0-9]+/6|✓ Step [0-9]+/6 done|ERROR|Failed|Traceback|Timing:|All done|Done' &quot;$LOG&quot; 2&gt;/dev/null | tail -n 1 || true)&quot;&#10;else&#10;  IDLE=-1&#10;  STEP=&quot;&quot;&#10;fi&#10;&#10;echo &quot;当前进度: ${STEP:-尚未找到步骤日志}&quot;&#10;if [ &quot;$IDLE&quot; -ge 0 ]; then&#10;  echo &quot;日志最后更新: ${IDLE}s 前&quot;&#10;fi&#10;&#10;echo &quot;日志文件: $LOG&quot;&#10;tail -n 120 &quot;$LOG&quot; 2&gt;/dev/null || echo &quot;暂未找到日志&quot;&#10;&#10;if [ &quot;$RUNNING&quot; = 1 ] &amp;&amp; [ &quot;$IDLE&quot; -ge 180 ]; then&#10;  echo &quot;--- 无新日志提醒 ---&quot;&#10;  echo &quot;安装进程仍在运行，但日志已 ${IDLE}s 没有新增；可能正在下载、解压或解析依赖。下面是进程状态。&quot;&#10;  PID=&quot;$(cat &quot;$PIDFILE&quot;)&quot;&#10;  ps -p &quot;$PID&quot; -o pid,etime,stat,pcpu,pmem,cmd 2&gt;/dev/null || true&#10;  pgrep -af 'install-miloco|uv|curl|npm|node|openclaw|miloco' 2&gt;/dev/null | head -n 20 || true&#10;fi&#10;&#10;echo &quot;--- Miloco service ---&quot;&#10;miloco-cli service status 2&gt;/dev/null || true&#10;&#10;echo &quot;--- OpenClaw gateway ---&quot;&#10;openclaw gateway status 2&gt;/dev/null || true&#10;&#10;echo &quot;--- Miloco plugin ---&quot;&#10;openclaw plugins list 2&gt;/dev/null | grep -i -C 2 miloco || true&#10;```&#10;&#10;然后用中文告诉我：&#10;&#10;1. 当前是否仍在运行。&#10;2. 当前大概处于第几步。&#10;3. 最近日志里有没有 ERROR / Failed / Traceback。&#10;4. 如果日志 180 秒以上没有更新，请明确说明“仍在运行但暂无新日志”，不要只显示转圈。&#10;5. 我是否需要继续等待，还是需要处理异常。&#10;6. 如果已经完成，请按下面格式汇报：&#10;&#10;```text&#10;馨光 AI 设计灯光部署结果&#10;&#10;脚本版本：&#10;OpenClaw 版本：&#10;Miloco 状态：&#10;Miloco 端口：&#10;OpenClaw gateway 状态：&#10;Miloco 插件状态：&#10;总耗时：&#10;日志文件：&#10;&#10;下一步需要人工处理：&#10;1. 配置 MiMo API Key：miloco-cli config set model.omni.api_key sk-你的Key&#10;2. 绑定米家账号：miloco-cli account bind&#10;3. 确认馨光淡彩光设备已出现在设备列表：miloco-cli device list&#10;4. 如需个人微信/企业微信/飞书绑定，重新运行脚本进入平台绑定菜单。&#10;```"></pre>
-              </div>
-            </div>
+<span class="term-yellow">状态: EXITED_BUT_INCOMPLETE</span>
+最后完成步骤: STEP_2_DONE
+下一步: STEP_3
+建议继续命令: INSTALL_ACTION=continue RUN_SYSTEM_UPGRADE=0 OPENCLAW_UPDATE=0 ...</pre>
           </div>
-
-          <div class="step-row">
-            <div class="step-num">3</div>
-            <div>
-              <h3>下载失败时用附件备用</h3>
-              <p>如果服务器临时无法访问公开地址，再下载脚本并上传到 OpenClaw 对话框。</p>
-              <a class="download-card" href="install-miloco-openclaw-cloud.sh" download>
-                <strong>下载 install-miloco-openclaw-cloud.sh</strong>
-                <span>保存后不要改名、不要改内容</span>
-              </a>
-              <div class="cmd">
-                <div class="cmd-title"><span>附件上传后发给 OpenClaw</span><button class="copy-btn" data-copy-target="agentPromptCmdQuick">复制备用指令</button></div>
-                <pre id="agentPromptCmdQuick" data-template="我已经上传了 install-miloco-openclaw-cloud.sh。请把附件原样保存到 /tmp/install-miloco-openclaw-cloud.sh，不要修改脚本内容。不要自行搜索网络，不要改用源码、pip、pipx、Docker 或手工解包。先检查 grep '^SCRIPT_VERSION=' /tmp/install-miloco-openclaw-cloud.sh，版本必须不低于 2026-06-24.1。然后执行：chmod +x /tmp/install-miloco-openclaw-cloud.sh && INSTALL_ACTION=full INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh。失败时只允许重试一次：INSTALL_ACTION=repair RUN_SYSTEM_UPGRADE=0 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh。完成后汇报 OpenClaw 版本、Miloco 服务状态、gateway 状态、插件状态、总耗时和日志文件。"></pre>
-              </div>
-            </div>
-          </div>
-
-          <div class="step-row">
-            <div class="step-num">4</div>
-            <div>
-              <h3>需要重启时</h3>
-              <p>如果安装输出提示新内核等待重启，等全部完成后再执行。</p>
-              <div class="cmd">
-                <div class="cmd-title"><span>服务器终端执行</span><button class="copy-btn" data-copy-target="rebootCmd">复制命令</button></div>
-                <pre id="rebootCmd" data-template="sudo reboot"></pre>
-              </div>
-            </div>
-          </div>
-
-          <h3>SSH 备用方式</h3>
-          <p>懂终端的用户也可以自己登录服务器执行。脚本会下载到服务器自己的 <code>/tmp/</code>，不是下载到本机电脑。</p>
-
-          <div class="step-row">
-            <div class="step-num">A</div>
-            <div>
-              <h3>确认 SSH 信息</h3>
-              <p>只有使用 SSH 备用方式时才需要填写。OpenClaw 应用模板底层通常是 Ubuntu，默认用户名一般是 <code>ubuntu</code>。</p>
-              <div class="setup-grid">
-                <div>
-                  <label for="serverIp">服务器 IP</label>
-                  <input id="serverIp" autocomplete="off" placeholder="例如：1.2.3.4" value="服务器IP">
-                  <div class="ip-reminder">这里填入服务器 IP，下面 SSH 命令会自动替换成你的地址。</div>
-                </div>
-                <div>
-                  <label for="serverUser">SSH 用户名</label>
-                  <input id="serverUser" autocomplete="off" value="ubuntu">
-                  <div class="input-hint">OpenClaw 应用模板通常使用 ubuntu。</div>
-                </div>
-              </div>
-              <div class="status-line">当前 SSH 目标：<strong id="targetText">ubuntu@服务器IP</strong></div>
-            </div>
-          </div>
-
-          <div class="step-row">
-            <div class="step-num">B</div>
-            <div>
-              <h3>登录服务器</h3>
-              <p>连接后进入服务器终端。</p>
-              <div class="cmd">
-                <div class="cmd-title"><span>本机终端执行</span><button class="copy-btn" data-copy-target="sshCmd">复制命令</button></div>
-                <pre id="sshCmd" data-template="ssh {user}@{ip}"></pre>
-              </div>
-            </div>
-          </div>
-
-          <div class="step-row">
-            <div class="step-num">C</div>
-            <div>
-              <h3>下载一键脚本</h3>
-              <p>登录服务器后执行。</p>
-              <div class="cmd">
-                <div class="cmd-title"><span>服务器终端执行</span><button class="copy-btn" data-copy-target="downloadCmd">复制命令</button></div>
-                <pre id="downloadCmd" data-template="curl -fsSL {scriptUrl} -o /tmp/install-miloco-openclaw-cloud.sh || curl -fsSL {scriptUrlRaw} -o /tmp/install-miloco-openclaw-cloud.sh || curl -fsSL {scriptUrlCdn} -o /tmp/install-miloco-openclaw-cloud.sh&#10;chmod +x /tmp/install-miloco-openclaw-cloud.sh"></pre>
-              </div>
-            </div>
-          </div>
-
-          <div class="step-row">
-            <div class="step-num">D</div>
-            <div>
-              <h3>打开脚本菜单</h3>
-              <p>菜单里选择 <strong>1) 一键傻瓜式部署</strong>。</p>
-              <div class="cmd">
-                <div class="cmd-title"><span>服务器终端执行</span><button class="copy-btn" data-copy-target="menuCmd">复制命令</button></div>
-                <pre id="menuCmd" data-template="bash /tmp/install-miloco-openclaw-cloud.sh"></pre>
-              </div>
-            </div>
-          </div>
-
-        </section>
-
-        <section id="screens">
-          <h2>过程截图示意</h2>
-          <p>下面这些可以直接作为教程截图使用。真实安装时文字和耗时会有差异，但关键节点一致。</p>
-
-          <h3>1. 主菜单</h3>
-          <div class="terminal-shot" role="img" aria-label="OpenClaw Miloco installer main menu">
-            <div class="terminal-bar"><span class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></span><span>ubuntu@cloud-vm</span></div>
-            <pre><span class="term-muted">Starting Xingguang AI lighting install (script 2026-06-24.1)</span>
-
-请选择操作:
-  <span class="term-green">1) 一键傻瓜式部署</span>
-  <span class="term-blue">2) 功能模块维护</span>
-  3) 平台绑定
-  4) 查看服务状态
-  5) 查看安装日志
-  0) 退出
-
-请输入编号: <span class="term-yellow">1</span></pre>
-          </div>
-
-          <h3>2. 一键傻瓜式部署步骤</h3>
-          <div class="terminal-shot" role="img" aria-label="one-click install steps">
-            <div class="terminal-bar"><span class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></span><span>install progress</span></div>
-            <pre><span class="term-blue">Step 1/6:</span> Update Ubuntu system and base packages
-  说明: 更新系统包并安装基础依赖。
-<span class="term-green">✓ Step 1/6 done</span>: Update Ubuntu system and base packages (00:02:21)
-
-<span class="term-blue">Step 2/6:</span> Update OpenClaw and configure gateway
-  说明: 升级 OpenClaw，并配置 127.0.0.1:18789 网关。
-<span class="term-green">✓ Step 2/6 done</span>: Update OpenClaw and configure gateway (00:02:18)
-
-<span class="term-blue">Step 3/6:</span> Install and deploy Miloco 2.0
-  说明: 下载 Miloco 主包，安装服务，并接入 OpenClaw 插件。</pre>
-          </div>
-
-          <h3>3. 自动测速和下载</h3>
-          <div class="terminal-shot" role="img" aria-label="mirror benchmark output">
-            <div class="terminal-bar"><span class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></span><span>mirror benchmark</span></div>
-            <pre>Benchmarking npm registries
-  0.312s  https://mirrors.cloud.tencent.com/npm
-  0.489s  https://registry.npmmirror.com
-
-Benchmarking Miloco installer sources
-  failed  https://github.com/XiaoMi/xiaomi-miloco/releases/download/v2026.6.18/install.sh
-  0.721s  https://gh-proxy.org/https://github.com/XiaoMi/xiaomi-miloco/releases/download/v2026.6.18/install.sh
-
-Preloading Miloco bundle miloco-linux-x86_64-2026.6.18.tar.gz
-<span class="term-green">Cached Miloco bundle archive</span>: ~/.cache/miloco-cloud-installer/2026.6.18/...</pre>
-          </div>
-
-          <h3>4. 平台绑定提示</h3>
-          <div class="terminal-shot" role="img" aria-label="binding prompts">
-            <div class="terminal-bar"><span class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></span><span>binding prompts</span></div>
-            <pre><span class="term-blue">Step 4/6:</span> Ask OpenClaw platform binding
-是否现在进行 OpenClaw 平台绑定？ [y/N] <span class="term-yellow">N</span>
-已跳过 OpenClaw 平台绑定。
-后续可从主菜单选择 3) 平台绑定。
-
-<span class="term-blue">Step 5/6:</span> Prompt Miloco Mi Home account binding
-是否现在绑定米家账号？ [y/N] <span class="term-yellow">N</span>
-已跳过米家绑定。后续可运行 miloco-cli account bind。</pre>
-          </div>
-
-          <h3>5. 安装完成</h3>
-          <div class="terminal-shot" role="img" aria-label="install completed output">
-            <div class="terminal-bar"><span class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></span><span>done</span></div>
-            <pre><span class="term-green">✓ miloco server</span>
-<span class="term-green">✓ miloco-cli</span>
-<span class="term-green">✓ supervisor</span>
-<span class="term-green">✓ Engine warm-up complete</span>
-<span class="term-green">✓ Plugin installed</span>
-<span class="term-green">✓ Builtin tools added to tools.alsoAllow</span>
-<span class="term-green">✓ All done</span>
-
-Miloco service is running: 127.0.0.1:1810
-OpenClaw gateway: 127.0.0.1:18789
-Timing: Total install took <span class="term-yellow">00:09:52</span> (592s)
-<span class="term-green">Done</span></pre>
-          </div>
-        </section>
-
-        <section id="sources">
-          <h2>国内源和缓存</h2>
-          <p>脚本不需要你准备自己的服务器、COS 或 OSS。它会直接从官方仓库或公开代理源下载，并自动测速优选。</p>
-          <div class="result-grid">
-            <div class="metric"><b>3/3</b><span>干净快照验证通过</span></div>
-            <div class="metric"><b>9-11 分钟</b><span>完整部署常见耗时</span></div>
-            <div class="metric"><b>64.9MB</b><span>Miloco 主包大小约值</span></div>
-          </div>
-          <ul>
-            <li>npm：npmmirror、官方 npm、腾讯云、华为云之间测速。</li>
-            <li>Miloco：优先官方 GitHub release，失败或较慢时切换公开 GitHub 代理源。</li>
-            <li>PyPI：清华 TUNA、中科大、官方 PyPI 之间测速，避免不兼容的镜像。</li>
-            <li>缓存：Miloco 主包缓存到云服务器自己的 <code>~/.cache/miloco-cloud-installer/</code>，不是下载到本机电脑。</li>
-          </ul>
         </section>
 
         <section id="first-use">
-          <h2>安装后第一次使用</h2>
-          <p>脚本完成后，云服务器上的 OpenClaw 和 Miloco 服务已经部署好。要让馨光淡彩光设备支持自然语言控制，还需要完成下面几件事。</p>
-          <div class="step-row">
-            <div class="step-num">1</div>
-            <div>
-              <h3>配置 MiMo API Key</h3>
-              <p>如果安装时没有配置 Key，后续可以在服务器终端补充。把 <code>sk-xxxx</code> 换成自己的 Key。</p>
-              <div class="cmd">
-                <div class="cmd-title"><span>服务器终端执行</span><button class="copy-btn" data-copy-target="mimoCmd">复制命令</button></div>
-                <pre id="mimoCmd" data-template="miloco-cli config set model.omni.api_key sk-xxxx"></pre>
-              </div>
-            </div>
-          </div>
-          <div class="step-row">
-            <div class="step-num">2</div>
-            <div>
-              <h3>绑定米家账号</h3>
-              <p>可以在 Miloco 面板里按提示绑定，也可以在服务器终端执行命令发起绑定。</p>
-              <div class="cmd">
-                <div class="cmd-title"><span>服务器终端执行</span><button class="copy-btn" data-copy-target="bindMiCmd">复制命令</button></div>
-                <pre id="bindMiCmd" data-template="miloco-cli account bind"></pre>
-              </div>
-            </div>
-          </div>
-          <div class="step-row">
-            <div class="step-num">3</div>
-            <div>
-              <h3>确认馨光淡彩光设备</h3>
-              <p>米家账号绑定完成后，确认馨光淡彩光设备已经在设备列表中出现。后续重点是通过自然语言对话调用灯光颜色、亮度、模式等自定义变化。</p>
-              <div class="cmd">
-                <div class="cmd-title"><span>服务器终端执行</span><button class="copy-btn" data-copy-target="deviceCmd">复制命令</button></div>
-                <pre id="deviceCmd" data-template="miloco-cli device list"></pre>
-              </div>
-            </div>
-          </div>
-          <div class="step-row">
-            <div class="step-num">4</div>
-            <div>
-              <h3>需要页面管理时再打开面板</h3>
-              <p><code>127.0.0.1:1810</code> 是云服务器内部地址，不能在自己电脑上直接打开。确实需要面板时，先保持 SSH 隧道运行，再在本机浏览器打开这个地址。</p>
-              <div class="cmd">
-                <div class="cmd-title"><span>本机终端执行</span><button class="copy-btn" data-copy-target="tunnelCmd">复制命令</button></div>
-                <pre id="tunnelCmd" data-template="ssh -L 1810:127.0.0.1:1810 {user}@{ip}"></pre>
-              </div>
-            </div>
+          <h2>绑定米家账号、配置 MiMo Key、确认设备</h2>
+          <div class="grid-3">
+            <div class="card"><strong>配置 MiMo API Key</strong><span>由人工在安全环境输入，不在教程中保存。</span><pre data-template="miloco-cli config set model.omni.api_key sk-xxxx"></pre></div>
+            <div class="card"><strong>绑定米家账号</strong><span>授权链接或扫码由人工完成。</span><pre data-template="miloco-cli account bind"></pre></div>
+            <div class="card"><strong>确认设备列表</strong><span>确认馨光淡彩光设备已经出现。</span><pre data-template="miloco-cli device list"></pre></div>
           </div>
         </section>
 
-        <section id="maintain">
-          <h2>后续维护菜单</h2>
-          <p>安装完成后，可以反复运行脚本做单项维护，不必每次从头部署。</p>
-          <div class="cmd">
-            <div class="cmd-title"><span>服务器终端执行</span><button class="copy-btn" data-copy-target="statusCmd">复制状态命令</button></div>
-            <pre id="statusCmd" data-template="INSTALL_ACTION=status bash /tmp/install-miloco-openclaw-cloud.sh"></pre>
+        <section id="acceptance">
+          <h2>第一阶段验收</h2>
+          <div class="grid-2">
+            <div class="card"><strong>服务状态</strong><span>Miloco 服务运行，端口为云服务器内部 <code>127.0.0.1:1810</code>。</span></div>
+            <div class="card"><strong>OpenClaw gateway</strong><span>gateway 可访问，CLI / Gateway 版本会在日志中输出。</span></div>
+            <div class="card"><strong>插件状态</strong><span>Miloco 插件已出现在 OpenClaw 插件列表。</span></div>
+            <div class="card"><strong>设备识别</strong><span>米家绑定后能看到馨光淡彩光设备。</span></div>
           </div>
-          <div class="terminal-shot" role="img" aria-label="maintenance menu">
-            <div class="terminal-bar"><span class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></span><span>maintenance menu</span></div>
-            <pre>功能模块维护:
-  1) OpenClaw 升级 / 网关配置
-  2) Miloco 2.0 安装 / 更新
-  3) 核心模块更新 / 修复
-  4) 重启 OpenClaw gateway
-  5) 重启 Miloco service
-  6) 查看模块状态
-  0) 返回上级菜单</pre>
-          </div>
-          <h3>常用维护命令</h3>
-          <div class="cmd">
-            <div class="cmd-title"><span>跳过系统升级，只修复核心模块</span><button class="copy-btn" data-copy-target="repairCmd">复制命令</button></div>
-            <pre id="repairCmd" data-template="INSTALL_ACTION=repair RUN_SYSTEM_UPGRADE=0 bash /tmp/install-miloco-openclaw-cloud.sh"></pre>
-          </div>
-          <div class="cmd">
-            <div class="cmd-title"><span>后续补做个人微信绑定</span><button class="copy-btn" data-copy-target="wechatCmd">复制命令</button></div>
-            <pre id="wechatCmd" data-template="INSTALL_ACTION=weixin RUN_SYSTEM_UPGRADE=0 bash /tmp/install-miloco-openclaw-cloud.sh"></pre>
-          </div>
+          <div class="notice warn">不要把 Miloco 面板直接暴露到公网。<code>127.0.0.1:1810</code> 是云服务器内部地址，不能在用户自己的电脑上直接打开。如果确实需要访问面板，只能通过 SSH 隧道。</div>
         </section>
 
-        <section id="verify">
-          <h2>验证和访问</h2>
-          <div class="checklist">
-            <div class="check"><span>✓</span><div>Miloco 服务显示 <code>"running": true</code>。</div></div>
-            <div class="check"><span>✓</span><div>Miloco 监听云服务器内部地址 <code>127.0.0.1:1810</code>。</div></div>
-            <div class="check"><span>✓</span><div>OpenClaw gateway 监听 <code>127.0.0.1:18789</code>。</div></div>
-            <div class="check"><span>✓</span><div>OpenClaw 插件列表显示 <code>miloco-openclaw-plugin</code> enabled。</div></div>
-          </div>
-          <div class="cmd">
-            <div class="cmd-title"><span>服务器终端验证</span><button class="copy-btn" data-copy-target="verifyCmd">复制命令</button></div>
-            <pre id="verifyCmd" data-template="miloco-cli service status&#10;openclaw gateway status&#10;openclaw plugins list | grep -i -C 2 miloco&#10;ss -ltnp | grep -E ':(1810|18789)\\b'"></pre>
-          </div>
-        </section>
-
-        <section id="troubleshooting">
-          <h2>常见问题</h2>
-          <h3>如果提示 Failed to download Miloco installer</h3>
-          <p>通常是服务器上的脚本不是最新版，或者当时代理源不可用。重新上传最新脚本，然后跳过系统升级重跑修复。</p>
-          <div class="cmd">
-            <div class="cmd-title"><span>先确认脚本版本</span><button class="copy-btn" data-copy-target="versionCmd">复制命令</button></div>
-            <pre id="versionCmd" data-template="grep '^SCRIPT_VERSION=' /tmp/install-miloco-openclaw-cloud.sh"></pre>
-          </div>
-          <div class="cmd">
-            <div class="cmd-title"><span>修复安装</span><button class="copy-btn" data-copy-target="fixCmd">复制命令</button></div>
-            <pre id="fixCmd" data-template="INSTALL_ACTION=repair RUN_SYSTEM_UPGRADE=0 bash /tmp/install-miloco-openclaw-cloud.sh"></pre>
-          </div>
-          <div class="notice warn">如果系统升级提示新内核，不需要立刻断开重连。等脚本完全结束后再执行 <code>sudo reboot</code>。</div>
-        </section>
-
-        <section id="references">
-          <h2>参考资料</h2>
-          <p>本教程的结构参考了官方安装文档和常见一键脚本教程：先给推荐安装流程，再给维护菜单、验证命令和排错入口。</p>
+        <section id="phase2">
+          <h2>第二阶段：馨光智能 Skill 安装与业务验收</h2>
+          <p>待补充。本阶段不会在当前脚本里假装完成。</p>
           <ul>
-            <li><a href="https://docs.openclaw.ai/install" target="_blank" rel="noreferrer">OpenClaw 官方安装文档</a></li>
-            <li><a href="https://github.com/XiaoMi/xiaomi-miloco" target="_blank" rel="noreferrer">Xiaomi Miloco GitHub 仓库</a></li>
-            <li><a href="https://github.com/XiaoMi/xiaomi-miloco/blob/main/user_guide_zh.md" target="_blank" rel="noreferrer">Miloco 中文使用手册</a></li>
+            <li>安装馨光 Skill。</li>
+            <li>配置馨光设备白名单。</li>
+            <li>配置淡彩光颜色输出规则。</li>
+            <li>自然语言场景测试。</li>
+            <li>dry-run 测试。</li>
+            <li>真机控制测试。</li>
+            <li>常见问题与回滚。</li>
           </ul>
+        </section>
+
+        <section id="advanced">
+          <h2>高级维护附录</h2>
+          <p>SSH 方式仅用于开发者、运维人员或故障排查，不是普通用户主线流程。</p>
+          <div class="grid-2">
+            <div>
+              <label for="serverIp">服务器 IP</label>
+              <input id="serverIp" autocomplete="off" placeholder="例如：1.2.3.4" value="服务器IP">
+              <div class="ip-reminder">这里填入服务器 IP，下面 SSH 命令会自动替换成你的地址。</div>
+            </div>
+            <div>
+              <label for="serverUser">SSH 用户名</label>
+              <input id="serverUser" autocomplete="off" value="ubuntu">
+              <p>OpenClaw 应用模板底层通常是 Ubuntu，默认用户名一般是 <code>ubuntu</code>。</p>
+            </div>
+          </div>
+          <div class="status-line">当前 SSH 目标：<strong id="targetText">ubuntu@服务器IP</strong></div>
+
+          <h3>SSH 登录服务器</h3>
+          <div class="cmd"><div class="cmd-title"><span>本机终端执行</span><button class="copy-btn" data-copy-target="sshCmd">复制命令</button></div><pre id="sshCmd" data-template="ssh {user}@{ip}"></pre></div>
+
+          <h3>手动下载并执行安装脚本</h3>
+          <div class="cmd"><div class="cmd-title"><span>服务器终端执行</span><button class="copy-btn" data-copy-target="manualInstallCmd">复制命令</button></div><pre id="manualInstallCmd" data-template="curl -fsSL https://nijez.github.io/xingguang-ai-lighting-guide/install-miloco-openclaw-cloud.sh -o /tmp/install-miloco-openclaw-cloud.sh || curl -fsSL https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/install-miloco-openclaw-cloud.sh -o /tmp/install-miloco-openclaw-cloud.sh || curl -fsSL https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/install-miloco-openclaw-cloud.sh -o /tmp/install-miloco-openclaw-cloud.sh&#10;chmod +x /tmp/install-miloco-openclaw-cloud.sh&#10;INSTALL_ACTION=full RUN_SYSTEM_UPGRADE=0 OPENCLAW_UPDATE=0 INSTALL_EXTRA_PLUGINS=0 bash /tmp/install-miloco-openclaw-cloud.sh"></pre></div>
+
+          <h3>查看安装日志</h3>
+          <div class="cmd"><div class="cmd-title"><span>服务器终端执行</span><button class="copy-btn" data-copy-target="logCmd">复制命令</button></div><pre id="logCmd" data-template="tail -n 160 /tmp/openclaw-miloco-install-current.log 2>/dev/null || tail -n 160 ~/miloco-cloud-install.log"></pre></div>
+
+          <h3>检查服务状态</h3>
+          <div class="cmd"><div class="cmd-title"><span>服务器终端执行</span><button class="copy-btn" data-copy-target="statusCmd">复制命令</button></div><pre id="statusCmd" data-template="INSTALL_ACTION=status bash /tmp/install-miloco-openclaw-cloud.sh&#10;miloco-cli service status&#10;openclaw gateway status&#10;openclaw plugins list | grep -i -C 2 miloco"></pre></div>
+
+          <h3>重启服务</h3>
+          <div class="cmd"><div class="cmd-title"><span>服务器终端执行</span><button class="copy-btn" data-copy-target="restartCmd">复制命令</button></div><pre id="restartCmd" data-template="INSTALL_ACTION=restart-openclaw bash /tmp/install-miloco-openclaw-cloud.sh&#10;INSTALL_ACTION=restart-miloco bash /tmp/install-miloco-openclaw-cloud.sh"></pre></div>
+
+          <h3>更新、重装、回滚</h3>
+          <div class="cmd"><div class="cmd-title"><span>继续未完成部署</span><button class="copy-btn" data-copy-target="continueCmd">复制命令</button></div><pre id="continueCmd" data-template="INSTALL_ACTION=continue RUN_SYSTEM_UPGRADE=0 OPENCLAW_UPDATE=0 INSTALL_EXTRA_PLUGINS=0 bash /tmp/install-miloco-openclaw-cloud.sh"></pre></div>
+          <div class="cmd"><div class="cmd-title"><span>高级维护升级</span><button class="copy-btn" data-copy-target="upgradeCmd">复制命令</button></div><pre id="upgradeCmd" data-template="INSTALL_ACTION=full RUN_SYSTEM_UPGRADE=1 OPENCLAW_UPDATE=1 INSTALL_EXTRA_PLUGINS=1 bash /tmp/install-miloco-openclaw-cloud.sh"></pre></div>
+
+          <h3>访问 Miloco 面板</h3>
+          <p>只有确实需要访问面板时才建立 SSH 隧道。不要把 <code>1810</code> 端口直接开放到公网。</p>
+          <div class="cmd"><div class="cmd-title"><span>本机终端执行</span><button class="copy-btn" data-copy-target="tunnelCmd">复制命令</button></div><pre id="tunnelCmd" data-template="ssh -L 1810:127.0.0.1:1810 {user}@{ip}"></pre></div>
         </section>
       </main>
     </div>
@@ -855,42 +775,24 @@ Timing: Total install took <span class="term-yellow">00:09:52</span> (592s)
       ip: document.getElementById('serverIp'),
       user: document.getElementById('serverUser')
     };
-    const publicBaseUrl = 'https://nijez.github.io/xingguang-ai-lighting-guide/';
     const targetText = document.getElementById('targetText');
-    const commandBlocks = Array.from(document.querySelectorAll('[data-template]'));
+    const templatedBlocks = Array.from(document.querySelectorAll('[data-template]'));
 
     function values() {
-      const scriptUrl = new URL('install-miloco-openclaw-cloud.sh', publicBaseUrl).href;
-      const scriptUrlCdn = 'https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/install-miloco-openclaw-cloud.sh';
-      const scriptUrlRaw = 'https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/install-miloco-openclaw-cloud.sh';
-      const promptUrl = new URL('发给龙虾的部署指令.txt', publicBaseUrl).href;
-      const zipUrl = new URL('馨光 AI 设计灯光安装指导.zip', publicBaseUrl).href;
       return {
         ip: fields.ip.value.trim() || '服务器IP',
-        user: fields.user.value.trim() || 'ubuntu',
-        scriptUrl,
-        scriptUrlCdn,
-        scriptUrlRaw,
-        promptUrl,
-        zipUrl
+        user: fields.user.value.trim() || 'ubuntu'
       };
     }
 
     function renderTemplate(template, data) {
-      return template
-        .replaceAll('{ip}', data.ip)
-        .replaceAll('{user}', data.user)
-        .replaceAll('{scriptUrl}', data.scriptUrl)
-        .replaceAll('{scriptUrlCdn}', data.scriptUrlCdn)
-        .replaceAll('{scriptUrlRaw}', data.scriptUrlRaw)
-        .replaceAll('{promptUrl}', data.promptUrl)
-        .replaceAll('{zipUrl}', data.zipUrl);
+      return template.replaceAll('{ip}', data.ip).replaceAll('{user}', data.user);
     }
 
     function refreshCommands() {
       const data = values();
       targetText.textContent = `${data.user}@${data.ip}`;
-      commandBlocks.forEach((block) => {
+      templatedBlocks.forEach((block) => {
         block.textContent = renderTemplate(block.dataset.template, data);
       });
     }
@@ -919,17 +821,29 @@ Timing: Total install took <span class="term-yellow">00:09:52</span> (592s)
           await copyText(target.textContent.trimEnd());
           button.textContent = '已复制';
           window.setTimeout(() => { button.textContent = original; }, 1200);
-        } catch (error) {
+        } catch {
           button.textContent = '复制失败';
           window.setTimeout(() => { button.textContent = original; }, 1600);
         }
       });
     });
 
-    Object.values(fields).forEach((input) => {
-      input.addEventListener('input', refreshCommands);
+    document.querySelectorAll('[data-copy-textarea]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const target = document.getElementById(button.dataset.copyTextarea);
+        const original = button.textContent;
+        try {
+          await copyText(target.value.trimEnd());
+          button.textContent = '已复制';
+          window.setTimeout(() => { button.textContent = original; }, 1200);
+        } catch {
+          button.textContent = '复制失败';
+          window.setTimeout(() => { button.textContent = original; }, 1600);
+        }
+      });
     });
 
+    Object.values(fields).forEach((input) => input.addEventListener('input', refreshCommands));
     refreshCommands();
   </script>
 </body>

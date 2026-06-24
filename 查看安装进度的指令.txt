@@ -1,44 +1,79 @@
-请查看 馨光 AI 设计灯光安装进度。不要重新启动安装，不要修改脚本，不要切换安装方法。
+请查看「馨光 AI 设计灯光」第一阶段底座部署进度。不要重新启动安装，不要修改脚本，不要切换安装方法。
 
 请只执行下面这些命令：
 
 ```bash
 PIDFILE=/tmp/openclaw-miloco-install.pid
 LOG=/tmp/openclaw-miloco-install-current.log
+STATE=/tmp/openclaw-miloco-install.state
 NOW="$(date +%s)"
+CONTINUE_CMD='INSTALL_ACTION=continue RUN_SYSTEM_UPGRADE=0 OPENCLAW_UPDATE=0 INSTALL_EXTRA_PLUGINS=0 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh'
 
 if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
-  echo "状态: RUNNING"
-  RUNNING=1
+  STATUS=RUNNING
+elif [ -f "$STATE" ] && grep -q '^STEP_6_DONE$' "$STATE"; then
+  STATUS=FINISHED
 else
-  echo "状态: FINISHED_OR_NOT_RUNNING"
-  RUNNING=0
+  STATUS=EXITED_BUT_INCOMPLETE
 fi
+echo "状态: $STATUS"
+
+if [ -f "$STATE" ]; then
+  LAST_DONE="$(grep -E '^STEP_[0-9]+_DONE$' "$STATE" | tail -n 1 || true)"
+else
+  LAST_DONE=""
+fi
+
+NEXT_STEP=COMPLETE
+for n in 1 2 3 4 5 6; do
+  if ! grep -q "^STEP_${n}_DONE$" "$STATE" 2>/dev/null; then
+    NEXT_STEP="STEP_${n}"
+    break
+  fi
+done
 
 if [ -f "$LOG" ]; then
   LOG_MTIME="$(stat -c %Y "$LOG" 2>/dev/null || date +%s)"
   IDLE="$((NOW - LOG_MTIME))"
-  STEP="$(grep -E 'Step [0-9]+/6|✓ Step [0-9]+/6 done|ERROR|Failed|Traceback|Timing:|All done|Done' "$LOG" 2>/dev/null | tail -n 1 || true)"
+  STEP="$(grep -E 'Step [0-9]+/6|STATE: STEP_[0-9]+_DONE|ERROR|Failed|Traceback|timeout|Timing:|Done' "$LOG" 2>/dev/null | tail -n 1 || true)"
+  ERRORS="$(grep -Ei 'ERROR|Failed|Traceback|timeout|timed out' "$LOG" 2>/dev/null | tail -n 20 || true)"
 else
   IDLE=-1
   STEP=""
+  ERRORS=""
 fi
 
+echo "最后完成步骤: ${LAST_DONE:-none}"
+echo "下一步: $NEXT_STEP"
 echo "当前进度: ${STEP:-尚未找到步骤日志}"
 if [ "$IDLE" -ge 0 ]; then
   echo "日志最后更新: ${IDLE}s 前"
 fi
-
 echo "日志文件: $LOG"
-tail -n 120 "$LOG" 2>/dev/null || echo "暂未找到日志"
+echo "状态文件: $STATE"
 
-if [ "$RUNNING" = 1 ] && [ "$IDLE" -ge 180 ]; then
+if [ "$STATUS" = RUNNING ] && [ "$IDLE" -ge 180 ]; then
   echo "--- 无新日志提醒 ---"
-  echo "安装进程仍在运行，但日志已 ${IDLE}s 没有新增；可能正在下载、解压或解析依赖。下面是进程状态。"
+  echo "安装进程仍在运行，但暂无新日志。可能正在下载、解压、解析依赖或等待 OpenClaw gateway 响应。"
   PID="$(cat "$PIDFILE")"
   ps -p "$PID" -o pid,etime,stat,pcpu,pmem,cmd 2>/dev/null || true
   pgrep -af 'install-miloco|uv|curl|npm|node|openclaw|miloco' 2>/dev/null | head -n 20 || true
 fi
+
+if [ "$STATUS" = EXITED_BUT_INCOMPLETE ]; then
+  echo "--- 未完成状态 ---"
+  echo "安装进程已退出，但状态文件没有 STEP_6_DONE。"
+  echo "是否可以继续: 是"
+  echo "建议继续命令: $CONTINUE_CMD"
+fi
+
+if [ -n "$ERRORS" ]; then
+  echo "--- 最近异常关键词 ---"
+  printf '%s\n' "$ERRORS"
+fi
+
+echo "--- 最近日志 ---"
+tail -n 120 "$LOG" 2>/dev/null || echo "暂未找到日志"
 
 echo "--- Miloco service ---"
 miloco-cli service status 2>/dev/null || true
@@ -52,18 +87,21 @@ openclaw plugins list 2>/dev/null | grep -i -C 2 miloco || true
 
 然后用中文告诉我：
 
-1. 当前是否仍在运行。
-2. 当前大概处于第几步。
-3. 最近日志里有没有 ERROR / Failed / Traceback。
-4. 如果日志 180 秒以上没有更新，请明确说明“仍在运行但暂无新日志”，不要只显示转圈。
-5. 我是否需要继续等待，还是需要处理异常。
-6. 如果已经完成，请按下面格式汇报：
+1. 当前状态是 RUNNING、FINISHED 还是 EXITED_BUT_INCOMPLETE。
+2. 最后完成到哪一步，下一步是哪一步。
+3. 最近日志里有没有 ERROR / Failed / Traceback / timeout。
+4. 如果日志 180 秒以上没有更新，请明确说明“安装进程仍在运行，但暂无新日志”。
+5. 我是否需要继续等待，还是执行继续命令。
+
+成功时使用这个模板：
 
 ```text
 馨光 AI 设计灯光部署结果
 
+状态：成功
 脚本版本：
-OpenClaw 版本：
+OpenClaw CLI 版本：
+OpenClaw Gateway 版本：
 Miloco 状态：
 Miloco 端口：
 OpenClaw gateway 状态：
@@ -72,8 +110,23 @@ Miloco 插件状态：
 日志文件：
 
 下一步需要人工处理：
-1. 配置 MiMo API Key：miloco-cli config set model.omni.api_key sk-你的Key
-2. 绑定米家账号：miloco-cli account bind
-3. 确认馨光淡彩光设备已出现在设备列表：miloco-cli device list
-4. 如需个人微信/企业微信/飞书绑定，重新运行脚本进入平台绑定菜单。
+1. 配置 MiMo API Key
+2. 绑定米家账号
+3. 确认馨光淡彩光设备已出现在设备列表
+4. 后续安装馨光 Skill
+```
+
+未完成时使用这个模板：
+
+```text
+馨光 AI 设计灯光部署结果
+
+状态：未完成 / 可继续
+脚本版本：
+最后完成步骤：
+中断位置：
+疑似原因：
+是否发现 ERROR / Failed / Traceback：
+建议继续命令：
+日志文件：
 ```
