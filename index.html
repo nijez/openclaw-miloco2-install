@@ -1,0 +1,905 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenClaw + Miloco 2.0 云服务器安装教程</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-2: #eef3f8;
+      --ink: #17202a;
+      --muted: #5f6f7f;
+      --line: #d8e1ea;
+      --accent: #127a67;
+      --accent-2: #0b5e96;
+      --danger: #a63d2a;
+      --terminal: #111722;
+      --terminal-bar: #202938;
+      --terminal-text: #dfe8f3;
+      --terminal-muted: #95a2b3;
+      --terminal-green: #59d68b;
+      --terminal-blue: #57b7ff;
+      --terminal-yellow: #ffd166;
+      --terminal-orange: #ff9f66;
+      --shadow: 0 12px 30px rgba(20, 31, 47, 0.08);
+      --radius: 8px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.6;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 56px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .brand p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      max-width: 780px;
+    }
+
+    .version {
+      flex: 0 0 auto;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .setup-panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+
+    .setup-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+      gap: 14px;
+      align-items: end;
+    }
+
+    label {
+      display: block;
+      font-weight: 650;
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 11px 12px;
+      background: #fbfdff;
+      color: var(--ink);
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(18, 122, 103, 0.12);
+    }
+
+    .input-hint {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .ip-reminder {
+      margin-top: 6px;
+      color: var(--danger);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .status-line {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .status-line strong {
+      color: var(--ink);
+    }
+
+    .notice {
+      border-left: 4px solid var(--accent);
+      background: #edf8f5;
+      padding: 12px 14px;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      margin: 16px 0 0;
+    }
+
+    .notice.warn {
+      border-left-color: var(--danger);
+      background: #fff4ef;
+    }
+
+    .download-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 16px 0 0;
+    }
+
+    .download-card {
+      display: block;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      background: #f8fbfd;
+      color: var(--ink);
+      text-decoration: none;
+    }
+
+    .download-card strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .download-card span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .download-card:hover {
+      border-color: var(--accent);
+      background: #effaf6;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    nav {
+      position: sticky;
+      top: 14px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px;
+      box-shadow: var(--shadow);
+    }
+
+    nav a {
+      display: block;
+      color: var(--ink);
+      text-decoration: none;
+      padding: 9px 10px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    nav a:hover {
+      background: var(--surface-2);
+    }
+
+    main {
+      min-width: 0;
+    }
+
+    section {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 21px;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 20px 0 10px;
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 10px 0;
+    }
+
+    ul,
+    ol {
+      padding-left: 22px;
+      margin: 10px 0;
+    }
+
+    .step-row {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .step-num {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 800;
+    }
+
+    .cmd {
+      margin: 12px 0;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #f8fbfd;
+    }
+
+    .cmd-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+      background: #f1f5f9;
+    }
+
+    .copy-btn {
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .copy-btn:hover {
+      background: #0f6858;
+    }
+
+    pre {
+      margin: 0;
+      padding: 13px 14px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .cmd pre {
+      color: #0f2537;
+    }
+
+    .terminal-shot {
+      margin: 14px 0;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--terminal);
+      border: 1px solid #263345;
+      box-shadow: 0 12px 26px rgba(15, 23, 42, 0.22);
+    }
+
+    .terminal-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: var(--terminal-bar);
+      padding: 9px 12px;
+      color: #b7c2d0;
+      font-size: 13px;
+    }
+
+    .dots {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .red { background: #ff5f57; }
+    .yellow { background: #febc2e; }
+    .green { background: #28c840; }
+
+    .terminal-shot pre {
+      color: var(--terminal-text);
+      background: var(--terminal);
+    }
+
+    .term-muted { color: var(--terminal-muted); }
+    .term-green { color: var(--terminal-green); }
+    .term-blue { color: var(--terminal-blue); }
+    .term-yellow { color: var(--terminal-yellow); }
+    .term-orange { color: var(--terminal-orange); }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .metric {
+      background: #f8fbfd;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+    }
+
+    .metric b {
+      display: block;
+      font-size: 22px;
+      color: var(--accent-2);
+      line-height: 1.2;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .warn {
+      border-left-color: var(--danger);
+      background: #fff4ef;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .checklist {
+      display: grid;
+      gap: 8px;
+    }
+
+    .check {
+      display: grid;
+      grid-template-columns: 26px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+    }
+
+    .check span:first-child {
+      color: var(--accent);
+      font-weight: 900;
+    }
+
+    a {
+      color: var(--accent-2);
+    }
+
+    @media (max-width: 880px) {
+      .topbar {
+        display: block;
+      }
+
+      .version {
+        display: inline-block;
+        margin-top: 12px;
+      }
+
+      .setup-grid,
+      .layout,
+      .download-grid,
+      .result-grid {
+        grid-template-columns: 1fr;
+      }
+
+      nav {
+        position: static;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <h1>OpenClaw + Miloco 2.0 云服务器安装教程</h1>
+        <p>适用于新装 Ubuntu 腾讯云或阿里云服务器。先填服务器 IP，下面所有可复制命令会自动替换成你的地址。</p>
+      </div>
+      <div class="version">脚本版本：2026-06-23.9</div>
+    </header>
+
+    <div class="setup-panel" id="command-builder">
+      <div class="setup-grid">
+        <div>
+          <label for="serverIp">服务器 IP</label>
+          <input id="serverIp" autocomplete="off" placeholder="例如：1.2.3.4" value="服务器IP">
+          <div class="ip-reminder">这里填入服务器 IP，下面就可以一键复制命令行。</div>
+        </div>
+        <div>
+          <label for="serverUser">SSH 用户名</label>
+          <input id="serverUser" autocomplete="off" value="ubuntu">
+          <div class="input-hint">Ubuntu 镜像通常是 ubuntu。</div>
+        </div>
+      </div>
+      <div class="status-line">当前命令目标：<strong id="targetText">ubuntu@服务器IP</strong></div>
+    </div>
+
+    <div class="layout">
+      <nav aria-label="教程目录">
+        <a href="#agent">发给龙虾执行</a>
+        <a href="#quick">最短安装流程</a>
+        <a href="#screens">过程截图示意</a>
+        <a href="#sources">国内源和缓存</a>
+        <a href="#first-use">安装后第一次使用</a>
+        <a href="#maintain">维护菜单</a>
+        <a href="#verify">验证和访问</a>
+        <a href="#troubleshooting">常见问题</a>
+        <a href="#references">参考资料</a>
+      </nav>
+
+      <main>
+        <section id="agent">
+          <h2>发给龙虾执行</h2>
+          <p>如果服务器已经有 OpenClaw 应用模板，推荐方式是：先点对话框左下角加号，上传 <code>install-miloco-openclaw-cloud.sh</code>，再复制下面这段指令发给龙虾。</p>
+          <div class="notice warn">如果本页面是 EdgeOne 的预览链接，龙虾直接下载脚本会遇到 401。只有绑定已备案自定义域名后，才建议使用“从网页下载脚本”的方式。</div>
+          <div class="cmd">
+            <div class="cmd-title"><span>给龙虾的附件执行指令</span><button class="copy-btn" data-copy-target="agentPromptCmd">复制指令</button></div>
+            <pre id="agentPromptCmd" data-template="我已经上传了 install-miloco-openclaw-cloud.sh。请把附件原样保存到 /tmp/install-miloco-openclaw-cloud.sh，不要修改脚本内容。不要自行搜索网络，不要改用源码、pip、pipx、Docker 或手工解包。先检查 grep '^SCRIPT_VERSION=' /tmp/install-miloco-openclaw-cloud.sh，版本必须不低于 2026-06-23.9。然后执行：chmod +x /tmp/install-miloco-openclaw-cloud.sh && INSTALL_ACTION=full INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh。失败时只允许重试一次：INSTALL_ACTION=repair RUN_SYSTEM_UPGRADE=0 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh。完成后汇报 OpenClaw 版本、Miloco 服务状态、gateway 状态、插件状态、总耗时和日志文件。"></pre>
+          </div>
+          <div class="cmd">
+            <div class="cmd-title"><span>已绑定公开自定义域名时使用</span><button class="copy-btn" data-copy-target="agentDownloadPromptCmd">复制下载指令</button></div>
+            <pre id="agentDownloadPromptCmd" data-template="请你在这台服务器上部署 OpenClaw + Miloco 2.0。不要自行搜索网络，不要改用源码、pip、pipx、Docker 或手工解包。请只执行下面这一份固定脚本：curl -fsSL {scriptUrl} -o /tmp/install-miloco-openclaw-cloud.sh && chmod +x /tmp/install-miloco-openclaw-cloud.sh。先检查 grep '^SCRIPT_VERSION=' /tmp/install-miloco-openclaw-cloud.sh，版本必须不低于 2026-06-23.9。然后执行：INSTALL_ACTION=full INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh。失败时只允许重试一次：INSTALL_ACTION=repair RUN_SYSTEM_UPGRADE=0 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh。完成后汇报 OpenClaw 版本、Miloco 服务状态、gateway 状态、插件状态、总耗时和日志文件。"></pre>
+          </div>
+          <div class="download-grid">
+            <a class="download-card" href="install-miloco-openclaw-cloud.sh" download>
+              <strong>下载一键脚本</strong>
+              <span>手动上传或本地保存时使用</span>
+            </a>
+            <a class="download-card" href="发给龙虾的部署指令.txt" download>
+              <strong>下载龙虾指令</strong>
+              <span>附件上传模式的完整提示词</span>
+            </a>
+            <a class="download-card" href="云服务器OpenClaw加Miloco2.0的一键部署包.zip" download>
+              <strong>下载离线包</strong>
+              <span>教程、脚本、指令打包版</span>
+            </a>
+          </div>
+        </section>
+
+        <section id="quick">
+          <h2>最短安装流程</h2>
+          <p>第一次安装推荐直接在 OpenClaw 对话框里上传脚本，然后复制执行指令。这样不需要用户会 SSH，也不会遇到预览链接 401。</p>
+          <div class="notice warn">如果使用 EdgeOne 默认预览域名，不要让服务器直接下载脚本；预览访问会校验 Cookie/Token，服务器直接下载会返回 401。此时请下载脚本后上传，或者在 OpenClaw 对话框里上传脚本附件。</div>
+
+          <div class="step-row">
+            <div class="step-num">1</div>
+            <div>
+              <h3>下载一键脚本</h3>
+              <p>先把脚本保存到自己的电脑，再上传到 OpenClaw 对话框。</p>
+              <a class="download-card" href="install-miloco-openclaw-cloud.sh" download>
+                <strong>下载 install-miloco-openclaw-cloud.sh</strong>
+                <span>保存后不要改名、不要改内容</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="step-row">
+            <div class="step-num">2</div>
+            <div>
+              <h3>上传到 OpenClaw</h3>
+              <p>打开 OpenClaw 对话框，点输入框左下角加号，上传刚才下载的 <code>install-miloco-openclaw-cloud.sh</code>。</p>
+            </div>
+          </div>
+
+          <div class="step-row">
+            <div class="step-num">3</div>
+            <div>
+              <h3>复制执行指令</h3>
+              <p>上传完成后，把下面这段话发给 OpenClaw。</p>
+              <div class="cmd">
+                <div class="cmd-title"><span>发给 OpenClaw</span><button class="copy-btn" data-copy-target="agentPromptCmdQuick">复制指令</button></div>
+                <pre id="agentPromptCmdQuick" data-template="我已经上传了 install-miloco-openclaw-cloud.sh。请把附件原样保存到 /tmp/install-miloco-openclaw-cloud.sh，不要修改脚本内容。不要自行搜索网络，不要改用源码、pip、pipx、Docker 或手工解包。先检查 grep '^SCRIPT_VERSION=' /tmp/install-miloco-openclaw-cloud.sh，版本必须不低于 2026-06-23.9。然后执行：chmod +x /tmp/install-miloco-openclaw-cloud.sh && INSTALL_ACTION=full INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh。失败时只允许重试一次：INSTALL_ACTION=repair RUN_SYSTEM_UPGRADE=0 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh。完成后汇报 OpenClaw 版本、Miloco 服务状态、gateway 状态、插件状态、总耗时和日志文件。"></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-row">
+            <div class="step-num">4</div>
+            <div>
+              <h3>等待完成</h3>
+              <p>看到 <code>Done</code> 和 <code>Timing: Total install took ...</code> 就完成。OpenClaw 会汇报版本、服务状态、插件状态和日志文件。</p>
+            </div>
+          </div>
+
+          <h3>已有公开自定义域名时的 SSH 备用方式</h3>
+          <p>只有脚本网页是公开可访问地址时，才使用下面的服务器下载命令。EdgeOne 默认预览域名不适合这条路线。</p>
+
+          <div class="step-row">
+            <div class="step-num">A</div>
+            <div>
+              <h3>登录服务器</h3>
+              <p>连接后进入服务器终端。</p>
+              <div class="cmd">
+                <div class="cmd-title"><span>本机终端执行</span><button class="copy-btn" data-copy-target="sshCmd">复制命令</button></div>
+                <pre id="sshCmd" data-template="ssh {user}@{ip}"></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-row">
+            <div class="step-num">B</div>
+            <div>
+              <h3>下载一键脚本</h3>
+              <p>登录服务器后执行。脚本会下载到服务器自己的 <code>/tmp/</code>，不是下载到本机电脑。</p>
+              <div class="cmd">
+                <div class="cmd-title"><span>服务器终端执行</span><button class="copy-btn" data-copy-target="downloadCmd">复制命令</button></div>
+                <pre id="downloadCmd" data-template="curl -fsSL {scriptUrl} -o /tmp/install-miloco-openclaw-cloud.sh && chmod +x /tmp/install-miloco-openclaw-cloud.sh"></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-row">
+            <div class="step-num">C</div>
+            <div>
+              <h3>打开脚本菜单</h3>
+              <p>菜单里选择 <strong>1) 一键傻瓜式部署</strong>。</p>
+              <div class="cmd">
+                <div class="cmd-title"><span>服务器终端执行</span><button class="copy-btn" data-copy-target="menuCmd">复制命令</button></div>
+                <pre id="menuCmd" data-template="bash /tmp/install-miloco-openclaw-cloud.sh"></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-row">
+            <div class="step-num">D</div>
+            <div>
+              <h3>需要重启时</h3>
+              <p>如果安装输出提示新内核等待重启，等全部完成后再执行。</p>
+              <div class="cmd">
+                <div class="cmd-title"><span>需要重启时执行</span><button class="copy-btn" data-copy-target="rebootCmd">复制命令</button></div>
+                <pre id="rebootCmd" data-template="sudo reboot"></pre>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="screens">
+          <h2>过程截图示意</h2>
+          <p>下面这些可以直接作为教程截图使用。真实安装时文字和耗时会有差异，但关键节点一致。</p>
+
+          <h3>1. 主菜单</h3>
+          <div class="terminal-shot" role="img" aria-label="OpenClaw Miloco installer main menu">
+            <div class="terminal-bar"><span class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></span><span>ubuntu@cloud-vm</span></div>
+            <pre><span class="term-muted">Starting OpenClaw + Miloco install (script 2026-06-23.9)</span>
+
+请选择操作:
+  <span class="term-green">1) 一键傻瓜式部署</span>
+  <span class="term-blue">2) 功能模块维护</span>
+  3) 平台绑定
+  4) 查看服务状态
+  5) 查看安装日志
+  0) 退出
+
+请输入编号: <span class="term-yellow">1</span></pre>
+          </div>
+
+          <h3>2. 一键傻瓜式部署步骤</h3>
+          <div class="terminal-shot" role="img" aria-label="one-click install steps">
+            <div class="terminal-bar"><span class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></span><span>install progress</span></div>
+            <pre><span class="term-blue">Step 1/6:</span> Update Ubuntu system and base packages
+  说明: 更新系统包并安装基础依赖。
+<span class="term-green">✓ Step 1/6 done</span>: Update Ubuntu system and base packages (00:02:21)
+
+<span class="term-blue">Step 2/6:</span> Update OpenClaw and configure gateway
+  说明: 升级 OpenClaw，并配置 127.0.0.1:18789 网关。
+<span class="term-green">✓ Step 2/6 done</span>: Update OpenClaw and configure gateway (00:02:18)
+
+<span class="term-blue">Step 3/6:</span> Install and deploy Miloco 2.0
+  说明: 下载 Miloco 主包，安装服务，并接入 OpenClaw 插件。</pre>
+          </div>
+
+          <h3>3. 自动测速和下载</h3>
+          <div class="terminal-shot" role="img" aria-label="mirror benchmark output">
+            <div class="terminal-bar"><span class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></span><span>mirror benchmark</span></div>
+            <pre>Benchmarking npm registries
+  0.312s  https://mirrors.cloud.tencent.com/npm
+  0.489s  https://registry.npmmirror.com
+
+Benchmarking Miloco installer sources
+  failed  https://github.com/XiaoMi/xiaomi-miloco/releases/download/v2026.6.18/install.sh
+  0.721s  https://gh-proxy.org/https://github.com/XiaoMi/xiaomi-miloco/releases/download/v2026.6.18/install.sh
+
+Preloading Miloco bundle miloco-linux-x86_64-2026.6.18.tar.gz
+<span class="term-green">Cached Miloco bundle archive</span>: ~/.cache/miloco-cloud-installer/2026.6.18/...</pre>
+          </div>
+
+          <h3>4. 平台绑定提示</h3>
+          <div class="terminal-shot" role="img" aria-label="binding prompts">
+            <div class="terminal-bar"><span class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></span><span>binding prompts</span></div>
+            <pre><span class="term-blue">Step 4/6:</span> Ask OpenClaw platform binding
+是否现在进行 OpenClaw 平台绑定？ [y/N] <span class="term-yellow">N</span>
+已跳过 OpenClaw 平台绑定。
+后续可从主菜单选择 3) 平台绑定。
+
+<span class="term-blue">Step 5/6:</span> Prompt Miloco Mi Home account binding
+是否现在绑定米家账号？ [y/N] <span class="term-yellow">N</span>
+已跳过米家绑定。后续可运行 miloco-cli account bind。</pre>
+          </div>
+
+          <h3>5. 安装完成</h3>
+          <div class="terminal-shot" role="img" aria-label="install completed output">
+            <div class="terminal-bar"><span class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></span><span>done</span></div>
+            <pre><span class="term-green">✓ miloco server</span>
+<span class="term-green">✓ miloco-cli</span>
+<span class="term-green">✓ supervisor</span>
+<span class="term-green">✓ Engine warm-up complete</span>
+<span class="term-green">✓ Plugin installed</span>
+<span class="term-green">✓ Builtin tools added to tools.alsoAllow</span>
+<span class="term-green">✓ All done</span>
+
+Miloco service is running: 127.0.0.1:1810
+OpenClaw gateway: 127.0.0.1:18789
+Timing: Total install took <span class="term-yellow">00:09:52</span> (592s)
+<span class="term-green">Done</span></pre>
+          </div>
+        </section>
+
+        <section id="sources">
+          <h2>国内源和缓存</h2>
+          <p>脚本不需要你准备自己的服务器、COS 或 OSS。它会直接从官方仓库或公开代理源下载，并自动测速优选。</p>
+          <div class="result-grid">
+            <div class="metric"><b>3/3</b><span>干净快照验证通过</span></div>
+            <div class="metric"><b>9-11 分钟</b><span>完整部署常见耗时</span></div>
+            <div class="metric"><b>64.9MB</b><span>Miloco 主包大小约值</span></div>
+          </div>
+          <ul>
+            <li>npm：npmmirror、官方 npm、腾讯云、华为云之间测速。</li>
+            <li>Miloco：优先官方 GitHub release，失败或较慢时切换公开 GitHub 代理源。</li>
+            <li>PyPI：清华 TUNA、中科大、官方 PyPI 之间测速，避免不兼容的镜像。</li>
+            <li>缓存：Miloco 主包缓存到云服务器自己的 <code>~/.cache/miloco-cloud-installer/</code>，不是下载到本机电脑。</li>
+          </ul>
+        </section>
+
+        <section id="first-use">
+          <h2>安装后第一次使用</h2>
+          <p>脚本完成后，OpenClaw 和 Miloco 服务已经部署好。Miloco 真正开始工作前，还需要完成下面几件事。</p>
+          <div class="step-row">
+            <div class="step-num">1</div>
+            <div>
+              <h3>打开 Miloco 面板</h3>
+              <p>在本机建立端口转发，然后浏览器打开 <code>http://127.0.0.1:1810/</code>。</p>
+              <div class="cmd">
+                <div class="cmd-title"><span>本机终端执行</span><button class="copy-btn" data-copy-target="tunnelCmd">复制命令</button></div>
+                <pre id="tunnelCmd" data-template="ssh -L 1810:127.0.0.1:1810 {user}@{ip}"></pre>
+              </div>
+            </div>
+          </div>
+          <div class="step-row">
+            <div class="step-num">2</div>
+            <div>
+              <h3>绑定米家账号</h3>
+              <p>可以在 Miloco 面板里按提示绑定，也可以在服务器终端执行命令发起绑定。</p>
+              <div class="cmd">
+                <div class="cmd-title"><span>服务器终端执行</span><button class="copy-btn" data-copy-target="bindMiCmd">复制命令</button></div>
+                <pre id="bindMiCmd" data-template="miloco-cli account bind"></pre>
+              </div>
+            </div>
+          </div>
+          <div class="step-row">
+            <div class="step-num">3</div>
+            <div>
+              <h3>配置 MiMo API Key</h3>
+              <p>如果安装时没有配置 Key，后续可以在服务器终端补充。把 <code>sk-xxxx</code> 换成自己的 Key。</p>
+              <div class="cmd">
+                <div class="cmd-title"><span>服务器终端执行</span><button class="copy-btn" data-copy-target="mimoCmd">复制命令</button></div>
+                <pre id="mimoCmd" data-template="miloco-cli config set model.omni.api_key sk-xxxx"></pre>
+              </div>
+            </div>
+          </div>
+          <div class="step-row">
+            <div class="step-num">4</div>
+            <div>
+              <h3>开启摄像头感知</h3>
+              <p>进入 Miloco 面板后，在设备或感知相关页面选择需要开启的米家摄像头。没有摄像头感知输入时，Miloco 只能完成部分文字和设备控制能力。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="maintain">
+          <h2>后续维护菜单</h2>
+          <p>安装完成后，可以反复运行脚本做单项维护，不必每次从头部署。</p>
+          <div class="cmd">
+            <div class="cmd-title"><span>服务器终端执行</span><button class="copy-btn" data-copy-target="statusCmd">复制状态命令</button></div>
+            <pre id="statusCmd" data-template="INSTALL_ACTION=status bash /tmp/install-miloco-openclaw-cloud.sh"></pre>
+          </div>
+          <div class="terminal-shot" role="img" aria-label="maintenance menu">
+            <div class="terminal-bar"><span class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></span><span>maintenance menu</span></div>
+            <pre>功能模块维护:
+  1) OpenClaw 升级 / 网关配置
+  2) Miloco 2.0 安装 / 更新
+  3) 核心模块更新 / 修复
+  4) 重启 OpenClaw gateway
+  5) 重启 Miloco service
+  6) 查看模块状态
+  0) 返回上级菜单</pre>
+          </div>
+          <h3>常用维护命令</h3>
+          <div class="cmd">
+            <div class="cmd-title"><span>跳过系统升级，只修复核心模块</span><button class="copy-btn" data-copy-target="repairCmd">复制命令</button></div>
+            <pre id="repairCmd" data-template="INSTALL_ACTION=repair RUN_SYSTEM_UPGRADE=0 bash /tmp/install-miloco-openclaw-cloud.sh"></pre>
+          </div>
+          <div class="cmd">
+            <div class="cmd-title"><span>后续补做个人微信绑定</span><button class="copy-btn" data-copy-target="wechatCmd">复制命令</button></div>
+            <pre id="wechatCmd" data-template="INSTALL_ACTION=weixin RUN_SYSTEM_UPGRADE=0 bash /tmp/install-miloco-openclaw-cloud.sh"></pre>
+          </div>
+        </section>
+
+        <section id="verify">
+          <h2>验证和访问</h2>
+          <div class="checklist">
+            <div class="check"><span>✓</span><div>Miloco 服务显示 <code>"running": true</code>。</div></div>
+            <div class="check"><span>✓</span><div>Miloco 监听 <code>127.0.0.1:1810</code>。</div></div>
+            <div class="check"><span>✓</span><div>OpenClaw gateway 监听 <code>127.0.0.1:18789</code>。</div></div>
+            <div class="check"><span>✓</span><div>OpenClaw 插件列表显示 <code>miloco-openclaw-plugin</code> enabled。</div></div>
+          </div>
+          <div class="cmd">
+            <div class="cmd-title"><span>服务器终端验证</span><button class="copy-btn" data-copy-target="verifyCmd">复制命令</button></div>
+            <pre id="verifyCmd" data-template="miloco-cli service status&#10;openclaw gateway status&#10;openclaw plugins list | grep -i -C 2 miloco&#10;ss -ltnp | grep -E ':(1810|18789)\\b'"></pre>
+          </div>
+        </section>
+
+        <section id="troubleshooting">
+          <h2>常见问题</h2>
+          <h3>如果提示 Failed to download Miloco installer</h3>
+          <p>通常是服务器上的脚本不是最新版，或者当时代理源不可用。重新上传最新脚本，然后跳过系统升级重跑修复。</p>
+          <div class="cmd">
+            <div class="cmd-title"><span>先确认脚本版本</span><button class="copy-btn" data-copy-target="versionCmd">复制命令</button></div>
+            <pre id="versionCmd" data-template="grep '^SCRIPT_VERSION=' /tmp/install-miloco-openclaw-cloud.sh"></pre>
+          </div>
+          <div class="cmd">
+            <div class="cmd-title"><span>修复安装</span><button class="copy-btn" data-copy-target="fixCmd">复制命令</button></div>
+            <pre id="fixCmd" data-template="INSTALL_ACTION=repair RUN_SYSTEM_UPGRADE=0 bash /tmp/install-miloco-openclaw-cloud.sh"></pre>
+          </div>
+          <div class="notice warn">如果系统升级提示新内核，不需要立刻断开重连。等脚本完全结束后再执行 <code>sudo reboot</code>。</div>
+        </section>
+
+        <section id="references">
+          <h2>参考资料</h2>
+          <p>本教程的结构参考了官方安装文档和常见一键脚本教程：先给推荐安装流程，再给维护菜单、验证命令和排错入口。</p>
+          <ul>
+            <li><a href="https://docs.openclaw.ai/install" target="_blank" rel="noreferrer">OpenClaw 官方安装文档</a></li>
+            <li><a href="https://github.com/XiaoMi/xiaomi-miloco" target="_blank" rel="noreferrer">Xiaomi Miloco GitHub 仓库</a></li>
+            <li><a href="https://github.com/XiaoMi/xiaomi-miloco/blob/main/user_guide_zh.md" target="_blank" rel="noreferrer">Miloco 中文使用手册</a></li>
+            <li><a href="https://github.com/MHSanaei/3x-ui/wiki/Installation" target="_blank" rel="noreferrer">3X-UI 一键安装教程示例</a></li>
+          </ul>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const fields = {
+      ip: document.getElementById('serverIp'),
+      user: document.getElementById('serverUser')
+    };
+    const targetText = document.getElementById('targetText');
+    const commandBlocks = Array.from(document.querySelectorAll('[data-template]'));
+
+    function values() {
+      const scriptUrl = new URL('install-miloco-openclaw-cloud.sh', window.location.href).href;
+      const promptUrl = new URL('发给龙虾的部署指令.txt', window.location.href).href;
+      const zipUrl = new URL('云服务器OpenClaw加Miloco2.0的一键部署包.zip', window.location.href).href;
+      return {
+        ip: fields.ip.value.trim() || '服务器IP',
+        user: fields.user.value.trim() || 'ubuntu',
+        scriptUrl,
+        promptUrl,
+        zipUrl
+      };
+    }
+
+    function renderTemplate(template, data) {
+      return template
+        .replaceAll('{ip}', data.ip)
+        .replaceAll('{user}', data.user)
+        .replaceAll('{scriptUrl}', data.scriptUrl)
+        .replaceAll('{promptUrl}', data.promptUrl)
+        .replaceAll('{zipUrl}', data.zipUrl);
+    }
+
+    function refreshCommands() {
+      const data = values();
+      targetText.textContent = `${data.user}@${data.ip}`;
+      commandBlocks.forEach((block) => {
+        block.textContent = renderTemplate(block.dataset.template, data);
+      });
+    }
+
+    async function copyText(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      document.execCommand('copy');
+      textarea.remove();
+    }
+
+    document.querySelectorAll('[data-copy-target]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const target = document.getElementById(button.dataset.copyTarget);
+        const original = button.textContent;
+        try {
+          await copyText(target.textContent.trimEnd());
+          button.textContent = '已复制';
+          window.setTimeout(() => { button.textContent = original; }, 1200);
+        } catch (error) {
+          button.textContent = '复制失败';
+          window.setTimeout(() => { button.textContent = original; }, 1600);
+        }
+      });
+    });
+
+    Object.values(fields).forEach((input) => {
+      input.addEventListener('input', refreshCommands);
+    });
+
+    refreshCommands();
+  </script>
+</body>
+</html>
