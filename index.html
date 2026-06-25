@@ -3,438 +3,225 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>馨光 AI 设计灯光安装指导：第一阶段 OpenClaw + Miloco 2.0 底座部署</title>
+  <title>馨光 AI 设计灯光安装指导</title>
   <style>
     :root {
       color-scheme: light;
       --bg: #f5f7fb;
-      --surface: #ffffff;
-      --surface-soft: #f0f6f4;
-      --ink: #17202a;
-      --muted: #5f6f7f;
-      --line: #d8e1ea;
-      --accent: #127a67;
-      --accent-2: #0b5e96;
-      --danger: #a63d2a;
-      --terminal: #111722;
-      --terminal-text: #dfe8f3;
-      --terminal-muted: #95a2b3;
-      --terminal-green: #59d68b;
-      --terminal-blue: #57b7ff;
-      --terminal-yellow: #ffd166;
-      --shadow: 0 12px 30px rgba(20, 31, 47, 0.08);
-      --radius: 8px;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      --text: #172033;
+      --muted: #5d6b82;
+      --line: #dbe3ef;
+      --blue: #1558d6;
+      --blue-soft: #eaf1ff;
+      --green: #11835b;
+      --red: #b42318;
+      --card: #ffffff;
+      --code: #f0f4f9;
     }
-
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
       background: var(--bg);
-      color: var(--ink);
       line-height: 1.65;
     }
-
-    button, input, textarea { font: inherit; }
-
-    a { color: var(--accent-2); }
-
-    .shell {
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 28px 20px 56px;
-    }
-
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 18px;
-      margin-bottom: 18px;
-    }
-
-    h1, h2, h3 { line-height: 1.28; }
-
-    h1 {
-      margin: 0;
-      font-size: 30px;
-      letter-spacing: 0;
-    }
-
-    .lead {
-      max-width: 860px;
-      margin: 10px 0 0;
-      color: var(--muted);
-      font-size: 17px;
-    }
-
-    .version {
-      flex: 0 0 auto;
-      border: 1px solid var(--line);
-      background: var(--surface);
-      padding: 8px 12px;
-      border-radius: var(--radius);
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: 230px minmax(0, 1fr);
-      gap: 20px;
-      align-items: start;
-    }
-
-    nav {
+    a { color: var(--blue); text-decoration: none; }
+    .layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 100vh; }
+    aside {
       position: sticky;
-      top: 16px;
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 10px;
-      box-shadow: var(--shadow);
+      top: 0;
+      height: 100vh;
+      padding: 32px 22px;
+      background: #fff;
+      border-right: 1px solid var(--line);
     }
-
+    aside h2 { margin: 0 0 22px; font-size: 20px; }
+    nav { display: grid; gap: 8px; }
     nav a {
       display: block;
+      padding: 9px 10px;
+      border-radius: 8px;
       color: var(--muted);
-      text-decoration: none;
-      padding: 8px 10px;
-      border-radius: 6px;
-      font-size: 14px;
+      font-weight: 600;
     }
-
-    nav a:hover { background: #f0f4f8; color: var(--ink); }
-
-    section {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 20px;
-      margin-bottom: 18px;
-    }
-
-    section h2 { margin: 0 0 10px; font-size: 23px; }
-    section h3 { margin: 18px 0 8px; font-size: 17px; }
-    section p { margin: 8px 0; color: var(--muted); }
-
+    nav a:hover { background: var(--blue-soft); color: var(--blue); }
+    main { padding: 42px 52px 72px; }
     .hero {
-      background: linear-gradient(180deg, #ffffff 0%, #eef7f4 100%);
-    }
-
-    .pill-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 14px;
-    }
-
-    .pill {
+      padding: 34px;
+      background: linear-gradient(180deg, #fff, #edf4ff);
       border: 1px solid var(--line);
-      background: #f8fbfd;
-      border-radius: 999px;
+      border-radius: 14px;
+    }
+    h1 { margin: 0 0 12px; font-size: 34px; letter-spacing: 0; }
+    h2 { margin: 48px 0 16px; font-size: 24px; }
+    h3 { margin: 0 0 8px; font-size: 18px; }
+    p { margin: 0 0 14px; }
+    .lead { max-width: 820px; color: var(--muted); font-size: 18px; }
+    .version {
+      display: inline-block;
+      margin-top: 16px;
       padding: 6px 10px;
-      color: var(--muted);
-      font-size: 14px;
+      border-radius: 8px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-weight: 700;
     }
-
     .notice {
-      border-left: 4px solid var(--accent);
-      background: #edf8f5;
-      padding: 12px 14px;
-      border-radius: 0 var(--radius) var(--radius) 0;
-      margin: 14px 0;
-    }
-
-    .notice.warn {
-      border-left-color: var(--danger);
-      background: #fff4ef;
-    }
-
-    .grid-2 {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .grid-3 {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .card {
+      margin: 16px 0;
+      padding: 14px 16px;
+      border-radius: 10px;
       border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: #f8fbfd;
-      padding: 14px;
+      background: #fff;
     }
-
-    .card strong { display: block; margin-bottom: 4px; }
-    .card span, .card p { color: var(--muted); font-size: 14px; }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-      overflow: hidden;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-    }
-
-    th, td {
-      padding: 11px 12px;
-      border-bottom: 1px solid var(--line);
-      text-align: left;
-      vertical-align: top;
-    }
-
-    th { background: #eef3f8; }
-    tr:last-child td { border-bottom: 0; }
-
+    .notice.success { border-color: #b8e4d5; background: #edfdf7; color: var(--green); }
+    .notice.warn { border-color: #ffd7c2; background: #fff7ed; color: var(--red); }
+    .steps { display: grid; gap: 14px; }
     .step {
       display: grid;
-      grid-template-columns: 34px minmax(0, 1fr);
-      gap: 12px;
-      margin-top: 14px;
-      padding-top: 14px;
-      border-top: 1px solid var(--line);
+      grid-template-columns: 46px 1fr;
+      gap: 14px;
+      padding: 18px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
     }
-
-    .step:first-of-type { border-top: 0; padding-top: 4px; }
-
-    .step-num {
-      width: 34px;
-      height: 34px;
+    .num {
       display: grid;
       place-items: center;
-      border-radius: 999px;
-      background: var(--accent);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--blue);
       color: #fff;
-      font-weight: 700;
+      font-weight: 800;
     }
-
-    .cmd {
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .card {
+      padding: 18px;
+      background: var(--card);
       border: 1px solid var(--line);
-      border-radius: var(--radius);
-      overflow: hidden;
-      margin-top: 12px;
-      background: #f8fbfd;
+      border-radius: 12px;
     }
-
+    .cmd {
+      margin: 18px 0;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--card);
+    }
     .cmd-title {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--line);
-      background: #eef3f8;
-      font-weight: 650;
-    }
-
-    .copy-btn {
-      border: 1px solid var(--accent);
-      background: var(--accent);
-      color: #fff;
-      border-radius: 6px;
-      padding: 6px 10px;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-
-    pre, textarea.prompt-box {
-      margin: 0;
-      padding: 14px;
-      width: 100%;
-      border: 0;
-      background: #f8fbfd;
-      color: var(--ink);
-      white-space: pre-wrap;
-      overflow-x: auto;
-      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-      font-size: 13px;
-      line-height: 1.55;
-    }
-
-    textarea.prompt-box {
-      min-height: 280px;
-      resize: vertical;
-    }
-
-    .terminal {
-      background: var(--terminal);
-      color: var(--terminal-text);
-      border-radius: var(--radius);
-      overflow: hidden;
-      margin-top: 12px;
-    }
-
-    .terminal-bar {
-      background: #202938;
-      color: var(--terminal-muted);
-      padding: 8px 12px;
-      font-size: 13px;
-    }
-
-    .terminal pre { background: transparent; color: inherit; }
-    .term-green { color: var(--terminal-green); }
-    .term-blue { color: var(--terminal-blue); }
-    .term-yellow { color: var(--terminal-yellow); }
-    .term-muted { color: var(--terminal-muted); }
-
-    .download-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      align-items: center;
       gap: 12px;
-      margin-top: 14px;
-    }
-
-    .download-card {
-      display: block;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 12px;
-      background: #f8fbfd;
-      color: var(--ink);
-      text-decoration: none;
-    }
-
-    label { display: block; font-weight: 650; margin-bottom: 6px; }
-
-    input {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 11px 12px;
-      background: #fbfdff;
-      color: var(--ink);
-      outline: none;
-    }
-
-    .ip-reminder {
-      margin-top: 6px;
-      color: var(--danger);
-      font-size: 14px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
       font-weight: 700;
     }
-
-    .status-line { margin-top: 12px; color: var(--muted); }
-    code { background: #edf1f5; padding: 1px 4px; border-radius: 4px; }
-
-    @media (max-width: 900px) {
-      .topbar, .layout { display: block; }
-      nav { position: static; margin-bottom: 18px; }
-      .grid-2, .grid-3, .download-grid { grid-template-columns: 1fr; }
-      .version { display: inline-block; margin-top: 12px; }
+    .copy-btn {
+      border: 0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #fff;
+      background: var(--blue);
+      cursor: pointer;
+      font-weight: 700;
+    }
+    textarea {
+      display: block;
+      width: 100%;
+      min-height: 360px;
+      padding: 16px;
+      border: 0;
+      resize: vertical;
+      background: var(--code);
+      color: #101828;
+      font: 14px/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    ul { margin: 0 0 14px 22px; padding: 0; }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: var(--code);
+      border-radius: 6px;
+    }
+    code { padding: 2px 5px; }
+    pre { padding: 14px; white-space: pre-wrap; }
+    footer { margin-top: 56px; color: var(--muted); font-size: 14px; }
+    @media (max-width: 840px) {
+      .layout { grid-template-columns: 1fr; }
+      aside { position: static; height: auto; }
+      main { padding: 28px 18px 56px; }
+      .grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <div class="shell">
-    <header class="topbar">
-      <div>
-        <h1>馨光 AI 设计灯光安装指导：第一阶段 OpenClaw + Miloco 2.0 底座部署</h1>
-        <p class="lead">本教程默认使用腾讯云轻量应用服务器的 OpenClaw 应用模板。普通用户优先走龙虾对话里的傻瓜式部署流程，不需要手动 SSH，也不需要理解 Linux 命令。</p>
-      </div>
-      <div class="version">脚本版本：2026-06-25.3</div>
-    </header>
-
-    <div class="layout">
-      <nav aria-label="教程目录">
+  <div class="layout">
+    <aside>
+      <h2>安装目录</h2>
+      <nav>
         <a href="#goal">项目目标</a>
-        <a href="#stage">当前阶段</a>
-        <a href="#scenario">适用场景</a>
-        <a href="#server">服务器配置</a>
-        <a href="#create">创建服务器</a>
-        <a href="#agent">发给龙虾</a>
-        <a href="#progress">查看进度</a>
-        <a href="#first-use">首次配置</a>
-        <a href="#acceptance">第一阶段验收</a>
-        <a href="#phase2">第二阶段</a>
-        <a href="#advanced">高级维护附录</a>
+        <a href="#flow">安装流程</a>
+        <a href="#server">购买服务器</a>
+        <a href="#mimo">配置 MiMo</a>
+        <a href="#agent">发给小龙虾</a>
+        <a href="#test">测试灯光</a>
+        <a href="#progress">查看安装进度</a>
+        <a href="#faq">常见问题</a>
       </nav>
+    </aside>
 
-      <main>
-        <section id="goal" class="hero">
-          <h2>项目目标</h2>
-          <p>最终目标是让用户通过龙虾 / OpenClaw 对话，用自然语言描述灯光场景，例如“马尔代夫凌晨”“森林清晨”“海边日落”。后续馨光 Skill 会提取适合淡彩光的两个颜色值，再通过 Miloco 2.0 控制馨光设备。</p>
-          <div class="pill-row">
-            <span class="pill">自然语言灯光场景</span>
-            <span class="pill">淡彩光双颜色输出</span>
-            <span class="pill">Miloco 2.0 控制米家设备</span>
-            <span class="pill">馨光 Skill 第二阶段补充</span>
-          </div>
-        </section>
+    <main>
+      <section class="hero" id="goal">
+        <h1>馨光 AI 设计灯光安装指导</h1>
+        <p class="lead">普通用户只需要准备腾讯云轻量服务器的小龙虾（OpenClaw）应用模板、MiMo API Key，然后把固定安装指令发给小龙虾对话页。</p>
+        <div class="version">脚本版本：2026-06-25.3</div>
+        <div class="notice success">2026-06-25.3 已完成真实腾讯云 OpenClaw 应用模板服务器验证，第一阶段底座部署版本已冻结。</div>
+      </section>
 
-        <section id="stage">
-          <h2>当前阶段说明</h2>
-          <div class="notice">当前页面只完成第一阶段：OpenClaw + Miloco 2.0 底座部署。馨光智能 Skill、设备白名单、淡彩光颜色规则、dry-run 测试和真机控制验收还没有安装完成，会在第二阶段补充。</div>
-          <table>
-            <thead><tr><th>路径</th><th>适合谁</th><th>是否推荐</th></tr></thead>
-            <tbody>
-              <tr><td>OpenClaw 傻瓜式部署</td><td>普通用户、客户、演示部署</td><td>默认推荐</td></tr>
-              <tr><td>SSH 运维方式</td><td>开发者、技术人员、故障排查</td><td>高级备用</td></tr>
-            </tbody>
-          </table>
-        </section>
+      <section id="flow">
+        <h2>安装流程</h2>
+        <div class="steps">
+          <div class="step"><div class="num">1</div><div><h3>购买腾讯云轻量服务器</h3><p>创建服务器时选择小龙虾（OpenClaw）应用模板。</p></div></div>
+          <div class="step"><div class="num">2</div><div><h3>开通小米 MiMo 大模型账号</h3><p>获取 API Key，并妥善保存。不要截图公开，不要发给无关人员。</p></div></div>
+          <div class="step"><div class="num">3</div><div><h3>把固定安装指令发给小龙虾</h3><p>复制本页的一键安装指令，粘贴到小龙虾对话页。</p></div></div>
+          <div class="step"><div class="num">4</div><div><h3>输入灯光需求测试效果</h3><p>完成馨光技能配置后，用自然语言描述想要的灯光氛围。</p></div></div>
+        </div>
+      </section>
 
-        <section id="scenario">
-          <h2>适用场景</h2>
-          <div class="grid-3">
-            <div class="card"><strong>腾讯云轻量应用服务器</strong><span>创建服务器时选择 OpenClaw 应用模板。</span></div>
-            <div class="card"><strong>龙虾 / AgentChat 可打开</strong><span>能进入 OpenClaw 对话页，并能把指令发给龙虾执行。</span></div>
-            <div class="card"><strong>馨光淡彩光控制</strong><span>当前不启用摄像头视觉感知，重点是自然语言灯光控制底座。</span></div>
-          </div>
-        </section>
+      <section id="server">
+        <h2>购买服务器</h2>
+        <div class="notice">在腾讯云轻量应用服务器创建实例时，选择小龙虾（OpenClaw）应用模板。页面能打开小龙虾对话页后，再继续下一步。</div>
+      </section>
 
-        <section id="server">
-          <h2>服务器配置建议</h2>
-          <p>本项目主要用于馨光 AI 淡彩光控制，不启用摄像头视觉感知能力，因此服务器配置要求低于 Miloco 完整全屋 AI 方案。</p>
-          <table>
-            <thead><tr><th>用途</th><th>建议配置</th><th>说明</th></tr></thead>
-            <tbody>
-              <tr><td>测试 / 内测</td><td>2 核 2G 内存，40G 磁盘</td><td>可尝试部署。</td></tr>
-              <tr><td>稳定演示 / 客户试用</td><td>2 核 4G 内存，60G-80G 磁盘</td><td>推荐。</td></tr>
-              <tr><td>长期运行 / 多插件 / 多用户</td><td>4G 以上内存，80G 以上磁盘</td><td>根据实际运行反馈升级。</td></tr>
-            </tbody>
-          </table>
-          <p>如果只是馨光淡彩光控制，通常不需要高配服务器。如果后续启用摄像头识别、多模态感知、更多 OpenClaw 插件或多人同时使用，再提高配置。</p>
-        </section>
+      <section id="mimo">
+        <h2>配置 MiMo</h2>
+        <p>请先开通小米 MiMo 大模型账号并获取 API Key。安装底座时默认不会保存或展示你的 Key，后续按小龙虾提示或技术人员指导完成配置。</p>
+      </section>
 
-        <section id="create">
-          <h2>创建腾讯云轻量应用服务器</h2>
-          <div class="step"><div class="step-num">1</div><div><h3>选择应用模板</h3><p>服务器重装系统或新建实例时选择 <strong>OpenClaw 应用模板</strong>。本教程默认 OpenClaw 已经预装。</p></div></div>
-          <div class="step"><div class="step-num">2</div><div><h3>打开 OpenClaw / AgentChat / 龙虾</h3><p>进入腾讯云提供的 OpenClaw 页面，确认能看到 AgentChat 对话框。</p></div></div>
-          <div class="step"><div class="step-num">3</div><div><h3>发出一键部署指令</h3><p>复制下一节的完整指令发给龙虾。它会下载固定脚本，启动服务器后台部署任务，然后尽快结束当前回复。</p></div></div>
-        </section>
-
-        <section id="agent">
-          <h2>把一键部署指令发给龙虾</h2>
-          <p>下面这份指令只负责下载脚本、检查版本、启动独立后台部署任务。后台任务会继续完成 OpenClaw 最低版本检查、必要升级、Miloco 部署和 Gateway 重启。</p>
-          <div class="notice">默认参数：<code>RUN_SYSTEM_UPGRADE=0</code>、<code>OPENCLAW_UPDATE=auto</code>、<code>INSTALL_EXTRA_PLUGINS=0</code>、<code>INSTALL_NONINTERACTIVE=1</code>。OpenClaw 已安装且满足最低兼容版本时跳过升级；低于最低兼容版本时会由后台任务自动升级。Gateway 重启期间 AgentChat 可能短暂断线，等待 1-3 分钟后刷新页面即可。</div>
-          <div class="cmd">
-            <div class="cmd-title"><span>发给龙虾的一键部署指令</span><button class="copy-btn" data-copy-textarea="agentPrompt">复制指令</button></div>
-            <textarea id="agentPrompt" class="prompt-box" readonly>请你在这台服务器上执行「馨光 AI 设计灯光安装指导：第一阶段 OpenClaw + Miloco 2.0 底座部署」。默认环境是腾讯云轻量应用服务器的 OpenClaw 应用模板，OpenClaw 已预装。请不要自行搜索网络，不要改用源码安装、pip/pipx 安装、Docker 安装或手工解包安装。
+      <section id="agent">
+        <h2>发给小龙虾</h2>
+        <p>复制下面完整内容，发送到小龙虾对话页。发送一次即可，不要重复发送。</p>
+        <div class="notice warn">如果安装过程中页面短暂异常，通常是小龙虾后台服务正在重启。请等待 1-3 分钟后刷新页面。刷新后如果是空白对话框，直接发送「查看安装进度」。</div>
+        <div class="cmd">
+          <div class="cmd-title"><span>发给小龙虾的一键安装指令</span><button class="copy-btn" data-copy-textarea="agentPrompt">复制指令</button></div>
+          <textarea id="agentPrompt" readonly>请你在这台服务器上执行「馨光 AI 设计灯光安装指导」普通用户版安装流程。默认环境是腾讯云轻量应用服务器的小龙虾（OpenClaw）应用模板，小龙虾已经预装。
 
 重要回复语言要求：
 - 全程必须使用中文回复，包括中间进度、等待说明、异常解释和最终结果。
-- 不要用英文写 “I'll / Let me / Good / It's progressing” 这类过程说明。
-- 命令输出或日志里的英文可以作为必要关键词保留，但你的解释必须翻译成中文。
-- 当前前台回复只负责启动后台部署任务，不要长时间轮询，不要输出英文思考过程。
+- 不要用英文写过程说明。
+- 当前回复只负责启动后台安装任务，不要长时间轮询。
 
 目标：
 1. 下载固定脚本并校验版本。
-2. 启动独立后台部署任务。
-3. 后台任务负责 OpenClaw 最低版本检查、必要时升级、Miloco 2.0 部署和 Gateway 重启。
-4. 默认跳过微信绑定、米家账号绑定、MiMo API Key 配置。
-5. 如果 Gateway 重启导致 AgentChat 页面短暂断线，提示用户等待 1～3 分钟后刷新页面；如果刷新后是空白对话框，直接发送查看安装进度。
+2. 启动后台安装任务。
+3. 默认跳过米家账号绑定和 MiMo API Key 配置。
+4. 如果安装过程中页面短暂异常，提示用户等待 1～3 分钟后刷新页面；如果刷新后是空白对话框，直接发送「查看安装进度」。
 
-当前阶段只部署底座，不安装馨光智能 Skill。馨光 Skill、设备白名单、淡彩光颜色规则和真机验收属于第二阶段。
+当前阶段只安装馨光 AI 设计灯光能力所需底座。馨光技能、设备白名单、淡彩光颜色规则和真机验收属于后续阶段。
 
-请只执行下面这一份固定流程。不要在当前 AgentChat 前台会话里直接执行 systemctl restart、openclaw gateway restart、kill 或 pkill：
+请只执行下面这一份固定流程。不要自行搜索网络，不要切换其他安装方式，不要重复启动安装：
 
 ```bash
 TARGET=/tmp/install-miloco-openclaw-cloud.sh
@@ -476,198 +263,97 @@ bash "$TARGET"
 执行后请只用中文输出下面这个模板，不要继续轮询：
 
 ```text
-馨光 AI 设计灯光后台部署已启动
+馨光 AI 设计灯光后台安装已启动
 脚本版本：
-后台任务：
-进程 PID：
+任务状态：
 日志文件：
 状态文件：
 
 说明：
-部署任务已在服务器后台运行。
-如果页面稍后出现 OpenClaw 网关异常，通常是 Gateway 正在重启。
+安装任务已在服务器后台运行。
+如果页面稍后短暂异常，通常是小龙虾后台服务正在重启。
 请等待 1～3 分钟后刷新页面。
 如果刷新后出现空白对话框，直接发送「查看安装进度」。
 不要重复发送一键部署指令。
 ```
 
 重要限制：
-- 普通用户不需要 SSH。
-- 不要把 Miloco 面板直接暴露到公网。
-- `127.0.0.1:1810` 是云服务器内部地址，不能在用户自己的电脑上直接打开。
-- 不要输出或保存 SSH 密码、token、MiMo API Key。
-- 默认跳过微信绑定、米家账号绑定、MiMo API Key 配置。
-</textarea>
-          </div>
-          <div class="download-grid">
-            <a class="download-card" href="install-miloco-openclaw-cloud.sh" download><strong>下载脚本</strong><span>手动上传或高级排查时使用</span></a>
-            <a class="download-card" href="发给龙虾的部署指令.txt" download><strong>下载龙虾指令</strong><span>完整提示词文本</span></a>
-            <a class="download-card" href="查看安装进度的指令.txt" download><strong>下载进度指令</strong><span>中断后继续查看</span></a>
-            <a class="download-card" href="馨光 AI 设计灯光安装指导.zip" download><strong>下载离线包</strong><span>教程、脚本、指令打包版</span></a>
-          </div>
-        </section>
+- 不要输出或保存用户密码、授权信息、MiMo API Key。
+- 默认跳过米家账号绑定和 MiMo API Key 配置。</textarea>
+        </div>
+      </section>
 
-        <section id="progress">
-          <h2>查看安装进度</h2>
-          <p>如果页面短暂断线或没有实时刷新，安装仍可能在后台运行。发送下面这份指令只读取状态，不会重新启动安装。</p>
-          <div class="cmd">
-            <div class="cmd-title"><span>查看进度指令</span><button class="copy-btn" data-copy-textarea="progressPrompt">复制进度指令</button></div>
-            <textarea id="progressPrompt" class="prompt-box" readonly>请查看「馨光 AI 设计灯光」第一阶段底座部署进度。只读取状态，不要重新启动安装，不要修改脚本，不要切换安装方法。
+      <section id="test">
+        <h2>测试灯光</h2>
+        <p>完成馨光技能配置后，可以用下面这些句子测试：</p>
+        <div class="grid">
+          <div class="card">吊顶灯带，设计个马尔代夫灯光效果。</div>
+          <div class="card">客厅灯带，设计一个海边日落灯光效果。</div>
+          <div class="card">卧室灯光，设计一个适合睡前放松的灯光效果。</div>
+          <div class="card">茶室灯光，设计一个安静的东方禅意灯光效果。</div>
+        </div>
+      </section>
+
+      <section id="progress">
+        <h2>查看安装进度</h2>
+        <p>如果页面刷新后没有看到上一段回复，直接把下面内容发给小龙虾。</p>
+        <div class="cmd">
+          <div class="cmd-title"><span>查看安装进度</span><button class="copy-btn" data-copy-textarea="progressPrompt">复制指令</button></div>
+          <textarea id="progressPrompt" readonly>请查看「馨光 AI 设计灯光」安装进度。只读取状态，不要重新启动安装，不要修改脚本，不要切换安装方法。
 
 重要回复语言要求：
 - 全程必须使用中文回复，包括中间进度、等待说明、异常解释和最终结果。
-- 不要用英文写 “I'll / Let me / Good / It's progressing” 这类过程说明。
-- 命令输出或日志里的英文可以作为必要关键词保留，但你的解释必须翻译成中文。
-- 每次观察进度时只用中文简短说明当前状态，不要输出英文思考过程。
+- 每次观察进度时只用中文简短说明当前状态。
 - 每次中间汇报都必须带“检查时间”，不要只说继续等待。
 
-请只执行下面这些只读命令：
+请只执行下面这些只读检查：
 
 ```bash
-PIDFILE=/tmp/openclaw-miloco-install.pid
 LOG=/tmp/openclaw-miloco-install-current.log
 STATE=/tmp/openclaw-miloco-install.state
-UNIT=xingguang-miloco-deploy
-NOW="$(date +%s)"
+PIDFILE=/tmp/openclaw-miloco-install.pid
 CHECK_TIME="$(date '+%F %T %Z')"
-CONTINUE_CMD='RUN_CONTEXT=agentchat_launcher DEPLOY_SUPERVISOR=1 INSTALL_ACTION=continue RUN_SYSTEM_UPGRADE=0 OPENCLAW_UPDATE=auto INSTALL_EXTRA_PLUGINS=0 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh'
-
-PID=""
-PID_RUNNING=0
-if [ -f "$PIDFILE" ]; then
-  PID="$(cat "$PIDFILE" 2&gt;/dev/null || true)"
-  if [ -n "$PID" ] &amp;&amp; kill -0 "$PID" 2&gt;/dev/null; then
-    PID_RUNNING=1
-  fi
-fi
-
-UNIT_ACTIVE="$(systemctl --user is-active "$UNIT" 2&gt;/dev/null || true)"
-
-if [ "$PID_RUNNING" = 1 ] || [ "$UNIT_ACTIVE" = active ] || [ "$UNIT_ACTIVE" = activating ]; then
-  STATUS=RUNNING
-elif [ -f "$STATE" ] &amp;&amp; grep -Eq '^(SUCCESS_ACTIVE|SUCCESS_AFTER_RECONNECT|STEP_6_DONE)$' "$STATE"; then
-  STATUS=FINISHED
-else
-  STATUS=EXITED_BUT_INCOMPLETE
-fi
-
-if [ -f "$STATE" ]; then
-  LAST_DONE="$(grep -E '^STEP_[0-9]+_DONE$' "$STATE" | tail -n 1 || true)"
-  LAST_STATE="$(tail -n 1 "$STATE" 2&gt;/dev/null || true)"
-  RECONNECT_STATE="$(grep -E '^(AGENTCHAT_RECONNECT_EXPECTED|GATEWAY_RESTART_SCHEDULED|GATEWAY_RESTART_DONE)$' "$STATE" | tail -n 1 || true)"
-else
-  LAST_DONE=""
-  LAST_STATE=""
-  RECONNECT_STATE=""
-fi
-
-NEXT_STEP=COMPLETE
-for n in 1 2 3 4 5 6; do
-  if ! grep -q "^STEP_${n}_DONE$" "$STATE" 2&gt;/dev/null; then
-    NEXT_STEP="STEP_${n}"
-    break
-  fi
-done
-
-if [ -f "$LOG" ]; then
-  LOG_MTIME="$(stat -c %Y "$LOG" 2&gt;/dev/null || date +%s)"
-  LOG_MTIME_TEXT="$(date -d "@$LOG_MTIME" '+%F %T %Z' 2&gt;/dev/null || date '+%F %T %Z')"
-  IDLE="$((NOW - LOG_MTIME))"
-  STEP="$(grep -E 'Step [0-9]+/6|STATE: |ERROR|Failed|Traceback|timeout|Timing:|Done' "$LOG" 2&gt;/dev/null | tail -n 1 || true)"
-  ERRORS="$(grep -Ei 'ERROR|Failed|Traceback|timeout|timed out' "$LOG" 2&gt;/dev/null | tail -n 20 || true)"
-else
-  IDLE=-1
-  LOG_MTIME_TEXT=""
-  STEP=""
-  ERRORS=""
-fi
 
 echo "检查时间: $CHECK_TIME"
-echo "状态: $STATUS"
-echo "后台 PID: ${PID:-none}"
-echo "后台任务状态: ${UNIT_ACTIVE:-unknown}"
-echo "最后完成步骤: ${LAST_DONE:-none}"
-echo "最后状态: ${LAST_STATE:-none}"
-echo "下一步: $NEXT_STEP"
-echo "当前进度: ${STEP:-尚未找到步骤日志}"
-if [ "$IDLE" -ge 0 ]; then
-  echo "日志最后更新: ${IDLE}s 前"
-  echo "日志最后变化时间: $LOG_MTIME_TEXT"
-fi
-echo "日志文件: $LOG"
 echo "状态文件: $STATE"
+echo "日志文件: $LOG"
 
-if [ -n "$RECONNECT_STATE" ]; then
-  echo "--- Gateway 重启说明 ---"
-  echo "Gateway 正在或刚刚重启，这是部署过程中的预期行为。"
-  echo "如果页面断线，请等待 1～3 分钟后刷新页面；如果刷新后是空白对话框，直接发送查看安装进度。"
-fi
-
-if [ "$STATUS" = RUNNING ] &amp;&amp; [ "$IDLE" -ge 180 ]; then
-  echo "--- 无新日志提醒 ---"
-  echo "安装进程仍在运行，但暂无新日志。可能正在下载、解压、解析依赖或等待 OpenClaw gateway 响应。"
+if [ -f "$PIDFILE" ]; then
+  PID="$(cat "$PIDFILE" 2&gt;/dev/null || true)"
+  echo "后台任务编号: ${PID:-none}"
   if [ -n "$PID" ]; then
-    ps -p "$PID" -o pid,etime,stat,pcpu,pmem,cmd 2&gt;/dev/null || true
+    ps -p "$PID" -o pid,etime,stat,cmd 2&gt;/dev/null || true
   fi
+else
+  echo "后台任务编号: none"
 fi
 
-if [ "$STATUS" = EXITED_BUT_INCOMPLETE ]; then
-  echo "--- 未完成状态 ---"
-  echo "安装进程已退出或未运行，但状态文件没有成功状态。"
-  echo "是否可以继续: 是"
-  echo "建议继续命令: $CONTINUE_CMD"
-fi
-
-if [ -n "$ERRORS" ]; then
-  echo "--- 最近异常关键词 ---"
-  printf '%s\n' "$ERRORS"
-fi
-
-echo "--- 最近状态文件 ---"
+echo "--- 最近状态 ---"
 tail -n 80 "$STATE" 2&gt;/dev/null || echo "暂未找到状态文件"
 
 echo "--- 最近日志 ---"
 tail -n 120 "$LOG" 2&gt;/dev/null || echo "暂未找到日志"
 
-echo "--- OpenClaw CLI ---"
-openclaw --version 2&gt;/dev/null || true
-
-echo "--- OpenClaw gateway ---"
-openclaw gateway status 2&gt;/dev/null || true
-
-echo "--- Miloco service ---"
-miloco-cli service status 2&gt;/dev/null || true
-
-echo "--- Miloco plugin ---"
-openclaw plugins list 2&gt;/dev/null | grep -i -C 2 miloco || true
-
-echo "--- Ports ---"
-ss -ltnp 2&gt;/dev/null | grep -E ':(1810|18789)\b' || true
+echo "--- 关键结果 ---"
+grep -E 'SUCCESS|STEP_[0-9]+_DONE|ERROR|Failed|Traceback|timeout|timed out' "$STATE" "$LOG" 2&gt;/dev/null | tail -n 80 || true
 ```
 
 然后用中文告诉我：
 
-1. 本次检查时间，以及日志最后变化时间。
-2. 当前状态是 RUNNING、FINISHED 还是 EXITED_BUT_INCOMPLETE。
-3. 是否出现 `AGENTCHAT_RECONNECT_EXPECTED`、`GATEWAY_RESTART_SCHEDULED` 或 `GATEWAY_RESTART_DONE`。
-4. 最后完成到哪一步，下一步是哪一步。
-5. 最近日志里有没有 ERROR / Failed / Traceback / timeout。
-6. 如果日志 180 秒以上没有更新，请明确说明“安装进程仍在运行，但暂无新日志”。
-7. 我是否需要继续等待，还是执行继续命令。
+1. 本次检查时间。
+2. 当前是否仍在安装。
+3. 最后完成到哪一步。
+4. 有没有看到 `SUCCESS_AFTER_RECONNECT`、`SUCCESS_ACTIVE` 或 `STEP_6_DONE`。
+5. 最近有没有 ERROR / Failed / Traceback / timeout。
+6. 我是否需要继续等待。
 
-成功时使用这个模板：
+如果成功，使用这个模板：
 
 ```text
-馨光 AI 设计灯光部署结果
+馨光 AI 设计灯光安装结果
 
 状态：成功
 脚本版本：
-OpenClaw CLI 版本：
-OpenClaw Gateway 版本：
-Miloco 状态：
-Miloco 端口：
-OpenClaw gateway 状态：
-Miloco 插件状态：
 最终状态：
 日志文件：
 
@@ -675,196 +361,59 @@ Miloco 插件状态：
 1. 配置 MiMo API Key
 2. 绑定米家账号
 3. 确认馨光淡彩光设备已出现在设备列表
-4. 后续安装馨光 Skill
+4. 后续安装馨光技能
 ```
 
-未完成时使用这个模板：
+如果还没完成，使用这个模板：
 
 ```text
-馨光 AI 设计灯光部署结果
+馨光 AI 设计灯光安装结果
 
-状态：未完成 / 可继续
-脚本版本：
+状态：仍在安装 / 未完成
+检查时间：
 最后完成步骤：
-最后状态：
-中断位置：
-疑似原因：
-是否发现 ERROR / Failed / Traceback：
-建议继续命令：
-日志文件：
+最后日志：
+是否需要继续等待：
+
+说明：
+如果安装过程中页面短暂异常，通常是小龙虾后台服务正在重启。
+请等待 1～3 分钟后刷新页面。
+刷新后如果是空白对话框，直接发送「查看安装进度」。
+不要重复发送一键部署指令。
 ```
-</textarea>
-          </div>
-          <div class="terminal">
-            <div class="terminal-bar">进度状态示意</div>
-            <pre><span class="term-blue">状态: RUNNING</span>
-检查时间: 2026-06-25 13:05:20 CST
-最后完成步骤: STEP_2_DONE
-下一步: STEP_3
-日志最后更新: 42s 前
-日志最后变化时间: 2026-06-25 13:04:38 CST
 
-<span class="term-yellow">状态: EXITED_BUT_INCOMPLETE</span>
-最后完成步骤: STEP_2_DONE
-下一步: STEP_3
-建议继续命令: RUN_CONTEXT=agentchat_launcher DEPLOY_SUPERVISOR=1 INSTALL_ACTION=continue ...</pre>
-          </div>
-        </section>
+如果多次刷新后仍无法查看进度，请联系技术人员处理。</textarea>
+        </div>
+      </section>
 
-        <section id="first-use">
-          <h2>绑定米家账号、配置 MiMo Key、确认设备</h2>
-          <div class="grid-3">
-            <div class="card"><strong>配置 MiMo API Key</strong><span>由人工在安全环境输入，不在教程中保存。</span><pre data-template="miloco-cli config set model.omni.api_key sk-xxxx"></pre></div>
-            <div class="card"><strong>绑定米家账号</strong><span>授权链接或扫码由人工完成。</span><pre data-template="miloco-cli account bind"></pre></div>
-            <div class="card"><strong>确认设备列表</strong><span>确认馨光淡彩光设备已经出现。</span><pre data-template="miloco-cli device list"></pre></div>
-          </div>
-        </section>
+      <section id="faq">
+        <h2>常见问题</h2>
+        <div class="grid">
+          <div class="card"><h3>安装过程中页面异常怎么办？</h3><p>通常是小龙虾后台服务正在重启。等待 1-3 分钟后刷新页面。</p></div>
+          <div class="card"><h3>刷新后没有内容怎么办？</h3><p>直接发送「查看安装进度」。</p></div>
+          <div class="card"><h3>能不能重复发送一键部署指令？</h3><p>不要重复发送。先用「查看安装进度」确认当前状态。</p></div>
+          <div class="card"><h3>怎么查看安装进度？</h3><p>复制本页「查看安装进度」内容，发给小龙虾。</p></div>
+          <div class="card"><h3>安装完成后下一步做什么？</h3><p>配置 MiMo API Key，绑定米家账号，确认馨光淡彩光设备已出现。</p></div>
+          <div class="card"><h3>为什么还不能直接控制灯光？</h3><p>当前页面验证的是第一阶段底座。馨光技能、设备白名单和真机控制验收属于后续阶段。</p></div>
+        </div>
+        <div class="notice warn">如果多次刷新后仍无法查看进度，请联系技术人员处理。</div>
+      </section>
 
-        <section id="acceptance">
-          <h2>第一阶段验收</h2>
-          <div class="notice success">2026-06-25.3 已完成真实腾讯云 OpenClaw 应用模板服务器验证。最终状态为 <code>SUCCESS_AFTER_RECONNECT</code>，底座部署版本已冻结。</div>
-          <div class="grid-2">
-            <div class="card"><strong>服务状态</strong><span>Miloco 服务运行，端口为云服务器内部 <code>127.0.0.1:1810</code>。</span></div>
-            <div class="card"><strong>OpenClaw gateway</strong><span>gateway 可访问，CLI / Gateway 版本会在日志中输出。</span></div>
-            <div class="card"><strong>插件状态</strong><span>Miloco 插件已出现在 OpenClaw 插件列表。</span></div>
-            <div class="card"><strong>设备识别</strong><span>米家绑定后能看到馨光淡彩光设备。</span></div>
-          </div>
-          <div class="notice warn">不要把 Miloco 面板直接暴露到公网。<code>127.0.0.1:1810</code> 是云服务器内部地址，不能在用户自己的电脑上直接打开。如果确实需要访问面板，只能通过 SSH 隧道。</div>
-        </section>
-
-        <section id="phase2">
-          <h2>第二阶段：馨光智能 Skill 安装与业务验收</h2>
-          <p>待补充。本阶段不会在当前脚本里假装完成。</p>
-          <ul>
-            <li>安装馨光 Skill。</li>
-            <li>配置馨光设备白名单。</li>
-            <li>配置淡彩光颜色输出规则。</li>
-            <li>自然语言场景测试。</li>
-            <li>dry-run 测试。</li>
-            <li>真机控制测试。</li>
-            <li>常见问题与回滚。</li>
-          </ul>
-        </section>
-
-        <section id="advanced">
-          <h2>高级维护附录</h2>
-          <p>SSH 方式仅用于开发者、运维人员或极端故障排查，不是普通用户主线流程。普通用户默认通过龙虾对话启动后台部署，不需要 SSH。</p>
-          <div class="grid-2">
-            <div>
-              <label for="serverIp">服务器 IP</label>
-              <input id="serverIp" autocomplete="off" placeholder="例如：1.2.3.4" value="服务器IP">
-              <div class="ip-reminder">这里填入服务器 IP，下面 SSH 命令会自动替换成你的地址。</div>
-            </div>
-            <div>
-              <label for="serverUser">SSH 用户名</label>
-              <input id="serverUser" autocomplete="off" value="ubuntu">
-              <p>OpenClaw 应用模板底层通常是 Ubuntu，默认用户名一般是 <code>ubuntu</code>。</p>
-            </div>
-          </div>
-          <div class="status-line">当前 SSH 目标：<strong id="targetText">ubuntu@服务器IP</strong></div>
-
-          <h3>SSH 登录服务器</h3>
-          <div class="cmd"><div class="cmd-title"><span>本机终端执行</span><button class="copy-btn" data-copy-target="sshCmd">复制命令</button></div><pre id="sshCmd" data-template="ssh {user}@{ip}"></pre></div>
-
-          <h3>手动下载并执行安装脚本</h3>
-          <div class="cmd"><div class="cmd-title"><span>服务器终端执行</span><button class="copy-btn" data-copy-target="manualInstallCmd">复制命令</button></div><pre id="manualInstallCmd" data-template="curl -fsSL https://nijez.github.io/xingguang-ai-lighting-guide/install-miloco-openclaw-cloud.sh -o /tmp/install-miloco-openclaw-cloud.sh || curl -fsSL https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/install-miloco-openclaw-cloud.sh -o /tmp/install-miloco-openclaw-cloud.sh || curl -fsSL https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/install-miloco-openclaw-cloud.sh -o /tmp/install-miloco-openclaw-cloud.sh&#10;chmod +x /tmp/install-miloco-openclaw-cloud.sh&#10;INSTALL_ACTION=full RUN_SYSTEM_UPGRADE=0 OPENCLAW_UPDATE=auto INSTALL_EXTRA_PLUGINS=0 bash /tmp/install-miloco-openclaw-cloud.sh"></pre></div>
-
-          <h3>查看安装日志</h3>
-          <div class="cmd"><div class="cmd-title"><span>服务器终端执行</span><button class="copy-btn" data-copy-target="logCmd">复制命令</button></div><pre id="logCmd" data-template="tail -n 160 /tmp/openclaw-miloco-install-current.log 2>/dev/null || tail -n 160 ~/miloco-cloud-install.log"></pre></div>
-
-          <h3>检查服务状态</h3>
-          <div class="cmd"><div class="cmd-title"><span>服务器终端执行</span><button class="copy-btn" data-copy-target="statusCmd">复制命令</button></div><pre id="statusCmd" data-template="INSTALL_ACTION=status bash /tmp/install-miloco-openclaw-cloud.sh&#10;miloco-cli service status&#10;openclaw gateway status&#10;openclaw plugins list | grep -i -C 2 miloco"></pre></div>
-
-          <h3>重启服务</h3>
-          <div class="cmd"><div class="cmd-title"><span>服务器终端执行</span><button class="copy-btn" data-copy-target="restartCmd">复制命令</button></div><pre id="restartCmd" data-template="INSTALL_ACTION=restart-openclaw bash /tmp/install-miloco-openclaw-cloud.sh&#10;INSTALL_ACTION=restart-miloco bash /tmp/install-miloco-openclaw-cloud.sh"></pre></div>
-
-          <h3>更新、重装、回滚</h3>
-          <div class="cmd"><div class="cmd-title"><span>继续未完成部署</span><button class="copy-btn" data-copy-target="continueCmd">复制命令</button></div><pre id="continueCmd" data-template="INSTALL_ACTION=continue RUN_SYSTEM_UPGRADE=0 OPENCLAW_UPDATE=auto INSTALL_EXTRA_PLUGINS=0 bash /tmp/install-miloco-openclaw-cloud.sh"></pre></div>
-          <div class="cmd"><div class="cmd-title"><span>高级维护升级</span><button class="copy-btn" data-copy-target="upgradeCmd">复制命令</button></div><pre id="upgradeCmd" data-template="INSTALL_ACTION=full RUN_SYSTEM_UPGRADE=1 OPENCLAW_UPDATE=1 INSTALL_EXTRA_PLUGINS=1 bash /tmp/install-miloco-openclaw-cloud.sh"></pre></div>
-
-          <h3>访问 Miloco 面板</h3>
-          <p>只有确实需要访问面板时才建立 SSH 隧道。不要把 <code>1810</code> 端口直接开放到公网。</p>
-          <div class="cmd"><div class="cmd-title"><span>本机终端执行</span><button class="copy-btn" data-copy-target="tunnelCmd">复制命令</button></div><pre id="tunnelCmd" data-template="ssh -L 1810:127.0.0.1:1810 {user}@{ip}"></pre></div>
-        </section>
-      </main>
-    </div>
+      <footer>馨光 AI 设计灯光安装指导。普通用户版页面不提供技术维护入口。</footer>
+    </main>
   </div>
 
   <script>
-    const fields = {
-      ip: document.getElementById('serverIp'),
-      user: document.getElementById('serverUser')
-    };
-    const targetText = document.getElementById('targetText');
-    const templatedBlocks = Array.from(document.querySelectorAll('[data-template]'));
-
-    function values() {
-      return {
-        ip: fields.ip.value.trim() || '服务器IP',
-        user: fields.user.value.trim() || 'ubuntu'
-      };
-    }
-
-    function renderTemplate(template, data) {
-      return template.replaceAll('{ip}', data.ip).replaceAll('{user}', data.user);
-    }
-
-    function refreshCommands() {
-      const data = values();
-      targetText.textContent = `${data.user}@${data.ip}`;
-      templatedBlocks.forEach((block) => {
-        block.textContent = renderTemplate(block.dataset.template, data);
-      });
-    }
-
-    async function copyText(text) {
-      if (navigator.clipboard && window.isSecureContext) {
+    document.querySelectorAll('[data-copy-textarea]').forEach(function(button) {
+      button.addEventListener('click', async function() {
+        const id = button.getAttribute('data-copy-textarea');
+        const text = document.getElementById(id).value;
         await navigator.clipboard.writeText(text);
-        return;
-      }
-      const textarea = document.createElement('textarea');
-      textarea.value = text;
-      textarea.style.position = 'fixed';
-      textarea.style.left = '-9999px';
-      document.body.appendChild(textarea);
-      textarea.focus();
-      textarea.select();
-      document.execCommand('copy');
-      textarea.remove();
-    }
-
-    document.querySelectorAll('[data-copy-target]').forEach((button) => {
-      button.addEventListener('click', async () => {
-        const target = document.getElementById(button.dataset.copyTarget);
-        const original = button.textContent;
-        try {
-          await copyText(target.textContent.trimEnd());
-          button.textContent = '已复制';
-          window.setTimeout(() => { button.textContent = original; }, 1200);
-        } catch {
-          button.textContent = '复制失败';
-          window.setTimeout(() => { button.textContent = original; }, 1600);
-        }
+        const old = button.textContent;
+        button.textContent = '已复制';
+        setTimeout(function() { button.textContent = old; }, 1200);
       });
     });
-
-    document.querySelectorAll('[data-copy-textarea]').forEach((button) => {
-      button.addEventListener('click', async () => {
-        const target = document.getElementById(button.dataset.copyTextarea);
-        const original = button.textContent;
-        try {
-          await copyText(target.value.trimEnd());
-          button.textContent = '已复制';
-          window.setTimeout(() => { button.textContent = original; }, 1200);
-        } catch {
-          button.textContent = '复制失败';
-          window.setTimeout(() => { button.textContent = original; }, 1600);
-        }
-      });
-    });
-
-    Object.values(fields).forEach((input) => input.addEventListener('input', refreshCommands));
-    refreshCommands();
   </script>
 </body>
 </html>
