@@ -23,7 +23,7 @@ TARGET=/tmp/install-miloco-openclaw-cloud.sh
 LOG=/tmp/openclaw-miloco-install-current.log
 PIDFILE=/tmp/openclaw-miloco-install.pid
 STATE=/tmp/openclaw-miloco-install.state
-EXPECTED_VERSION=2026-06-24.2
+EXPECTED_VERSION=2026-06-25.1
 rm -f "$TARGET"
 
 for URL in \

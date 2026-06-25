@@ -8,7 +8,7 @@ set -Eeuo pipefail
 # - WeChat channel installation/login is skipped.
 # - MiMo API key is configured only when MIMO_API_KEY is supplied.
 
-SCRIPT_VERSION="2026-06-24.2"
+SCRIPT_VERSION="2026-06-25.1"
 TOTAL_STEPS=6
 MILOCO_VERSION="${MILOCO_VERSION:-2026.6.18}"
 OPENCLAW_PORT="${OPENCLAW_PORT:-18789}"
@@ -846,6 +846,59 @@ wait_for_openclaw_gateway() {
   return 1
 }
 
+restart_openclaw_gateway_best_effort() {
+  setup_runtime_paths
+  if ! have openclaw; then
+    log "OpenClaw command not found; skipping gateway restart"
+    return 0
+  fi
+
+  log "Restarting OpenClaw gateway"
+  if timeout 90s openclaw gateway restart; then
+    log "OpenClaw gateway restart requested"
+  else
+    log "WARNING: OpenClaw gateway restart returned non-zero; continuing to status checks"
+  fi
+  wait_for_openclaw_gateway || true
+  report_openclaw_versions || true
+}
+
+miloco_service_running() {
+  setup_runtime_paths
+  have miloco-cli || return 1
+
+  local status_file="$WORK_DIR/miloco-service-running.json"
+  if miloco-cli service status >"$status_file" 2>/dev/null &&
+    jq -e '.running == true' "$status_file" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  ss -ltn 2>/dev/null | grep -Eq ':1810\b'
+}
+
+miloco_plugin_present() {
+  setup_runtime_paths
+  have openclaw || return 1
+  openclaw plugins list 2>/dev/null | grep -qi 'miloco'
+}
+
+miloco_base_ready() {
+  setup_runtime_paths
+  have miloco-cli || return 1
+  miloco-cli service start >/dev/null 2>&1 || true
+
+  if ! miloco_service_running; then
+    return 1
+  fi
+
+  if miloco_plugin_present; then
+    return 0
+  fi
+
+  log "Miloco service is running, but OpenClaw plugin is not confirmed yet"
+  return 1
+}
+
 install_miloco() {
   local installer="$WORK_DIR/install-miloco.sh"
   mapfile -t urls < <(miloco_installer_urls | rank_urls_by_speed "Miloco installer" 1)
@@ -865,7 +918,14 @@ install_miloco() {
   # Redirect stdin so Miloco installer skips Mi Home and model prompts.
   run_miloco_phase "$installer" --agent-prepare
 
-  run_miloco_phase "$installer" --agent-finish
+  if ! run_miloco_phase "$installer" --agent-finish; then
+    log "WARNING: Miloco agent-finish returned non-zero; checking whether Miloco already completed"
+    if miloco_base_ready; then
+      log "Miloco service and OpenClaw plugin are present; continuing despite installer finalization warning"
+    else
+      die "Miloco agent-finish failed and Miloco is not confirmed ready"
+    fi
+  fi
 
   if [[ -n "$MIMO_API_KEY" ]]; then
     log "Configuring MiMo API key"
@@ -873,9 +933,8 @@ install_miloco() {
   fi
 
   miloco-cli service start >/dev/null 2>&1 || true
-  openclaw gateway restart || log "WARNING: OpenClaw gateway restart failed after Miloco install; final verification will report status"
+  restart_openclaw_gateway_best_effort
   wait_for_miloco_service || true
-  wait_for_openclaw_gateway || true
 }
 
 install_weixin_if_requested() {
@@ -1292,7 +1351,12 @@ run_full_deploy() {
     step_start="$(date +%s)"
     step_start_msg 3 "Install and deploy Miloco 2.0"
     print_step_note "下载 Miloco 2.0、安装服务和项目必要插件；不默认安装 discord、slack、qqbot、whatsapp 等额外插件。"
-    install_miloco
+    if miloco_base_ready; then
+      log "Miloco service and OpenClaw plugin are already present; completing Step 3 without reinstalling"
+      restart_openclaw_gateway_best_effort
+    else
+      install_miloco
+    fi
     step_done_msg 3 "Install and deploy Miloco 2.0" "$step_start"
     log_timing_since "Miloco" "$step_start"
   fi
@@ -1325,6 +1389,7 @@ run_full_deploy() {
     step_start="$(date +%s)"
     step_start_msg 6 "Verify services and print next manual actions"
     print_step_note "检查 Miloco 服务、OpenClaw 网关、插件状态和端口监听。"
+    restart_openclaw_gateway_best_effort
     verify_install
     log "Done"
     log_timing_since "Total install" "$SCRIPT_START_EPOCH"
@@ -1380,11 +1445,17 @@ run_miloco_deploy() {
 
   step_start="$(date +%s)"
   step_start_msg 3 "Install or update Miloco 2.0"
-  install_miloco
+  if miloco_base_ready; then
+    log "Miloco service and OpenClaw plugin are already present; skipping reinstall"
+    restart_openclaw_gateway_best_effort
+  else
+    install_miloco
+  fi
   step_done_msg 3 "Install or update Miloco 2.0" "$step_start"
 
   step_start="$(date +%s)"
   step_start_msg 4 "Verify services and ports"
+  restart_openclaw_gateway_best_effort
   verify_install
   step_done_msg 4 "Verify services and ports" "$step_start"
   log_timing_since "Miloco action" "$action_start"
