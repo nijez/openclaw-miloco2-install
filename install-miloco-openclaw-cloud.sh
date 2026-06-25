@@ -8,17 +8,21 @@ set -Eeuo pipefail
 # - WeChat channel installation/login is skipped.
 # - MiMo API key is configured only when MIMO_API_KEY is supplied.
 
-SCRIPT_VERSION="2026-06-25.1"
+SCRIPT_VERSION="2026-06-25.2"
 TOTAL_STEPS=6
 MILOCO_VERSION="${MILOCO_VERSION:-2026.6.18}"
 OPENCLAW_PORT="${OPENCLAW_PORT:-18789}"
 OPENCLAW_BIND="${OPENCLAW_BIND:-loopback}"
 OPENCLAW_MIN_VERSION="${OPENCLAW_MIN_VERSION:-2026.6.10}"
 RUN_SYSTEM_UPGRADE="${RUN_SYSTEM_UPGRADE:-0}"
-OPENCLAW_UPDATE="${OPENCLAW_UPDATE:-0}"
+OPENCLAW_UPDATE="${OPENCLAW_UPDATE:-auto}"
 INSTALL_EXTRA_PLUGINS="${INSTALL_EXTRA_PLUGINS:-0}"
 INSTALL_ACTION="${INSTALL_ACTION:-}"
 INSTALL_NONINTERACTIVE="${INSTALL_NONINTERACTIVE:-0}"
+RUN_CONTEXT="${RUN_CONTEXT:-}"
+DEPLOY_SUPERVISOR="${DEPLOY_SUPERVISOR:-0}"
+SUPERVISOR_UNIT="${SUPERVISOR_UNIT:-xingguang-miloco-deploy}"
+PID_FILE="${PID_FILE:-/tmp/openclaw-miloco-install.pid}"
 PRELOAD_MILOCO_BUNDLE="${PRELOAD_MILOCO_BUNDLE:-1}"
 CACHE_MILOCO_BUNDLE="${CACHE_MILOCO_BUNDLE:-1}"
 INSTALL_WEIXIN_PLUGIN="${INSTALL_WEIXIN_PLUGIN:-0}"
@@ -96,14 +100,15 @@ state_next_step() {
 }
 
 recommended_continue_command() {
-  printf 'INSTALL_ACTION=continue RUN_SYSTEM_UPGRADE=0 OPENCLAW_UPDATE=0 INSTALL_EXTRA_PLUGINS=0 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh'
+  printf 'INSTALL_ACTION=continue RUN_SYSTEM_UPGRADE=0 OPENCLAW_UPDATE=auto INSTALL_EXTRA_PLUGINS=0 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh'
 }
 
 print_incomplete_report() {
   local reason="${1:-unknown}"
-  if state_has STEP_6_DONE; then
+  if state_has STEP_6_DONE || state_has SUCCESS_ACTIVE || state_has SUCCESS_AFTER_RECONNECT; then
     return 0
   fi
+  state_mark EXITED_BUT_INCOMPLETE || true
   cat >&2 <<EOF
 
 部署未完成 / 可恢复中断
@@ -154,6 +159,85 @@ log_timing_since() {
   end_epoch="$(date +%s)"
   elapsed="$((end_epoch - start_epoch))"
   log "Timing: $label took $(format_duration "$elapsed") (${elapsed}s)"
+}
+
+script_path() {
+  readlink -f "$0" 2>/dev/null || printf '%s' "$0"
+}
+
+write_supervisor_launcher() {
+  local launcher="$1"
+  local script
+  script="$(script_path)"
+
+  {
+    printf '#!/usr/bin/env bash\n'
+    printf 'set -Eeuo pipefail\n'
+    printf 'echo $$ > %q\n' "$PID_FILE"
+    printf 'export DEPLOY_SUPERVISOR=0\n'
+    printf 'export RUN_CONTEXT=agentchat_supervisor\n'
+    printf 'export INSTALL_ACTION=%q\n' "${INSTALL_ACTION:-full}"
+    printf 'export RUN_SYSTEM_UPGRADE=%q\n' "$RUN_SYSTEM_UPGRADE"
+    printf 'export OPENCLAW_UPDATE=%q\n' "$OPENCLAW_UPDATE"
+    printf 'export INSTALL_EXTRA_PLUGINS=%q\n' "$INSTALL_EXTRA_PLUGINS"
+    printf 'export INSTALL_NONINTERACTIVE=%q\n' "$INSTALL_NONINTERACTIVE"
+    printf 'export LOG_FILE=%q\n' "$LOG_FILE"
+    printf 'export STATE_FILE=%q\n' "$STATE_FILE"
+    printf 'export PID_FILE=%q\n' "$PID_FILE"
+    printf 'export MILOCO_VERSION=%q\n' "$MILOCO_VERSION"
+    printf 'export OPENCLAW_PORT=%q\n' "$OPENCLAW_PORT"
+    printf 'export OPENCLAW_BIND=%q\n' "$OPENCLAW_BIND"
+    printf 'export OPENCLAW_MIN_VERSION=%q\n' "$OPENCLAW_MIN_VERSION"
+    printf 'export INSTALL_WEIXIN_PLUGIN=%q\n' "$INSTALL_WEIXIN_PLUGIN"
+    printf 'exec bash %q\n' "$script"
+  } >"$launcher"
+  chmod +x "$launcher"
+}
+
+launch_background_supervisor() {
+  local launcher="/tmp/openclaw-miloco-install-supervisor.sh"
+  local start_method="setsid-nohup"
+  local unit="$SUPERVISOR_UNIT"
+
+  INSTALL_ACTION="${INSTALL_ACTION:-full}"
+  mkdir -p "$(dirname "$LOG_FILE")" "$(dirname "$STATE_FILE")" "$(dirname "$PID_FILE")"
+  : >"$LOG_FILE"
+  rm -f "$PID_FILE"
+  state_init
+  state_mark BACKGROUND_SUPERVISOR_STARTED
+  write_supervisor_launcher "$launcher"
+
+  if have systemd-run && systemd-run --user --unit="$unit" --collect --property=Restart=no /bin/bash "$launcher" >/dev/null 2>&1; then
+    start_method="systemd-run --user"
+  else
+    setsid nohup /bin/bash "$launcher" </dev/null >>"$LOG_FILE" 2>&1 &
+    printf '%s\n' "$!" >"$PID_FILE"
+  fi
+
+  local wait_i pid=""
+  for wait_i in {1..10}; do
+    if [[ -s "$PID_FILE" ]]; then
+      pid="$(cat "$PID_FILE" 2>/dev/null || true)"
+      break
+    fi
+    sleep 0.2
+  done
+
+  cat <<EOF
+馨光 AI 设计灯光后台部署已启动
+脚本版本：$SCRIPT_VERSION
+后台任务：$start_method${unit:+ / $unit}
+进程 PID：${pid:-稍后写入 $PID_FILE}
+日志文件：$LOG_FILE
+状态文件：$STATE_FILE
+
+说明：
+部署任务已在服务器后台运行。
+如果页面稍后出现 OpenClaw 网关异常，通常是 Gateway 正在重启。
+请等待 1～3 分钟后点击「重新连接」。
+重新连接后发送「查看安装进度」。
+不要重复发送一键部署指令。
+EOF
 }
 
 die() {
@@ -441,11 +525,7 @@ configure_openclaw_gateway() {
     log "OpenClaw onboard returned exit code $status; checking whether gateway is usable before failing"
   fi
 
-  if timeout 60s openclaw gateway restart; then
-    log "OpenClaw gateway restart requested"
-  else
-    log "OpenClaw gateway restart returned non-zero; checking status"
-  fi
+  restart_openclaw_gateway_best_effort
 
   if wait_for_openclaw_gateway; then
     gateway_ok=1
@@ -470,23 +550,33 @@ install_openclaw() {
 
   if ! have openclaw; then
     log "Installing OpenClaw"
+    state_mark OPENCLAW_UPGRADE_REQUIRED
+    state_mark OPENCLAW_UPGRADE_STARTED
     run_openclaw_installer
     setup_runtime_paths
+    state_mark OPENCLAW_UPGRADE_DONE
   else
     local current_version
     current_version="$(openclaw_version_number || true)"
     log "OpenClaw already installed: $(openclaw --version 2>/dev/null || true)"
     if [[ "$OPENCLAW_UPDATE" == 1 ]]; then
       log "Updating OpenClaw"
+      state_mark OPENCLAW_UPGRADE_REQUIRED
+      state_mark OPENCLAW_UPGRADE_STARTED
       run_openclaw_installer
       setup_runtime_paths
+      state_mark OPENCLAW_UPGRADE_DONE
     else
       if [[ -n "$current_version" ]] && ! version_ge "$current_version" "$OPENCLAW_MIN_VERSION"; then
-        log "OpenClaw CLI version $current_version is below required $OPENCLAW_MIN_VERSION; updating despite OPENCLAW_UPDATE=0"
+        log "OpenClaw CLI version $current_version is below required $OPENCLAW_MIN_VERSION; updating with OPENCLAW_UPDATE=$OPENCLAW_UPDATE"
+        state_mark OPENCLAW_UPGRADE_REQUIRED
+        state_mark OPENCLAW_UPGRADE_STARTED
         run_openclaw_installer
         setup_runtime_paths
+        state_mark OPENCLAW_UPGRADE_DONE
       else
-        log "Skipping OpenClaw package update (OPENCLAW_UPDATE=0 and installed version satisfies $OPENCLAW_MIN_VERSION)"
+        state_mark OPENCLAW_VERSION_OK
+        log "Skipping OpenClaw package update (OPENCLAW_UPDATE=$OPENCLAW_UPDATE and installed version satisfies $OPENCLAW_MIN_VERSION)"
       fi
       if wait_for_openclaw_gateway; then
         log "OpenClaw gateway already usable; skipping onboard reconfiguration"
@@ -846,6 +936,44 @@ wait_for_openclaw_gateway() {
   return 1
 }
 
+openclaw_gateway_unit() {
+  local unit
+  for unit in openclaw-gateway.service openclaw_gateway.service; do
+    if systemctl --user status "$unit" >/dev/null 2>&1; then
+      printf '%s' "$unit"
+      return 0
+    fi
+  done
+  systemctl --user list-units --all --type=service --no-legend 2>/dev/null |
+    awk 'tolower($1) ~ /openclaw/ && tolower($1) ~ /gateway/ {print $1; exit}'
+}
+
+repair_gateway_deactivating_if_needed() {
+  [[ "$RUN_CONTEXT" == agentchat_supervisor ]] || return 0
+  have systemctl || return 0
+
+  local unit active sub main_pid
+  unit="$(openclaw_gateway_unit || true)"
+  [[ -n "$unit" ]] || return 0
+
+  active="$(systemctl --user show "$unit" -p ActiveState --value 2>/dev/null || true)"
+  sub="$(systemctl --user show "$unit" -p SubState --value 2>/dev/null || true)"
+  if [[ "$active" != deactivating && "$sub" != *deactivating* && "$sub" != stop-sigterm && "$sub" != stop-sigkill ]]; then
+    return 0
+  fi
+
+  log "OpenClaw gateway unit $unit is stuck in ${active}/${sub}; repairing in background supervisor"
+  timeout 20s systemctl --user stop "$unit" >/dev/null 2>&1 || true
+  main_pid="$(systemctl --user show "$unit" -p MainPID --value 2>/dev/null || true)"
+  if [[ "$main_pid" =~ ^[0-9]+$ && "$main_pid" -gt 0 ]]; then
+    kill "$main_pid" >/dev/null 2>&1 || true
+    sleep 2
+    kill -9 "$main_pid" >/dev/null 2>&1 || true
+  fi
+  systemctl --user reset-failed "$unit" >/dev/null 2>&1 || true
+  systemctl --user start "$unit" >/dev/null 2>&1 || true
+}
+
 restart_openclaw_gateway_best_effort() {
   setup_runtime_paths
   if ! have openclaw; then
@@ -853,13 +981,22 @@ restart_openclaw_gateway_best_effort() {
     return 0
   fi
 
+  state_mark GATEWAY_RESTART_SCHEDULED
+  if [[ "$RUN_CONTEXT" == agentchat_supervisor ]]; then
+    state_mark AGENTCHAT_RECONNECT_EXPECTED
+  fi
   log "Restarting OpenClaw gateway"
   if timeout 90s openclaw gateway restart; then
     log "OpenClaw gateway restart requested"
   else
     log "WARNING: OpenClaw gateway restart returned non-zero; continuing to status checks"
   fi
-  wait_for_openclaw_gateway || true
+  repair_gateway_deactivating_if_needed || true
+  wait_for_openclaw_gateway || {
+    repair_gateway_deactivating_if_needed || true
+    wait_for_openclaw_gateway || true
+  }
+  state_mark GATEWAY_RESTART_DONE
   report_openclaw_versions || true
 }
 
@@ -892,6 +1029,9 @@ miloco_base_ready() {
   fi
 
   if miloco_plugin_present; then
+    state_mark MILOCO_ALREADY_INSTALLED
+    state_mark MILOCO_INSTALL_DONE
+    state_mark PLUGIN_READY
     return 0
   fi
 
@@ -916,6 +1056,7 @@ install_miloco() {
   setup_runtime_paths
 
   # Redirect stdin so Miloco installer skips Mi Home and model prompts.
+  state_mark MILOCO_INSTALL_STARTED
   run_miloco_phase "$installer" --agent-prepare
 
   if ! run_miloco_phase "$installer" --agent-finish; then
@@ -933,8 +1074,12 @@ install_miloco() {
   fi
 
   miloco-cli service start >/dev/null 2>&1 || true
+  state_mark MILOCO_INSTALL_DONE
   restart_openclaw_gateway_best_effort
   wait_for_miloco_service || true
+  if miloco_plugin_present; then
+    state_mark PLUGIN_READY
+  fi
 }
 
 install_weixin_if_requested() {
@@ -1393,6 +1538,11 @@ run_full_deploy() {
     verify_install
     log "Done"
     log_timing_since "Total install" "$SCRIPT_START_EPOCH"
+    if state_has AGENTCHAT_RECONNECT_EXPECTED; then
+      state_mark SUCCESS_AFTER_RECONNECT
+    else
+      state_mark SUCCESS_ACTIVE
+    fi
     step_done_msg 6 "Verify services and print next manual actions" "$step_start"
   fi
   print_next_actions
@@ -1438,7 +1588,7 @@ run_miloco_deploy() {
   step_start="$(date +%s)"
   step_start_msg 2 "OpenClaw gateway check"
   previous_update="$OPENCLAW_UPDATE"
-  OPENCLAW_UPDATE=0
+  OPENCLAW_UPDATE=auto
   install_openclaw
   OPENCLAW_UPDATE="$previous_update"
   step_done_msg 2 "OpenClaw gateway check" "$step_start"
@@ -1457,6 +1607,11 @@ run_miloco_deploy() {
   step_start_msg 4 "Verify services and ports"
   restart_openclaw_gateway_best_effort
   verify_install
+  if state_has AGENTCHAT_RECONNECT_EXPECTED; then
+    state_mark SUCCESS_AFTER_RECONNECT
+  else
+    state_mark SUCCESS_ACTIVE
+  fi
   step_done_msg 4 "Verify services and ports" "$step_start"
   log_timing_since "Miloco action" "$action_start"
   print_next_actions
@@ -1468,7 +1623,7 @@ run_repair_update() {
   previous_update="$OPENCLAW_UPDATE"
   previous_extra="$INSTALL_EXTRA_PLUGINS"
   RUN_SYSTEM_UPGRADE=0
-  OPENCLAW_UPDATE=0
+  OPENCLAW_UPDATE=auto
   INSTALL_EXTRA_PLUGINS=0
   run_full_deploy
   RUN_SYSTEM_UPGRADE="$previous_upgrade"
@@ -1482,7 +1637,7 @@ run_continue_deploy() {
 
 run_status_report() {
   state_init
-  if state_has STEP_6_DONE; then
+  if state_has STEP_6_DONE || state_has SUCCESS_ACTIVE || state_has SUCCESS_AFTER_RECONNECT; then
     printf '状态: FINISHED\n'
   else
     printf '状态: EXITED_BUT_INCOMPLETE\n'
@@ -1545,6 +1700,19 @@ main() {
     else
       INSTALL_ACTION=full
     fi
+  fi
+
+  if [[ "$DEPLOY_SUPERVISOR" == 1 && "$RUN_CONTEXT" != agentchat_supervisor ]]; then
+    case "$INSTALL_ACTION" in
+      full|install|continue|resume|repair|update|fix)
+        launch_background_supervisor
+        return 0
+        ;;
+    esac
+  fi
+
+  if [[ "$RUN_CONTEXT" == agentchat_supervisor ]]; then
+    state_mark BACKGROUND_SUPERVISOR_STARTED
   fi
 
   dispatch_action "$INSTALL_ACTION"

@@ -4,26 +4,25 @@
 - 全程必须使用中文回复，包括中间进度、等待说明、异常解释和最终结果。
 - 不要用英文写 “I'll / Let me / Good / It's progressing” 这类过程说明。
 - 命令输出或日志里的英文可以作为必要关键词保留，但你的解释必须翻译成中文。
-- 每次观察进度时只用中文简短说明当前状态，不要输出英文思考过程。
-- 每次中间汇报都必须带“检查时间”，不要只说继续等待。
+- 当前前台回复只负责启动后台部署任务，不要长时间轮询，不要输出英文思考过程。
 
 目标：
-1. 检查已预装 OpenClaw 和 gateway 状态。
-2. 轻量部署 Miloco 2.0 底座。
-3. OpenClaw 已安装且满足最低兼容版本时跳过升级；低于最低兼容版本或显式要求时才升级。
+1. 下载固定脚本并校验版本。
+2. 启动独立后台部署任务。
+3. 后台任务负责 OpenClaw 最低版本检查、必要时升级、Miloco 2.0 部署和 Gateway 重启。
 4. 默认跳过微信绑定、米家账号绑定、MiMo API Key 配置。
-5. 最后汇报 OpenClaw gateway、Miloco 服务和插件状态。
+5. 如果 Gateway 重启导致 AgentChat 页面短暂断线，提示用户等待 1～3 分钟后重新连接。
 
 当前阶段只部署底座，不安装馨光智能 Skill。馨光 Skill、设备白名单、淡彩光颜色规则和真机验收属于第二阶段。
 
-请只执行下面这一份固定流程：
+请只执行下面这一份固定流程。不要在当前 AgentChat 前台会话里直接执行 systemctl restart、openclaw gateway restart、kill 或 pkill：
 
 ```bash
 TARGET=/tmp/install-miloco-openclaw-cloud.sh
 LOG=/tmp/openclaw-miloco-install-current.log
 PIDFILE=/tmp/openclaw-miloco-install.pid
 STATE=/tmp/openclaw-miloco-install.state
-EXPECTED_VERSION=2026-06-25.1
+EXPECTED_VERSION=2026-06-25.2
 rm -f "$TARGET"
 
 for URL in \
@@ -42,126 +41,40 @@ done
 grep -q "SCRIPT_VERSION=\"$EXPECTED_VERSION\"" "$TARGET" || { echo "固定脚本下载失败或版本不正确"; exit 1; }
 chmod +x "$TARGET"
 
-rm -f "$LOG" "$PIDFILE"
-nohup bash -lc 'INSTALL_ACTION=full RUN_SYSTEM_UPGRADE=0 OPENCLAW_UPDATE=0 INSTALL_EXTRA_PLUGINS=0 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh || INSTALL_ACTION=continue RUN_SYSTEM_UPGRADE=0 OPENCLAW_UPDATE=0 INSTALL_EXTRA_PLUGINS=0 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh' > "$LOG" 2>&1 &
-echo $! > "$PIDFILE"
-PID="$(cat "$PIDFILE")"
-START_TS="$(date +%s)"
-START_TIME="$(date '+%F %T %Z')"
-LAST_SIZE=0
-LAST_CHANGE="$START_TS"
-
-echo "安装进程已启动 PID=$PID"
-echo "启动时间: $START_TIME"
-echo "日志文件: $LOG"
-echo "状态文件: $STATE"
-
-for i in $(seq 1 90); do
-  NOW="$(date +%s)"
-  CHECK_TIME="$(date '+%F %T %Z')"
-  SIZE="$(wc -c < "$LOG" 2>/dev/null || echo 0)"
-  if [ "$SIZE" != "$LAST_SIZE" ]; then
-    LAST_SIZE="$SIZE"
-    LAST_CHANGE="$NOW"
-  fi
-  IDLE="$((NOW - LAST_CHANGE))"
-  ELAPSED="$((NOW - START_TS))"
-  LAST_CHANGE_TIME="$(date -d "@$LAST_CHANGE" '+%F %T %Z' 2>/dev/null || date '+%F %T %Z')"
-  STEP="$(grep -E 'Step [0-9]+/6|STATE: STEP_[0-9]+_DONE|ERROR|Failed|Traceback|timeout|Timing:|Done' "$LOG" 2>/dev/null | tail -n 1 || true)"
-
-  echo
-  echo "===== 安装进度检查 $i/90 ====="
-  echo "检查时间: $CHECK_TIME"
-  if kill -0 "$PID" 2>/dev/null; then
-    echo "状态: RUNNING"
-  elif [ -f "$STATE" ] && grep -q '^STEP_6_DONE$' "$STATE"; then
-    echo "状态: FINISHED"
-  else
-    echo "状态: EXITED_BUT_INCOMPLETE"
-  fi
-  echo "启动时间: $START_TIME"
-  echo "已运行: ${ELAPSED}s"
-  echo "日志最后更新: ${IDLE}s 前"
-  echo "日志最后变化时间: $LAST_CHANGE_TIME"
-  echo "当前进度: ${STEP:-尚未写入步骤日志，可能正在初始化或下载}"
-
-  echo "--- 关键进度 ---"
-  grep -E 'Step [0-9]+/6|STATE: STEP_[0-9]+_DONE|ERROR|Failed|Traceback|timeout|Timing:|Done' "$LOG" 2>/dev/null | tail -n 40 || true
-
-  if kill -0 "$PID" 2>/dev/null && [ "$IDLE" -ge 180 ]; then
-    echo "--- 无新日志提醒 ---"
-    echo "安装进程仍在运行，但暂无新日志。可能正在下载、解压、解析依赖或等待 OpenClaw gateway 响应。"
-    ps -p "$PID" -o pid,etime,stat,pcpu,pmem,cmd 2>/dev/null || true
-    pgrep -af 'install-miloco|uv|curl|npm|node|openclaw|miloco' 2>/dev/null | head -n 20 || true
-  fi
-
-  if ! kill -0 "$PID" 2>/dev/null; then
-    break
-  fi
-  sleep 20
-done
-
-if kill -0 "$PID" 2>/dev/null; then
-  echo "安装仍在后台运行，稍后可发送查看安装进度指令继续查看。"
-fi
+RUN_CONTEXT=agentchat_launcher \
+DEPLOY_SUPERVISOR=1 \
+INSTALL_ACTION=full \
+RUN_SYSTEM_UPGRADE=0 \
+OPENCLAW_UPDATE=auto \
+INSTALL_EXTRA_PLUGINS=0 \
+INSTALL_NONINTERACTIVE=1 \
+LOG_FILE="$LOG" \
+STATE_FILE="$STATE" \
+PID_FILE="$PIDFILE" \
+bash "$TARGET"
 ```
 
-高级维护命令只在确实需要系统升级、OpenClaw 主动升级或额外插件时使用，不作为默认流程：
-
-```bash
-INSTALL_ACTION=full RUN_SYSTEM_UPGRADE=1 OPENCLAW_UPDATE=1 INSTALL_EXTRA_PLUGINS=1 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh
-```
-
-完成后请执行验证：
-
-```bash
-miloco-cli service status
-openclaw gateway status
-openclaw plugins list | grep -i -C 2 miloco
-ss -ltnp | grep -E ':(1810|18789)\b'
-```
-
-如果成功，请按这个模板回复：
+执行后请只用中文输出下面这个模板，不要继续轮询：
 
 ```text
-馨光 AI 设计灯光部署结果
-
-状态：成功
+馨光 AI 设计灯光后台部署已启动
 脚本版本：
-OpenClaw CLI 版本：
-OpenClaw Gateway 版本：
-Miloco 状态：
-Miloco 端口：
-OpenClaw gateway 状态：
-Miloco 插件状态：
-总耗时：
+后台任务：
+进程 PID：
 日志文件：
+状态文件：
 
-下一步需要人工处理：
-1. 配置 MiMo API Key
-2. 绑定米家账号
-3. 确认馨光淡彩光设备已出现在设备列表
-4. 后续安装馨光 Skill
-```
-
-如果未完成，请按这个模板回复：
-
-```text
-馨光 AI 设计灯光部署结果
-
-状态：未完成 / 可继续
-脚本版本：
-最后完成步骤：
-中断位置：
-疑似原因：
-是否发现 ERROR / Failed / Traceback：
-建议继续命令：
-日志文件：
+说明：
+部署任务已在服务器后台运行。
+如果页面稍后出现 OpenClaw 网关异常，通常是 Gateway 正在重启。
+请等待 1～3 分钟后点击「重新连接」。
+重新连接后发送「查看安装进度」。
+不要重复发送一键部署指令。
 ```
 
 重要限制：
+- 普通用户不需要 SSH。
 - 不要把 Miloco 面板直接暴露到公网。
 - `127.0.0.1:1810` 是云服务器内部地址，不能在用户自己的电脑上直接打开。
-- 如果确实需要访问面板，只能通过 SSH 隧道。
 - 不要输出或保存 SSH 密码、token、MiMo API Key。
 - 默认跳过微信绑定、米家账号绑定、MiMo API Key 配置。
