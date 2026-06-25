@@ -26,6 +26,13 @@
 - 本地教程：[docs/miloco-openclaw-cloud-install.html](docs/miloco-openclaw-cloud-install.html)
 - 公开地址：https://nijez.github.io/xingguang-ai-lighting-guide/
 
+## 相关入口
+
+- 购买腾讯云小龙虾服务器：https://cloud.tencent.com/act/pro/openclaw
+- 查看腾讯云 OpenClaw 实践教程：https://cloud.tencent.com/document/product/1207/127874
+- 小米 MiMo 开放平台：https://platform.xiaomimimo.com/
+- OpenClaw 配置 MiMo 说明：https://mimo.mi.com/docs/zh-CN/tokenplan/integration/openclaw
+
 ## MiMo API Key 说明
 
 小龙虾和馨光 AI 设计灯光能力都会用到 MiMo API Key。
