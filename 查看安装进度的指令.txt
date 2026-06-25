@@ -86,7 +86,7 @@ echo "状态文件: $STATE"
 if [ -n "$RECONNECT_STATE" ]; then
   echo "--- Gateway 重启说明 ---"
   echo "Gateway 正在或刚刚重启，这是部署过程中的预期行为。"
-  echo "如果页面断线，请等待 1～3 分钟后点击重新连接。"
+  echo "如果页面断线，请等待 1～3 分钟后刷新页面；如果刷新后是空白对话框，直接发送查看安装进度。"
 fi
 
 if [ "$STATUS" = RUNNING ] && [ "$IDLE" -ge 180 ]; then

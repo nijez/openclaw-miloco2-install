@@ -8,7 +8,7 @@ set -Eeuo pipefail
 # - WeChat channel installation/login is skipped.
 # - MiMo API key is configured only when MIMO_API_KEY is supplied.
 
-SCRIPT_VERSION="2026-06-25.2"
+SCRIPT_VERSION="2026-06-25.3"
 TOTAL_STEPS=6
 MILOCO_VERSION="${MILOCO_VERSION:-2026.6.18}"
 OPENCLAW_PORT="${OPENCLAW_PORT:-18789}"
@@ -234,8 +234,8 @@ launch_background_supervisor() {
 说明：
 部署任务已在服务器后台运行。
 如果页面稍后出现 OpenClaw 网关异常，通常是 Gateway 正在重启。
-请等待 1～3 分钟后点击「重新连接」。
-重新连接后发送「查看安装进度」。
+请等待 1～3 分钟后刷新页面。
+如果刷新后出现空白对话框，直接发送「查看安装进度」。
 不要重复发送一键部署指令。
 EOF
 }

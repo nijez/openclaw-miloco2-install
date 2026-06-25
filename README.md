@@ -23,7 +23,7 @@ OpenClaw 对话模式使用“前台启动 + 后台 supervisor 部署”：
 - 状态写入 `/tmp/openclaw-miloco-install.state`。
 - 一键部署指令只负责启动独立后台任务，并尽快结束当前回复。
 - 后台任务负责 OpenClaw 最低版本检查、必要时升级、Miloco 2.0 部署和 Gateway 重启。
-- 如果 Gateway 重启导致 AgentChat 页面短暂断线，等待 1-3 分钟后点击“重新连接”，再发送 `docs/查看安装进度的指令.txt`。
+- 如果 Gateway 重启导致 AgentChat 页面短暂断线，等待 1-3 分钟后刷新页面；如果刷新后是空白对话框，直接发送 `docs/查看安装进度的指令.txt`。
 
 ## EdgeOne 发布状态
 
@@ -216,7 +216,7 @@ INSTALL_ACTION=continue RUN_SYSTEM_UPGRADE=0 OPENCLAW_UPDATE=auto INSTALL_EXTRA_
 新版脚本启动时会显示脚本版本，例如：
 
 ```text
-Starting Xingguang AI lighting install (script 2026-06-25.2)
+Starting Xingguang AI lighting install (script 2026-06-25.3)
 ```
 
 脚本会按 6 个步骤显示进度：

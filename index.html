@@ -339,7 +339,7 @@
         <h1>馨光 AI 设计灯光安装指导：第一阶段 OpenClaw + Miloco 2.0 底座部署</h1>
         <p class="lead">本教程默认使用腾讯云轻量应用服务器的 OpenClaw 应用模板。普通用户优先走龙虾对话里的傻瓜式部署流程，不需要手动 SSH，也不需要理解 Linux 命令。</p>
       </div>
-      <div class="version">脚本版本：2026-06-25.2</div>
+      <div class="version">脚本版本：2026-06-25.3</div>
     </header>
 
     <div class="layout">
@@ -414,7 +414,7 @@
         <section id="agent">
           <h2>把一键部署指令发给龙虾</h2>
           <p>下面这份指令只负责下载脚本、检查版本、启动独立后台部署任务。后台任务会继续完成 OpenClaw 最低版本检查、必要升级、Miloco 部署和 Gateway 重启。</p>
-          <div class="notice">默认参数：<code>RUN_SYSTEM_UPGRADE=0</code>、<code>OPENCLAW_UPDATE=auto</code>、<code>INSTALL_EXTRA_PLUGINS=0</code>、<code>INSTALL_NONINTERACTIVE=1</code>。OpenClaw 已安装且满足最低兼容版本时跳过升级；低于最低兼容版本时会由后台任务自动升级。Gateway 重启期间 AgentChat 可能短暂断线，等待 1-3 分钟后点击“重新连接”即可。</div>
+          <div class="notice">默认参数：<code>RUN_SYSTEM_UPGRADE=0</code>、<code>OPENCLAW_UPDATE=auto</code>、<code>INSTALL_EXTRA_PLUGINS=0</code>、<code>INSTALL_NONINTERACTIVE=1</code>。OpenClaw 已安装且满足最低兼容版本时跳过升级；低于最低兼容版本时会由后台任务自动升级。Gateway 重启期间 AgentChat 可能短暂断线，等待 1-3 分钟后刷新页面即可。</div>
           <div class="cmd">
             <div class="cmd-title"><span>发给龙虾的一键部署指令</span><button class="copy-btn" data-copy-textarea="agentPrompt">复制指令</button></div>
             <textarea id="agentPrompt" class="prompt-box" readonly>请你在这台服务器上执行「馨光 AI 设计灯光安装指导：第一阶段 OpenClaw + Miloco 2.0 底座部署」。默认环境是腾讯云轻量应用服务器的 OpenClaw 应用模板，OpenClaw 已预装。请不要自行搜索网络，不要改用源码安装、pip/pipx 安装、Docker 安装或手工解包安装。
@@ -430,7 +430,7 @@
 2. 启动独立后台部署任务。
 3. 后台任务负责 OpenClaw 最低版本检查、必要时升级、Miloco 2.0 部署和 Gateway 重启。
 4. 默认跳过微信绑定、米家账号绑定、MiMo API Key 配置。
-5. 如果 Gateway 重启导致 AgentChat 页面短暂断线，提示用户等待 1～3 分钟后重新连接。
+5. 如果 Gateway 重启导致 AgentChat 页面短暂断线，提示用户等待 1～3 分钟后刷新页面；如果刷新后是空白对话框，直接发送查看安装进度。
 
 当前阶段只部署底座，不安装馨光智能 Skill。馨光 Skill、设备白名单、淡彩光颜色规则和真机验收属于第二阶段。
 
@@ -441,7 +441,7 @@ TARGET=/tmp/install-miloco-openclaw-cloud.sh
 LOG=/tmp/openclaw-miloco-install-current.log
 PIDFILE=/tmp/openclaw-miloco-install.pid
 STATE=/tmp/openclaw-miloco-install.state
-EXPECTED_VERSION=2026-06-25.2
+EXPECTED_VERSION=2026-06-25.3
 rm -f "$TARGET"
 
 for URL in \
@@ -486,8 +486,8 @@ bash "$TARGET"
 说明：
 部署任务已在服务器后台运行。
 如果页面稍后出现 OpenClaw 网关异常，通常是 Gateway 正在重启。
-请等待 1～3 分钟后点击「重新连接」。
-重新连接后发送「查看安装进度」。
+请等待 1～3 分钟后刷新页面。
+如果刷新后出现空白对话框，直接发送「查看安装进度」。
 不要重复发送一键部署指令。
 ```
 
@@ -600,7 +600,7 @@ echo "状态文件: $STATE"
 if [ -n "$RECONNECT_STATE" ]; then
   echo "--- Gateway 重启说明 ---"
   echo "Gateway 正在或刚刚重启，这是部署过程中的预期行为。"
-  echo "如果页面断线，请等待 1～3 分钟后点击重新连接。"
+  echo "如果页面断线，请等待 1～3 分钟后刷新页面；如果刷新后是空白对话框，直接发送查看安装进度。"
 fi
 
 if [ "$STATUS" = RUNNING ] &amp;&amp; [ "$IDLE" -ge 180 ]; then

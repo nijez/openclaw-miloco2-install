@@ -11,7 +11,7 @@
 2. 启动独立后台部署任务。
 3. 后台任务负责 OpenClaw 最低版本检查、必要时升级、Miloco 2.0 部署和 Gateway 重启。
 4. 默认跳过微信绑定、米家账号绑定、MiMo API Key 配置。
-5. 如果 Gateway 重启导致 AgentChat 页面短暂断线，提示用户等待 1～3 分钟后重新连接。
+5. 如果 Gateway 重启导致 AgentChat 页面短暂断线，提示用户等待 1～3 分钟后刷新页面；如果刷新后是空白对话框，直接发送查看安装进度。
 
 当前阶段只部署底座，不安装馨光智能 Skill。馨光 Skill、设备白名单、淡彩光颜色规则和真机验收属于第二阶段。
 
@@ -22,7 +22,7 @@ TARGET=/tmp/install-miloco-openclaw-cloud.sh
 LOG=/tmp/openclaw-miloco-install-current.log
 PIDFILE=/tmp/openclaw-miloco-install.pid
 STATE=/tmp/openclaw-miloco-install.state
-EXPECTED_VERSION=2026-06-25.2
+EXPECTED_VERSION=2026-06-25.3
 rm -f "$TARGET"
 
 for URL in \
@@ -67,8 +67,8 @@ bash "$TARGET"
 说明：
 部署任务已在服务器后台运行。
 如果页面稍后出现 OpenClaw 网关异常，通常是 Gateway 正在重启。
-请等待 1～3 分钟后点击「重新连接」。
-重新连接后发送「查看安装进度」。
+请等待 1～3 分钟后刷新页面。
+如果刷新后出现空白对话框，直接发送「查看安装进度」。
 不要重复发送一键部署指令。
 ```
 
