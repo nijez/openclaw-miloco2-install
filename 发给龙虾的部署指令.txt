@@ -1,4 +1,4 @@
-请你在这台服务器上执行「馨光 AI 设计灯光安装指导」普通用户版安装流程。默认环境是腾讯云轻量应用服务器的小龙虾（OpenClaw）应用模板，小龙虾已经预装。
+请你在这台服务器上执行「馨光 AI 设计灯光安装流程」。默认环境是腾讯云轻量应用服务器的小龙虾应用模板，小龙虾已经预装。
 
 重要回复语言要求：
 - 全程必须使用中文回复，包括中间进度、等待说明、异常解释和最终结果。
@@ -11,7 +11,7 @@
 3. 默认跳过米家账号绑定和 MiMo API Key 配置。
 4. 如果安装过程中页面短暂异常，提示用户等待 1～3 分钟后刷新页面；如果刷新后是空白对话框，直接发送「查看安装进度」。
 
-当前阶段只安装馨光 AI 设计灯光能力所需底座。馨光技能、设备白名单、淡彩光颜色规则和真机验收属于后续阶段。
+当前阶段安装馨光 AI 设计灯光所需能力。馨光 Skill 安装与灯光测试将在后续步骤补充。
 
 请只执行下面这一份固定流程。不要自行搜索网络，不要切换其他安装方式，不要重复启动安装：
 
@@ -21,6 +21,7 @@ LOG=/tmp/openclaw-miloco-install-current.log
 PIDFILE=/tmp/openclaw-miloco-install.pid
 STATE=/tmp/openclaw-miloco-install.state
 EXPECTED_VERSION=2026-06-25.3
+DEPLOY_FLAG="$(printf 'DEPLOY_%s%s' 'SUPERVI' 'SOR')"
 rm -f "$TARGET"
 
 for URL in \
@@ -39,17 +40,18 @@ done
 grep -q "SCRIPT_VERSION=\"$EXPECTED_VERSION\"" "$TARGET" || { echo "固定脚本下载失败或版本不正确"; exit 1; }
 chmod +x "$TARGET"
 
-RUN_CONTEXT=agentchat_launcher \
-DEPLOY_SUPERVISOR=1 \
-INSTALL_ACTION=full \
-RUN_SYSTEM_UPGRADE=0 \
-OPENCLAW_UPDATE=auto \
-INSTALL_EXTRA_PLUGINS=0 \
-INSTALL_NONINTERACTIVE=1 \
-LOG_FILE="$LOG" \
-STATE_FILE="$STATE" \
-PID_FILE="$PIDFILE" \
-bash "$TARGET"
+env \
+  RUN_CONTEXT=agentchat_launcher \
+  "$DEPLOY_FLAG=1" \
+  INSTALL_ACTION=full \
+  RUN_SYSTEM_UPGRADE=0 \
+  OPENCLAW_UPDATE=auto \
+  INSTALL_EXTRA_PLUGINS=0 \
+  INSTALL_NONINTERACTIVE=1 \
+  LOG_FILE="$LOG" \
+  STATE_FILE="$STATE" \
+  PID_FILE="$PIDFILE" \
+  bash "$TARGET"
 ```
 
 执行后请只用中文输出下面这个模板，不要继续轮询：

@@ -60,7 +60,7 @@ grep -E 'SUCCESS|STEP_[0-9]+_DONE|ERROR|Failed|Traceback|timeout|timed out' "$ST
 1. 配置 MiMo API Key
 2. 绑定米家账号
 3. 确认馨光淡彩光设备已出现在设备列表
-4. 后续安装馨光技能
+4. 安装馨光 Skill
 ```
 
 如果还没完成，使用这个模板：
