@@ -424,6 +424,7 @@
 - 不要用英文写 “I'll / Let me / Good / It's progressing” 这类过程说明。
 - 命令输出或日志里的英文可以作为必要关键词保留，但你的解释必须翻译成中文。
 - 每次观察进度时只用中文简短说明当前状态，不要输出英文思考过程。
+- 每次中间汇报都必须带“检查时间”，不要只说继续等待。
 
 目标：
 1. 检查已预装 OpenClaw 和 gateway 状态。
@@ -465,15 +466,18 @@ nohup bash -lc 'INSTALL_ACTION=full RUN_SYSTEM_UPGRADE=0 OPENCLAW_UPDATE=0 INSTA
 echo $! > "$PIDFILE"
 PID="$(cat "$PIDFILE")"
 START_TS="$(date +%s)"
+START_TIME="$(date '+%F %T %Z')"
 LAST_SIZE=0
 LAST_CHANGE="$START_TS"
 
 echo "安装进程已启动 PID=$PID"
+echo "启动时间: $START_TIME"
 echo "日志文件: $LOG"
 echo "状态文件: $STATE"
 
 for i in $(seq 1 90); do
   NOW="$(date +%s)"
+  CHECK_TIME="$(date '+%F %T %Z')"
   SIZE="$(wc -c < "$LOG" 2>/dev/null || echo 0)"
   if [ "$SIZE" != "$LAST_SIZE" ]; then
     LAST_SIZE="$SIZE"
@@ -481,10 +485,12 @@ for i in $(seq 1 90); do
   fi
   IDLE="$((NOW - LAST_CHANGE))"
   ELAPSED="$((NOW - START_TS))"
+  LAST_CHANGE_TIME="$(date -d "@$LAST_CHANGE" '+%F %T %Z' 2>/dev/null || date '+%F %T %Z')"
   STEP="$(grep -E 'Step [0-9]+/6|STATE: STEP_[0-9]+_DONE|ERROR|Failed|Traceback|timeout|Timing:|Done' "$LOG" 2>/dev/null | tail -n 1 || true)"
 
   echo
   echo "===== 安装进度检查 $i/90 ====="
+  echo "检查时间: $CHECK_TIME"
   if kill -0 "$PID" 2>/dev/null; then
     echo "状态: RUNNING"
   elif [ -f "$STATE" ] && grep -q '^STEP_6_DONE$' "$STATE"; then
@@ -492,8 +498,10 @@ for i in $(seq 1 90); do
   else
     echo "状态: EXITED_BUT_INCOMPLETE"
   fi
+  echo "启动时间: $START_TIME"
   echo "已运行: ${ELAPSED}s"
   echo "日志最后更新: ${IDLE}s 前"
+  echo "日志最后变化时间: $LAST_CHANGE_TIME"
   echo "当前进度: ${STEP:-尚未写入步骤日志，可能正在初始化或下载}"
 
   echo "--- 关键进度 ---"
@@ -597,6 +605,7 @@ Miloco 插件状态：
 - 不要用英文写 “I'll / Let me / Good / It's progressing” 这类过程说明。
 - 命令输出或日志里的英文可以作为必要关键词保留，但你的解释必须翻译成中文。
 - 每次观察进度时只用中文简短说明当前状态，不要输出英文思考过程。
+- 每次中间汇报都必须带“检查时间”，不要只说继续等待。
 
 请只执行下面这些命令：
 
@@ -605,6 +614,7 @@ PIDFILE=/tmp/openclaw-miloco-install.pid
 LOG=/tmp/openclaw-miloco-install-current.log
 STATE=/tmp/openclaw-miloco-install.state
 NOW="$(date +%s)"
+CHECK_TIME="$(date '+%F %T %Z')"
 CONTINUE_CMD='INSTALL_ACTION=continue RUN_SYSTEM_UPGRADE=0 OPENCLAW_UPDATE=0 INSTALL_EXTRA_PLUGINS=0 INSTALL_NONINTERACTIVE=1 bash /tmp/install-miloco-openclaw-cloud.sh'
 
 if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
@@ -632,20 +642,24 @@ done
 
 if [ -f "$LOG" ]; then
   LOG_MTIME="$(stat -c %Y "$LOG" 2>/dev/null || date +%s)"
+  LOG_MTIME_TEXT="$(date -d "@$LOG_MTIME" '+%F %T %Z' 2>/dev/null || date '+%F %T %Z')"
   IDLE="$((NOW - LOG_MTIME))"
   STEP="$(grep -E 'Step [0-9]+/6|STATE: STEP_[0-9]+_DONE|ERROR|Failed|Traceback|timeout|Timing:|Done' "$LOG" 2>/dev/null | tail -n 1 || true)"
   ERRORS="$(grep -Ei 'ERROR|Failed|Traceback|timeout|timed out' "$LOG" 2>/dev/null | tail -n 20 || true)"
 else
   IDLE=-1
+  LOG_MTIME_TEXT=""
   STEP=""
   ERRORS=""
 fi
 
+echo "检查时间: $CHECK_TIME"
 echo "最后完成步骤: ${LAST_DONE:-none}"
 echo "下一步: $NEXT_STEP"
 echo "当前进度: ${STEP:-尚未找到步骤日志}"
 if [ "$IDLE" -ge 0 ]; then
   echo "日志最后更新: ${IDLE}s 前"
+  echo "日志最后变化时间: $LOG_MTIME_TEXT"
 fi
 echo "日志文件: $LOG"
 echo "状态文件: $STATE"
@@ -685,18 +699,21 @@ openclaw plugins list 2>/dev/null | grep -i -C 2 miloco || true
 
 然后用中文告诉我：
 
-1. 当前状态是 RUNNING、FINISHED 还是 EXITED_BUT_INCOMPLETE。
-2. 最后完成到哪一步，下一步是哪一步。
-3. 最近日志里有没有 ERROR / Failed / Traceback / timeout。
-4. 如果日志 180 秒以上没有更新，请明确说明“安装进程仍在运行，但暂无新日志”。
-5. 我是否需要继续等待，还是执行继续命令。</textarea>
+1. 本次检查时间，以及日志最后变化时间。
+2. 当前状态是 RUNNING、FINISHED 还是 EXITED_BUT_INCOMPLETE。
+3. 最后完成到哪一步，下一步是哪一步。
+4. 最近日志里有没有 ERROR / Failed / Traceback / timeout。
+5. 如果日志 180 秒以上没有更新，请明确说明“安装进程仍在运行，但暂无新日志”。
+6. 我是否需要继续等待，还是执行继续命令。</textarea>
           </div>
           <div class="terminal">
             <div class="terminal-bar">进度状态示意</div>
             <pre><span class="term-blue">状态: RUNNING</span>
+检查时间: 2026-06-25 13:05:20 CST
 最后完成步骤: STEP_2_DONE
 下一步: STEP_3
 日志最后更新: 42s 前
+日志最后变化时间: 2026-06-25 13:04:38 CST
 
 <span class="term-yellow">状态: EXITED_BUT_INCOMPLETE</span>
 最后完成步骤: STEP_2_DONE

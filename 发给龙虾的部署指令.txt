@@ -5,6 +5,7 @@
 - 不要用英文写 “I'll / Let me / Good / It's progressing” 这类过程说明。
 - 命令输出或日志里的英文可以作为必要关键词保留，但你的解释必须翻译成中文。
 - 每次观察进度时只用中文简短说明当前状态，不要输出英文思考过程。
+- 每次中间汇报都必须带“检查时间”，不要只说继续等待。
 
 目标：
 1. 检查已预装 OpenClaw 和 gateway 状态。
@@ -46,15 +47,18 @@ nohup bash -lc 'INSTALL_ACTION=full RUN_SYSTEM_UPGRADE=0 OPENCLAW_UPDATE=0 INSTA
 echo $! > "$PIDFILE"
 PID="$(cat "$PIDFILE")"
 START_TS="$(date +%s)"
+START_TIME="$(date '+%F %T %Z')"
 LAST_SIZE=0
 LAST_CHANGE="$START_TS"
 
 echo "安装进程已启动 PID=$PID"
+echo "启动时间: $START_TIME"
 echo "日志文件: $LOG"
 echo "状态文件: $STATE"
 
 for i in $(seq 1 90); do
   NOW="$(date +%s)"
+  CHECK_TIME="$(date '+%F %T %Z')"
   SIZE="$(wc -c < "$LOG" 2>/dev/null || echo 0)"
   if [ "$SIZE" != "$LAST_SIZE" ]; then
     LAST_SIZE="$SIZE"
@@ -62,10 +66,12 @@ for i in $(seq 1 90); do
   fi
   IDLE="$((NOW - LAST_CHANGE))"
   ELAPSED="$((NOW - START_TS))"
+  LAST_CHANGE_TIME="$(date -d "@$LAST_CHANGE" '+%F %T %Z' 2>/dev/null || date '+%F %T %Z')"
   STEP="$(grep -E 'Step [0-9]+/6|STATE: STEP_[0-9]+_DONE|ERROR|Failed|Traceback|timeout|Timing:|Done' "$LOG" 2>/dev/null | tail -n 1 || true)"
 
   echo
   echo "===== 安装进度检查 $i/90 ====="
+  echo "检查时间: $CHECK_TIME"
   if kill -0 "$PID" 2>/dev/null; then
     echo "状态: RUNNING"
   elif [ -f "$STATE" ] && grep -q '^STEP_6_DONE$' "$STATE"; then
@@ -73,8 +79,10 @@ for i in $(seq 1 90); do
   else
     echo "状态: EXITED_BUT_INCOMPLETE"
   fi
+  echo "启动时间: $START_TIME"
   echo "已运行: ${ELAPSED}s"
   echo "日志最后更新: ${IDLE}s 前"
+  echo "日志最后变化时间: $LAST_CHANGE_TIME"
   echo "当前进度: ${STEP:-尚未写入步骤日志，可能正在初始化或下载}"
 
   echo "--- 关键进度 ---"
