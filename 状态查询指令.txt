@@ -1,0 +1,5 @@
+如果刷新后没有看到进度，复制下面这条状态查询指令，发送给小龙虾。
+
+```bash
+curl -fsSL https://nijez.github.io/xingguang-ai-lighting-guide/install-xinguang-ai-light.sh | bash -s -- status
+```

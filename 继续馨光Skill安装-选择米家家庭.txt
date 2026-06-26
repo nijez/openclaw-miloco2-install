@@ -1,46 +1,5 @@
-请继续执行「馨光 Skill 安装」。全程必须使用中文回复。
-
-这次我已经选择了米家家庭。请只切换到这个家庭，并读取该家庭下的设备列表。
-执行前，请把下面命令里的“用户选择的家庭名称”替换成我刚刚回复的家庭名称。
-
-重要要求：
-1. 不要自动使用第一个家庭。
-2. 不要让我选择产品类型、设备编号或设备型号。
-3. 不要控制灯光。
-4. 不要展开复杂说明。
-
-本次选择的家庭请使用用户刚刚回复的家庭名称：
-
-```text
-家庭：用户选择的家庭名称
-```
-
-请只执行下面这份固定流程：
+把下面命令里的“用户选择的家庭名称”替换成你刚刚选择的家庭名称，然后发送给小龙虾。
 
 ```bash
-TARGET=/tmp/install-xinguang-skill.sh
-EXPECTED_VERSION=2026-06-26.4
-LOG=/tmp/xinguang-skill-install-current.log
-RUN_MARKER=/tmp/xinguang-skill-install.marker
-
-grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$EXPECTED_VERSION\"" "$TARGET" || { echo "馨光 Skill 安装脚本不存在或版本不正确，请联系工作人员处理。"; exit 1; }
-chmod +x "$TARGET"
-
-nohup env \
-  XINGUANG_TARGET_HOME="用户选择的家庭名称" \
-  INSTALL_ACTION=continue \
-  INSTALL_NONINTERACTIVE=1 \
-  bash "$TARGET" >> "$LOG" 2>&1 &
-
-echo $! > "$RUN_MARKER"
-
-echo "正在安装馨光 Skill。"
-echo "稍后请发送「查看馨光 Skill 安装进度」。"
-```
-
-执行后只回复：
-
-```text
-正在安装馨光 Skill。
-稍后请发送「查看馨光 Skill 安装进度」。
+curl -fsSL https://nijez.github.io/xingguang-ai-lighting-guide/install-xinguang-skill.sh -o /tmp/xinguang-skill.sh && XINGUANG_TARGET_HOME="用户选择的家庭名称" INSTALL_ACTION=continue INSTALL_NONINTERACTIVE=1 bash /tmp/xinguang-skill.sh
 ```

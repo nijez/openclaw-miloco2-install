@@ -1,54 +1,5 @@
-请查看「馨光 Skill 安装」进度。只读取状态，不要重新安装，不要修改脚本，不要切换安装方法。全程必须使用中文回复。
-
-用户只需要知道当前状态和下一步。不要展开复杂说明。
-
-请只执行下面这些只读检查：
+如果刷新后没有看到馨光 Skill 安装进度，复制下面这条指令，发送给小龙虾。
 
 ```bash
-TARGET=/tmp/install-xinguang-skill.sh
-EXPECTED_VERSION=2026-06-26.4
-
-if [ ! -f "$TARGET" ] || ! grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$EXPECTED_VERSION\"" "$TARGET" 2>/dev/null; then
-  for URL in \
-    https://nijez.github.io/xingguang-ai-lighting-guide/install-xinguang-skill.sh \
-    https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/install-xinguang-skill.sh \
-    https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/install-xinguang-skill.sh
-  do
-    if curl -fsSL "$URL" -o "$TARGET" && grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$EXPECTED_VERSION\"" "$TARGET"; then
-      chmod +x "$TARGET"
-      break
-    fi
-  done
-fi
-
-grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$EXPECTED_VERSION\"" "$TARGET" || { echo "暂时无法读取馨光 Skill 安装进度，请联系工作人员处理。"; exit 0; }
-
-INSTALL_ACTION=status bash "$TARGET"
-```
-
-如果需要选择家庭，回复：
-
-```text
-检测到多个家庭，请选择馨光设备所在家庭。
-```
-
-如果馨光 Skill 已准备好，回复：
-
-```text
-馨光 Skill 已安装，可以开始测试灯光。
-
-你可以说：
-二楼客厅来个佛光普照
-```
-
-如果仍在准备，回复：
-
-```text
-正在安装馨光 Skill。
-```
-
-如果安装失败或无法继续，回复：
-
-```text
-馨光 Skill 暂时无法继续，请联系工作人员处理。
+curl -fsSL https://nijez.github.io/xingguang-ai-lighting-guide/install-xinguang-skill.sh -o /tmp/xinguang-skill.sh && INSTALL_ACTION=status INSTALL_NONINTERACTIVE=1 bash /tmp/xinguang-skill.sh
 ```

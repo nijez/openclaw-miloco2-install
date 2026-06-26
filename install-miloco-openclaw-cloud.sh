@@ -8,7 +8,7 @@ set -Eeuo pipefail
 # - WeChat channel installation/login is skipped.
 # - MiMo API key is configured only when MIMO_API_KEY is supplied.
 
-SCRIPT_VERSION="2026-06-25.10"
+SCRIPT_VERSION="2026-06-25.11"
 TOTAL_STEPS=6
 MILOCO_VERSION="${MILOCO_VERSION:-2026.6.18}"
 OPENCLAW_PORT="${OPENCLAW_PORT:-18789}"
@@ -210,7 +210,7 @@ progress_message_for_marker() {
     GATEWAY_RESTART_SCHEDULED|AGENTCHAT_RECONNECT_EXPECTED)
       cat <<'EOF'
 小龙虾后台服务正在重启，请等待 1–3 分钟后刷新页面。
-刷新后如果是空白对话框，再发送「查看安装进度」。
+如果刷新后没有看到进度，请复制状态查询指令发给小龙虾。
 不要重复发送一键安装指令。
 EOF
       ;;
@@ -301,14 +301,14 @@ observe_background_progress() {
     cat <<EOF
 
 安装还在继续，请稍候。
-如果超过 2 分钟没有新进度，再发送「查看安装进度」。
+如果超过 2 分钟没有新进度，请复制状态查询指令发给小龙虾。
 不要重复发送一键安装指令。
 EOF
   else
     cat <<EOF
 
 安装暂时无法确认。
-如果超过 2 分钟没有新进度，再发送「查看安装进度」。
+如果超过 2 分钟没有新进度，请复制状态查询指令发给小龙虾。
 不要重复发送一键安装指令。
 EOF
   fi
@@ -1779,7 +1779,7 @@ run_status_report() {
   elif state_has GATEWAY_RESTART_SCHEDULED || state_has AGENTCHAT_RECONNECT_EXPECTED; then
     cat <<'EOF'
 小龙虾后台服务正在重启，请等待 1–3 分钟后刷新页面。
-刷新后如果是空白对话框，再发送「查看安装进度」。
+如果刷新后没有看到进度，请复制状态查询指令发给小龙虾。
 不要重复发送一键安装指令。
 EOF
   elif state_has STEP_3_DONE || state_has STEP_4_STARTED || state_has STEP_4_DONE || state_has STEP_5_STARTED || state_has STEP_5_DONE || state_has STEP_6_STARTED || state_has GATEWAY_RESTART_DONE; then
