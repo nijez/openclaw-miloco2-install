@@ -17,14 +17,14 @@ WAINFORT_API_PORT="${WAINFORT_API_PORT:-1888}"
 WAINFORT_MILOCO_URL="${WAINFORT_MILOCO_URL:-http://127.0.0.1:1810}"
 ROTATE_WAINFORT_TOKEN="${ROTATE_WAINFORT_TOKEN:-0}"
 
-SKILL_URLS="${SKILL_URLS:-https://nijez.github.io/xingguang-ai-lighting-guide/wainfort-ai-lighting-run-skill.txt https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/skills/wainfort-ai-lighting-run/SKILL.md https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/skills/wainfort-ai-lighting-run/SKILL.md https://nijez.github.io/xingguang-ai-lighting-guide/skills/wainfort-ai-lighting-run/SKILL.md}"
+SKILL_URLS="${SKILL_URLS:-https://nijez.github.io/xingguang-ai-lighting-guide/skills/wainfort-ai-lighting-run/SKILL.md https://nijez.github.io/xingguang-ai-lighting-guide/wainfort-ai-lighting-run-skill.txt https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/skills/wainfort-ai-lighting-run/SKILL.md https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/skills/wainfort-ai-lighting-run/SKILL.md}"
 
 ENV_FILE="$INSTALL_DIR/.env"
 SERVER_BIN="$INSTALL_DIR/wainfort-server"
 SERVER_PID_FILE="$INSTALL_DIR/wainfort-server.pid"
 API_LOG="$INSTALL_DIR/api.log"
 PUBLIC_SKILL_DIR="$INSTALL_DIR/downloads/$SKILL_NAME"
-LOCAL_SKILL_DIR="$INSTALL_DIR/openclaw-skill/$SKILL_NAME"
+LOCAL_SKILL_DIR="${LOCAL_SKILL_DIR:-/tmp/xinguang-skill/$SKILL_NAME}"
 LOCAL_SKILL_FILE="$LOCAL_SKILL_DIR/SKILL.md"
 DEVICE_CACHE="$INSTALL_DIR/devices-last.json"
 
