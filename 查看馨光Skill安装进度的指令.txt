@@ -1,12 +1,12 @@
 请查看「馨光 Skill 安装」进度。只读取状态，不要重新安装，不要修改脚本，不要切换安装方法。全程必须使用中文回复。
 
+用户只需要知道当前状态和下一步。不要展开复杂说明。
+
 请只执行下面这些只读检查：
 
 ```bash
 TARGET=/tmp/install-xinguang-skill.sh
-EXPECTED_VERSION=2026-06-26.3
-REJECT_VERSION_1=2026-06-26.1
-REJECT_VERSION_2=2026-06-26.2
+EXPECTED_VERSION=2026-06-26.4
 
 if [ ! -f "$TARGET" ] || ! grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$EXPECTED_VERSION\"" "$TARGET" 2>/dev/null; then
   for URL in \
@@ -21,157 +21,31 @@ if [ ! -f "$TARGET" ] || ! grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$EXPECTED
   done
 fi
 
-grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$REJECT_VERSION_1\"" "$TARGET" 2>/dev/null && { echo "无法读取馨光 Skill 安装进度：检测到旧版 $REJECT_VERSION_1，当前必须使用 $EXPECTED_VERSION"; exit 1; }
-grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$REJECT_VERSION_2\"" "$TARGET" 2>/dev/null && { echo "无法读取馨光 Skill 安装进度：检测到旧版 $REJECT_VERSION_2，当前必须使用 $EXPECTED_VERSION"; exit 1; }
-grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$EXPECTED_VERSION\"" "$TARGET" || { echo "无法读取馨光 Skill 安装进度：安装脚本不存在或版本不正确，当前必须使用 $EXPECTED_VERSION"; exit 1; }
+grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$EXPECTED_VERSION\"" "$TARGET" || { echo "暂时无法读取馨光 Skill 安装进度，请联系工作人员处理。"; exit 0; }
 
 INSTALL_ACTION=status bash "$TARGET"
 ```
 
-然后用中文告诉我：
-
-1. 本次检查时间。
-2. 馨光 Skill 是否已准备好。
-3. 服务是否运行中。
-4. 是否已读取当前家庭下的设备列表。
-5. 最近是否有错误。
-6. 是否需要继续等待。
-7. 当前家庭、检测到的家庭列表、目标家庭。
-8. 下一步需要我做什么。
-
-如果设备列表已读取，使用这个模板：
+如果需要选择家庭，回复：
 
 ```text
-馨光 Skill 安装进度
-
-状态：已准备好
-设备列表：已读取
-
-下一步：
-可以直接输入自然语言灯光需求，例如：
-客厅设计一个马尔代夫灯光效果。
-二楼客厅来一个森林晨光。
-卧室做一个适合睡前放松的灯光。
+检测到多个家庭，请选择馨光设备所在家庭。
 ```
 
-如果设备列表还没有读取，使用这个模板：
+如果馨光 Skill 已准备好，回复：
 
 ```text
-馨光 Skill 安装进度
-
-状态：需要继续配置
-设备列表：未读取
-
-说明：
-暂未读取到当前家庭下的设备列表，请先确认米家账号已绑定。如果你的米家账号下有多个家庭，请先选择馨光设备所在的家庭。
+馨光 Skill 已安装，可以开始测试灯光。
 ```
 
-如果状态中出现 `HOME_SELECTION_REQUIRED`，使用这个模板：
+如果仍在准备，回复：
 
 ```text
-馨光 Skill 安装进度
-
-状态：需要选择米家家庭
-
-说明：
-检测到或无法确认多个米家家庭。请先选择馨光设备所在的家庭，不要自动使用第一个家庭。
-
-下一步：
-请选择馨光设备所在的家庭，然后发送继续安装指令。不要自动使用第一个家庭。
+正在安装馨光 Skill。
 ```
 
-如果状态中出现 `TARGET_HOME_NOT_FOUND`，使用这个模板：
+如果安装失败或无法继续，回复：
 
 ```text
-馨光 Skill 安装进度
-
-状态：未找到指定家庭
-
-说明：
-未找到指定家庭，请检查家庭名称。
-```
-
-如果状态中出现 `PHYSICAL_CONFIRMATION_REQUIRED`，使用这个模板：
-
-```text
-馨光 Skill 灯光测试
-
-状态：等待现场确认
-
-说明：
-灯光请求已发送，请观察目标设备是否发生变化。
-如果灯光已变化，请回复“已变化”。
-如果没有变化，请回复“未变化”。
-```
-
-如果状态中出现 `WAITING_PHYSICAL_CONFIRMATION`，使用这个模板：
-
-```text
-馨光 Skill 灯光测试
-
-状态：等待现场确认
-
-说明：
-灯光请求已发送，当前处于单次测试模式。请观察目标设备是否发生变化。
-如果灯光已变化，请回复“已变化”。
-如果灯光未变化，请回复“未变化”。
-不要重复发送灯光请求。
-```
-
-如果状态中出现 `PHYSICAL_CHANGED`，使用这个模板：
-
-```text
-馨光 Skill 灯光测试
-
-状态：现场已变化
-
-说明：
-已经记录现场灯光变化。本次测试按现场观察结果继续判断。
-```
-
-如果状态中出现 `PHYSICAL_NOT_CHANGED`，使用这个模板：
-
-```text
-馨光 Skill 灯光测试
-
-状态：现场未变化
-
-说明：
-已经记录现场未观察到灯光变化。本次灯光测试需要继续排查。
-```
-
-如果状态中出现 `PHYSICAL_SUCCESS_API_FALSE`，使用这个模板：
-
-```text
-馨光 Skill 灯光测试
-
-状态：实际控制成功，API 返回状态需修复
-
-说明：
-API 返回 success:false，但现场已经观察到灯光变化。本次灯光测试记录为成功，后续需要修复 API 返回状态。
-```
-
-如果状态中出现 `UNSTABLE_MULTIPLE_COMMANDS`，使用这个模板：
-
-```text
-馨光 Skill 灯光测试
-
-状态：本轮不能作为稳定验收
-
-说明：
-控制链路已经触达设备，但出现多条控制命令叠加，例如连续变色、关灯再亮或自动切换颜色。本轮不能作为稳定验收。
-
-下一步：
-下一轮必须使用「馨光 Skill 单次灯光测试」方式，只发送一次请求，发送后等待现场确认。
-```
-
-如果状态中出现 `WAINFORT_SERVER_DATA_DIR_UNSUPPORTED`，使用这个模板：
-
-```text
-馨光 Skill 安装进度
-
-状态：本地灯控服务版本不兼容
-
-说明：
-wainfort-server 当前版本写入了不可访问的 /root 路径，无法在当前用户下稳定运行。请更换支持用户目录的 wainfort-server 版本后再继续。
+馨光 Skill 暂时无法继续，请联系工作人员处理。
 ```

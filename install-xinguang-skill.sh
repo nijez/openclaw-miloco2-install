@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-XINGUANG_SKILL_INSTALLER_VERSION="2026-06-26.3"
+XINGUANG_SKILL_INSTALLER_VERSION="2026-06-26.4"
 XINGUANG_SKILL_VERSION="3.0.1"
 SKILL_NAME="wainfort-ai-lighting-run"
 SKILL_COMPANY="深圳市馨光智能物联有限公司"
@@ -56,7 +56,7 @@ state_mark() {
 
 die() {
   state_mark "ERROR: $*"
-  printf '\n馨光 Skill 安装未完成\n原因：%s\n日志文件：%s\n状态文件：%s\n' "$*" "$LOG_FILE" "$STATE_FILE" >&2
+  printf '\n馨光 Skill 暂时无法继续，请联系工作人员处理。\n' >&2
   exit 1
 }
 
@@ -202,9 +202,9 @@ install_skill() {
       state_mark SKILL_INSTALL_VERIFIED
       return 0
     fi
-    die "馨光 Skill 安装失败，请联系技术人员处理。"
+    die "馨光 Skill 安装失败，请联系工作人员处理。"
   fi
-  die "馨光 Skill 安装失败，请联系技术人员处理。"
+  die "馨光 Skill 安装失败，请联系工作人员处理。"
 }
 
 verify_server_checksum() {
@@ -226,7 +226,7 @@ verify_server_checksum() {
     state_mark SERVER_SHA256_OK
     return 0
   fi
-  die "无法校验 wainfort-server 文件，请联系技术人员处理。"
+  die "无法校验 wainfort-server 文件，请联系工作人员处理。"
 }
 
 download_server() {
@@ -262,14 +262,16 @@ server_data_dir_unsupported() {
 
 fail_server_data_dir_unsupported() {
   state_mark WAINFORT_SERVER_DATA_DIR_UNSUPPORTED
-  die "wainfort-server 当前版本写入了不可访问的 /root 路径，无法在当前用户下稳定运行。请更换支持用户目录的 wainfort-server 版本后再继续。"
+  die "灯光服务暂时无法启动"
 }
 
 start_server() {
   load_env_if_present
+  printf '正在准备灯光服务。\n'
   if server_status_ok; then
     state_mark SERVER_ALREADY_RUNNING
     state_mark WAINFORT_SERVER_READY
+    printf '灯光服务已就绪。\n'
     return 0
   fi
   if server_process_running; then
@@ -299,6 +301,7 @@ start_server() {
     if server_status_ok; then
       state_mark SERVER_STATUS_OK
       state_mark WAINFORT_SERVER_READY
+      printf '灯光服务已就绪。\n'
       return 0
     fi
     sleep 2
@@ -313,7 +316,8 @@ start_server() {
     return 0
   fi
   state_mark WAINFORT_SERVER_START_FAILED
-  die "wainfort-server 未能启动"
+  printf '灯光服务暂时无法启动，请联系工作人员处理。\n' >&2
+  exit 1
 }
 
 query_home_list() {
@@ -608,7 +612,7 @@ switch_to_target_home() {
   fi
 
   state_mark HOME_SWITCH_VERIFY_FAILED
-  die "家庭切换后未能确认当前启用家庭，请联系技术人员处理。"
+  die "家庭切换后未能确认当前启用家庭，请联系工作人员处理。"
 }
 
 check_home_selection_before_install() {
@@ -774,7 +778,7 @@ record_light_result() {
 
   if [[ "$LIGHT_TEST_UNSTABLE" == 1 ]]; then
     state_mark UNSTABLE_MULTIPLE_COMMANDS
-    printf '灯光测试结果：检测到多条控制命令叠加，本轮不能作为稳定验收。\n'
+    printf '测试未通过，请联系工作人员处理。\n'
     return 0
   fi
 
@@ -783,148 +787,89 @@ record_light_result() {
       state_mark PHYSICAL_CHANGED
       if [[ "$api_result" == "false" ]]; then
         state_mark PHYSICAL_SUCCESS_API_FALSE
-        printf '实际控制成功，API 返回状态需修复。\n'
       fi
       state_mark LIGHT_TEST_SUCCESS
-      printf '灯光测试结果：现场已观察到灯光变化，记录为成功。\n'
+      printf '测试成功。\n'
       ;;
     未变化|没变化|not_changed|failed|no|false)
       state_mark PHYSICAL_NOT_CHANGED
       state_mark LIGHT_TEST_FAILED
-      printf '灯光测试结果：现场未观察到灯光变化，记录为失败。\n'
+      printf '测试未通过，请联系工作人员处理。\n'
       ;;
     多次变化|连续变化|不稳定|unstable|multiple|multiple_commands)
       state_mark UNSTABLE_MULTIPLE_COMMANDS
-      printf '灯光测试结果：控制链路已触达设备，但出现多条命令叠加，本轮不能作为稳定验收。\n'
+      printf '测试未通过，请联系工作人员处理。\n'
       ;;
     *)
       state_mark WAITING_PHYSICAL_CONFIRMATION
       state_mark PHYSICAL_CONFIRMATION_REQUIRED
-      printf '灯光请求已发送，请观察目标设备是否发生变化。\n'
-      printf '如果灯光已变化，请回复“已变化”。\n'
-      printf '如果没有变化，请回复“未变化”。\n'
+      printf '灯光请求已发送，请观察灯光是否变化。\n'
+      printf '如果已变化，请回复：已变化。\n'
+      printf '如果未变化，请回复：未变化。\n'
       ;;
   esac
 }
 
 print_status() {
   load_env_if_present
-  printf '馨光 Skill 安装进度\n\n'
-  printf '检查时间：%s\n' "$(date '+%F %T %Z')"
-  printf '安装器版本：%s\n' "$XINGUANG_SKILL_INSTALLER_VERSION"
-  printf 'Skill 版本：%s\n' "$XINGUANG_SKILL_VERSION"
-  printf '状态文件：%s\n' "$STATE_FILE"
-  printf '日志文件：%s\n\n' "$LOG_FILE"
-
-  if [[ -f "$STATE_FILE" ]]; then
-    printf '最近状态：\n'
-    tail -n 40 "$STATE_FILE" || true
-  else
-    printf '最近状态：暂未找到状态文件\n'
-  fi
-
-  printf '\n服务状态：'
-  if server_status_ok || server_process_running; then
-    printf '运行中\n'
-  else
-    printf '未确认运行\n'
-  fi
-
-  printf 'Skill 文件：'
-  if [[ -f "$LOCAL_SKILL_FILE" ]] || status_file_has SKILL_INSTALL_DONE; then
-    printf '已准备\n'
-  else
-    printf '未确认\n'
-  fi
-
-  if [[ -f "$TARGET_HOME_FILE" ]]; then
-    printf '\n当前家庭：'
-    grep -E '^XINGUANG_TARGET_HOME=' "$TARGET_HOME_FILE" 2>/dev/null | tail -n 1 | cut -d= -f2- || printf '未确认'
-    printf '\n'
-  elif [[ -n "$XINGUANG_TARGET_HOME" ]]; then
-    printf '\n目标家庭：%s\n' "$XINGUANG_TARGET_HOME"
-  fi
-
-  if [[ -f "$HOME_LIST_CACHE" ]]; then
-    printf '\n检测到的家庭列表：\n'
-    print_home_list
+  local ready=0
+  if { server_status_ok || server_process_running; } &&
+    { [[ -f "$LOCAL_SKILL_FILE" ]] || status_file_has SKILL_INSTALL_DONE; } &&
+    status_file_has DEVICE_LIST_READY; then
+    ready=1
   fi
 
   if status_file_has HOME_SELECTION_REQUIRED; then
-    printf '\n家庭选择：需要处理\n'
-    printf '说明：检测到多个米家家庭，请先选择要控制馨光设备的家庭，不要自动使用第一个家庭。\n'
+    printf '检测到多个家庭，请选择馨光设备所在家庭：\n\n'
+    if [[ -f "$HOME_LIST_CACHE" ]]; then
+      print_home_list
+    fi
+    return 0
   fi
   if status_file_has TARGET_HOME_NOT_FOUND; then
-    printf '\n家庭选择：未找到指定家庭，请检查家庭名称。\n'
+    printf '未找到该家庭，请重新选择。\n'
+    return 0
   fi
 
-  if status_file_has DEVICE_LIST_READY; then
-    printf '\n设备列表：已读取当前家庭下的设备列表。\n'
-  fi
-
-  if [[ -f "$DEVICE_REPORT" ]]; then
-    printf '\n设备列表摘要：\n'
-    cat "$DEVICE_REPORT" || true
-  fi
-
-  if status_file_has HOME_LIST_QUERY_FAILED; then
-    printf '\n家庭列表：查询失败，请确认米家账号已绑定后再继续。\n'
-  fi
-  if status_file_has HOME_CURRENT_DETECT_FAILED; then
-    printf '\n当前家庭：无法确认当前启用家庭，请联系技术人员处理。\n'
-  fi
-  if status_file_has HOME_SWITCH_VERIFY_FAILED; then
-    printf '\n家庭切换：已尝试切换，但未能确认目标家庭已启用。\n'
-  fi
-  if status_file_has WAINFORT_SERVER_DATA_DIR_UNSUPPORTED; then
-    printf '\n本地灯控服务：当前版本写入了不可访问的 /root 路径，无法在当前用户下稳定运行。请更换支持用户目录的 wainfort-server 版本后再继续。\n'
-  fi
-  if status_file_has WAINFORT_SERVER_START_FAILED; then
-    printf '\n本地灯控服务：启动失败，请联系技术人员处理。\n'
-  fi
-  if status_file_has LIGHT_REQUEST_SENT; then
-    printf '\n灯光测试：灯光请求已发送。\n'
-  fi
-  if status_file_has LIGHT_TEST_SINGLE_SHOT; then
-    printf '灯光测试：单次测试模式已启用，请勿自动重试、关灯、切换颜色或控制其它设备。\n'
-  fi
-  if status_file_has LIGHT_API_RETURNED_FALSE; then
-    printf '灯光测试：API 返回 success:false，不能单独作为最终失败依据。\n'
-  fi
-  if status_file_has WAITING_PHYSICAL_CONFIRMATION; then
-    printf '灯光测试：等待用户现场确认灯光是否变化。\n'
-  fi
-  if status_file_has PHYSICAL_CONFIRMATION_REQUIRED; then
-    printf '灯光测试：需要用户现场确认灯光是否变化。\n'
-  fi
   if status_file_has PHYSICAL_CHANGED; then
-    printf '灯光测试：现场已观察到灯光变化。\n'
+    printf '测试成功。\n'
+    return 0
   fi
   if status_file_has PHYSICAL_NOT_CHANGED; then
-    printf '灯光测试：现场未观察到灯光变化。\n'
-  fi
-  if status_file_has PHYSICAL_SUCCESS_API_FALSE; then
-    printf '灯光测试：现场已变化但 API 返回 false，记录为实际控制成功，API 返回状态需修复。\n'
-  fi
-  if status_file_has UNSTABLE_MULTIPLE_COMMANDS; then
-    printf '灯光测试：出现多条控制命令叠加，本轮不能作为稳定验收。下一轮必须只发送一次请求并等待现场确认。\n'
+    printf '测试未通过，请联系工作人员处理。\n'
+    return 0
   fi
   if status_file_has LIGHT_TEST_SUCCESS; then
-    printf '灯光测试：已通过现场确认。\n'
+    printf '测试成功。\n'
+    return 0
   fi
   if status_file_has LIGHT_TEST_FAILED; then
-    printf '灯光测试：现场未变化，测试失败。\n'
+    printf '测试未通过，请联系工作人员处理。\n'
+    return 0
+  fi
+  if status_file_has LIGHT_REQUEST_SENT; then
+    printf '灯光请求已发送，请观察灯光是否变化。\n'
+    printf '如果已变化，请回复：已变化。\n'
+    printf '如果未变化，请回复：未变化。\n'
+    return 0
+  fi
+  if status_file_has WAINFORT_SERVER_DATA_DIR_UNSUPPORTED || status_file_has WAINFORT_SERVER_START_FAILED; then
+    printf '灯光服务暂时无法启动，请联系工作人员处理。\n'
+    return 0
   fi
 
-  printf '馨光设备：'
-  if status_file_has DEVICE_LIST_READY; then
-    printf '设备列表已读取，后续由小龙虾按自然语言需求在当前家庭内匹配\n'
+  if (( ready == 1 )); then
+    cat <<'EOF'
+馨光 Skill 已安装，可以开始测试灯光。
+
+你还可以继续说：
+- 二楼客厅换成马尔代夫灯光效果。
+- 二楼客厅来一个森林晨光。
+- 保存当前灯光效果到快照 3。
+EOF
   else
-    printf '未确认\n'
+    printf '正在安装馨光 Skill。\n'
   fi
-
-  printf '\n最近错误：\n'
-  grep -Ei 'ERROR|失败|未能|无法|not found|failed|traceback' "$STATE_FILE" "$LOG_FILE" 2>/dev/null | tail -n 20 || printf '未发现明显错误\n'
 }
 
 main() {
@@ -941,6 +886,7 @@ main() {
   fi
 
   printf '%s\n' "$$" >"$PID_FILE"
+  printf '正在安装馨光 Skill。\n'
   state_mark "INSTALLER_VERSION=$XINGUANG_SKILL_INSTALLER_VERSION"
   state_mark "SKILL_VERSION=$XINGUANG_SKILL_VERSION"
 
@@ -954,18 +900,17 @@ main() {
   query_devices
 
   state_mark XINGUANG_SKILL_INSTALL_DONE
-  printf '\n馨光 Skill 已安装\n'
-  printf 'wainfort-server 已运行\n'
-  printf '安装器版本：%s\n' "$XINGUANG_SKILL_INSTALLER_VERSION"
-  printf 'Skill 版本：%s\n' "$XINGUANG_SKILL_VERSION"
-  [[ -n "$XINGUANG_TARGET_HOME" ]] && printf '米家家庭：%s\n' "$XINGUANG_TARGET_HOME"
-  printf '设备列表已读取\n'
-  printf '可以直接用自然语言描述灯光需求\n'
-  [[ -f "$DEVICE_REPORT" ]] && { printf '\n设备列表摘要：\n'; cat "$DEVICE_REPORT"; }
-  printf '日志文件：%s\n' "$LOG_FILE"
-  printf '状态文件：%s\n' "$STATE_FILE"
-  printf '\n下一步：直接告诉小龙虾想要的灯光效果，例如“客厅设计一个马尔代夫灯光效果”。\n'
-  printf '小龙虾会在当前米家家庭范围内读取设备列表，并通过馨光 Skill 执行。\n'
+  cat <<'EOF'
+
+馨光 Skill 已安装。
+灯光服务已就绪。
+可以开始测试灯光。
+
+你还可以继续说：
+- 二楼客厅换成马尔代夫灯光效果。
+- 二楼客厅来一个森林晨光。
+- 保存当前灯光效果到快照 3。
+EOF
 }
 
 main "$@"

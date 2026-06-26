@@ -1,129 +1,38 @@
-请查看「馨光 AI 设计灯光」安装进度。只读取状态，不要重新启动安装，不要修改脚本，不要切换安装方法。
+请查看「馨光 AI 设计灯光」安装进度。只读取状态，不要重新启动安装，不要修改脚本，不要切换安装方法。全程必须使用中文回复。
 
-重要回复语言要求：
-- 全程必须使用中文回复，包括中间进度、等待说明、异常解释和最终结果。
-- 每次观察进度时只用中文简短说明当前状态。
-- 每次中间汇报都必须带“检查时间”，不要只说继续等待。
-- 不要输出完整技术日志，只输出关键状态和下一步。
+用户只需要知道当前状态和下一步，不要展开复杂说明。
 
-请只执行下面这些只读检查：
+请只执行下面的只读检查：
 
 ```bash
-LOG=/tmp/openclaw-miloco-install-current.log
-STATE=/tmp/openclaw-miloco-install.state
-PIDFILE=/tmp/openclaw-miloco-install.pid
-CHECK_TIME="$(date '+%F %T %Z')"
+TARGET=/tmp/install-miloco-openclaw-cloud.sh
+EXPECTED_VERSION=2026-06-25.7
 
-progress_text() {
-  case "$1" in
-    STEP_1_DONE) echo "✅ Step 1/6：依赖检查完成" ;;
-    STEP_2_DONE) echo "✅ Step 2/6：小龙虾环境检查完成" ;;
-    PLUGIN_READY) echo "✅ Step 3/6：插件准备完成" ;;
-    STEP_3_DONE) echo "✅ Step 4/6：馨光 AI 设计灯光环境安装完成" ;;
-    GATEWAY_RESTART_SCHEDULED|AGENTCHAT_RECONNECT_EXPECTED)
-      echo "⚠️ Step 5/6：小龙虾后台服务正在重启，页面可能短暂异常。请等待 1–3 分钟后刷新页面。"
-      ;;
-    GATEWAY_RESTART_DONE) echo "✅ 小龙虾后台服务重启完成，继续检查安装结果" ;;
-    STEP_6_DONE|SUCCESS_ACTIVE|SUCCESS_AFTER_RECONNECT) echo "✅ Step 6/6：安装完成" ;;
-    EXITED_BUT_INCOMPLETE) echo "⚠️ 安装没有完整结束，可查看下一步处理方式" ;;
-    ERROR:*) echo "⚠️ 安装出现异常" ;;
-  esac
-}
-
-echo "检查时间: $CHECK_TIME"
-echo "状态文件: $STATE"
-echo "日志文件: $LOG"
-
-RUNNING="否"
-if [ -f "$PIDFILE" ]; then
-  PID="$(cat "$PIDFILE" 2>/dev/null || true)"
-  if [ -n "$PID" ] && ps -p "$PID" >/dev/null 2>&1; then
-    RUNNING="是"
-  fi
-fi
-echo "是否仍在运行: $RUNNING"
-
-echo "--- 当前状态 ---"
-if [ -f "$STATE" ]; then
-  awk '
-    /STEP_1_DONE|STEP_2_DONE|PLUGIN_READY|STEP_3_DONE|GATEWAY_RESTART_SCHEDULED|AGENTCHAT_RECONNECT_EXPECTED|GATEWAY_RESTART_DONE|STEP_6_DONE|SUCCESS_ACTIVE|SUCCESS_AFTER_RECONNECT|EXITED_BUT_INCOMPLETE|ERROR:/ {
-      print
-    }
-  ' "$STATE" | tail -n 20 | while read -r marker; do progress_text "$marker"; done | awk '!seen[$0]++'
-else
-  echo "暂未找到状态文件"
+if [ ! -f "$TARGET" ] || ! grep -q "SCRIPT_VERSION=\"$EXPECTED_VERSION\"" "$TARGET" 2>/dev/null; then
+  echo "暂时无法读取安装进度，请联系工作人员处理。"
+  exit 0
 fi
 
-if grep -qE 'STEP_6_DONE|SUCCESS_ACTIVE|SUCCESS_AFTER_RECONNECT' "$STATE" 2>/dev/null; then
-  CURRENT_STATUS="安装完成"
-  CURRENT_STEP="Step 6/6"
-  NEXT_ACTION="绑定米家账号；绑定完成后，如果账号下有多个家庭，请选择馨光设备所在的家庭；家庭选择完成后，再继续安装馨光 Skill。"
-elif grep -q 'STEP_3_DONE' "$STATE" 2>/dev/null; then
-  CURRENT_STATUS="仍在安装"
-  CURRENT_STEP="正在做收尾检查"
-  NEXT_ACTION="继续等待；如果页面短暂异常，等待 1–3 分钟后刷新页面，再发送「查看安装进度」。"
-elif grep -q 'STEP_2_DONE' "$STATE" 2>/dev/null; then
-  CURRENT_STATUS="仍在安装"
-  CURRENT_STEP="正在安装馨光 AI 设计灯光环境"
-  NEXT_ACTION="继续等待。"
-elif grep -q 'STEP_1_DONE' "$STATE" 2>/dev/null; then
-  CURRENT_STATUS="仍在安装"
-  CURRENT_STEP="正在检查小龙虾环境"
-  NEXT_ACTION="继续等待。"
-elif grep -q 'EXITED_BUT_INCOMPLETE' "$STATE" 2>/dev/null; then
-  CURRENT_STATUS="未完成"
-  CURRENT_STEP="安装任务已中断或退出"
-  NEXT_ACTION="请联系技术人员按状态文件继续处理，不要重复发送一键部署指令。"
-else
-  CURRENT_STATUS="刚启动或暂未写入状态"
-  CURRENT_STEP="等待第一步完成"
-  NEXT_ACTION="请稍后再查看。"
-fi
-
-echo "--- 用户化摘要 ---"
-echo "当前状态: $CURRENT_STATUS"
-echo "当前步骤: $CURRENT_STEP"
-echo "下一步该做什么: $NEXT_ACTION"
-
-echo "--- 最近关键日志 ---"
-grep -E 'SUCCESS|STEP_[0-9]+_DONE|GATEWAY_RESTART|AGENTCHAT_RECONNECT|ERROR|Failed|Traceback|timeout|timed out' "$STATE" "$LOG" 2>/dev/null | tail -n 30 || echo "暂未发现关键日志"
+INSTALL_ACTION=status INSTALL_NONINTERACTIVE=1 bash "$TARGET"
 ```
 
-然后用中文告诉我：
+然后只按下面格式回复：
 
 ```text
-馨光 AI 设计灯光安装进度
-
-检查时间：
-当前状态：
-当前步骤：
-是否仍在运行：
-下一步该做什么：
-最近关键日志：
+正在安装，请稍候。
 ```
 
-如果看到安装完成，必须使用这个下一步向导：
+如果安装完成，必须回复：
 
 ```text
-馨光 AI 设计灯光环境安装完成 ✅
-
-下一步：绑定米家账号
-
-请继续回复：
-绑定米家账号
-
-绑定完成后，如果你的账号下有多个家庭，请选择馨光设备所在的家庭。
-家庭选择完成后，再继续安装馨光 Skill。
+安装完成，请绑定米家账号。
 ```
 
-如果还没完成，使用这个说明：
+如果还没完成，回复：
 
 ```text
-安装仍在后台继续。
-如果页面短暂异常，通常是小龙虾后台服务正在重启。
-请等待 1–3 分钟后刷新页面。
-刷新后如果是空白对话框，直接发送「查看安装进度」。
-不要重复发送一键部署指令。
+正在安装，请稍候。
+稍后请发送「查看安装进度」。
 ```
 
-如果多次刷新后仍无法查看进度，请联系技术人员处理。
+如果多次刷新后仍无法查看进度，请联系工作人员处理。

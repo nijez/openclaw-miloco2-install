@@ -1,18 +1,12 @@
-请你执行「馨光 Skill 安装与家庭设备列表准备」。全程必须使用中文回复。
+请执行「馨光 Skill 安装」。全程必须使用中文回复。
 
 重要要求：
-1. 不要重复执行第一阶段安装流程。
-2. 不要修改第一阶段安装脚本。
-3. 不要自行搜索网络，不要切换其它安装方式。
-4. 本次目标是安装馨光 Skill，让小龙虾可以通过馨光 Skill 控制馨光设备。
-5. 不要输出或保存用户密码、授权信息、MiMo API Key。
-6. 安装任务启动后，不要长时间占用对话。
-7. 不要重复发送本安装指令。
-8. 如果检测到多个米家家庭，请让我选择要控制馨光设备的家庭，不要自动使用第一个家庭。
-9. 本次安装只做 Skill 安装、灯控服务启动、米家家庭选择和该家庭下设备列表读取，不要控制灯光。
-10. 如果只有一个米家家庭，可以直接继续。
-11. 如果有多个米家家庭，请让我选择要使用的家庭，不要自动使用第一个家庭。
-12. 不要让我做额外的灯光设备选择。后续我会直接用自然语言告诉你灯光需求，由馨光 Skill 处理设备匹配和灯光执行。
+1. 不要重复执行第一阶段安装。
+2. 不要让我选择产品类型、设备编号或设备型号。
+3. 如果检测到多个米家家庭，请让我选择馨光设备所在家庭，不要自动使用第一个家庭。
+4. 安装完成后，只提示我可以直接说灯光需求。
+5. 不要展开复杂说明。
+6. 不要控制灯光，本指令只安装 Skill、准备灯控服务、读取当前家庭设备列表。
 
 请只执行下面这份固定流程：
 
@@ -21,15 +15,13 @@ TARGET=/tmp/install-xinguang-skill.sh
 LOG=/tmp/xinguang-skill-install-current.log
 STATE=/tmp/xinguang-skill-install.state
 PIDFILE=/tmp/xinguang-skill-install.pid
-EXPECTED_VERSION=2026-06-26.3
-REJECT_VERSION_1=2026-06-26.1
-REJECT_VERSION_2=2026-06-26.2
+EXPECTED_VERSION=2026-06-26.4
 
 if [ -f "$PIDFILE" ]; then
   OLD_PID="$(cat "$PIDFILE" 2>/dev/null || true)"
   if [ -n "$OLD_PID" ] && ps -p "$OLD_PID" >/dev/null 2>&1; then
-    echo "馨光 Skill 安装任务已经在运行，请不要重复启动。"
-    echo "如需查看进度，请发送：查看馨光 Skill 安装进度"
+    echo "正在安装馨光 Skill。"
+    echo "稍后请发送：查看馨光 Skill 安装进度"
     exit 0
   fi
 fi
@@ -40,17 +32,12 @@ for URL in \
   https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/install-xinguang-skill.sh \
   https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/install-xinguang-skill.sh
 do
-  echo "尝试下载馨光 Skill 安装脚本: $URL"
   if curl -fsSL "$URL" -o "$TARGET" && grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$EXPECTED_VERSION\"" "$TARGET"; then
-    echo "馨光 Skill 安装脚本下载成功，版本 $EXPECTED_VERSION"
     break
   fi
-  echo "当前源失败或版本不匹配，继续尝试下一个源"
 done
 
-grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$REJECT_VERSION_1\"" "$TARGET" 2>/dev/null && { echo "拒绝使用旧版 $REJECT_VERSION_1，当前必须使用 $EXPECTED_VERSION"; exit 1; }
-grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$REJECT_VERSION_2\"" "$TARGET" 2>/dev/null && { echo "拒绝使用旧版 $REJECT_VERSION_2，当前必须使用 $EXPECTED_VERSION"; exit 1; }
-grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$EXPECTED_VERSION\"" "$TARGET" || { echo "馨光 Skill 安装脚本下载失败或版本不正确，当前必须使用 $EXPECTED_VERSION"; exit 1; }
+grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$EXPECTED_VERSION\"" "$TARGET" || { echo "馨光 Skill 安装脚本下载失败，请联系工作人员处理。"; exit 1; }
 chmod +x "$TARGET"
 
 nohup env \
@@ -60,23 +47,13 @@ nohup env \
 echo $! > "$PIDFILE"
 sleep 2
 
-echo "馨光 Skill 后台安装已启动"
-echo "安装脚本版本: $EXPECTED_VERSION"
-echo "日志文件: $LOG"
-echo "状态文件: $STATE"
-echo "说明: 安装任务已在服务器后台运行。请稍后发送「查看馨光 Skill 安装进度」。不要重复发送本安装指令。"
+echo "正在安装馨光 Skill。"
+echo "稍后请发送「查看馨光 Skill 安装进度」。"
 ```
 
-执行后请只用中文简短汇报：
+执行后只按下面格式回复：
 
 ```text
-馨光 Skill 后台安装已启动
-安装脚本版本：
-任务状态：
-日志文件：
-状态文件：
-
-下一步：
-请稍后发送「查看馨光 Skill 安装进度」。安装完成后，可以直接用自然语言告诉小龙虾想要的灯光效果，例如“客厅设计一个马尔代夫灯光效果”。小龙虾会通过馨光 Skill 控制馨光设备。
-不要重复发送安装指令。
+正在安装馨光 Skill。
+稍后请发送「查看馨光 Skill 安装进度」。
 ```

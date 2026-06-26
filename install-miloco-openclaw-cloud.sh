@@ -8,7 +8,7 @@ set -Eeuo pipefail
 # - WeChat channel installation/login is skipped.
 # - MiMo API key is configured only when MIMO_API_KEY is supplied.
 
-SCRIPT_VERSION="2026-06-25.4"
+SCRIPT_VERSION="2026-06-25.7"
 TOTAL_STEPS=6
 MILOCO_VERSION="${MILOCO_VERSION:-2026.6.18}"
 OPENCLAW_PORT="${OPENCLAW_PORT:-18789}"
@@ -111,14 +111,7 @@ print_incomplete_report() {
   state_mark EXITED_BUT_INCOMPLETE || true
   cat >&2 <<EOF
 
-部署未完成 / 可恢复中断
-最后完成步骤: $(state_last_done)
-中断位置: $(state_next_step)
-疑似原因: $reason
-是否可以继续: 是
-建议执行: $(recommended_continue_command)
-状态文件: $STATE_FILE
-日志文件: $LOG_FILE
+安装暂时无法继续，请联系工作人员处理。
 EOF
 }
 
@@ -196,34 +189,26 @@ write_supervisor_launcher() {
 
 progress_message_for_marker() {
   case "$1" in
-    STEP_1_DONE)
-      printf '✅ Step 1/6：依赖检查完成\n'
-      ;;
-    STEP_2_DONE)
-      printf '✅ Step 2/6：小龙虾环境检查完成\n'
+    STEP_1_DONE|STEP_2_DONE)
+      printf '正在准备安装环境。\n'
       ;;
     PLUGIN_READY)
-      printf '✅ Step 3/6：插件准备完成\n'
+      printf '正在安装灯光插件。\n'
       ;;
     STEP_3_DONE)
-      printf '✅ Step 4/6：馨光 AI 设计灯光环境安装完成\n'
+      printf '正在安装灯光插件。\n'
       ;;
     GATEWAY_RESTART_SCHEDULED|AGENTCHAT_RECONNECT_EXPECTED)
-      cat <<'EOF'
-⚠️ Step 5/6：小龙虾后台服务正在重启，页面可能短暂异常。
-请等待 1–3 分钟后刷新页面。
-刷新后如果是空白对话框，直接发送「查看安装进度」。
-不要重复发送一键部署指令。
-EOF
+      printf '小龙虾后台服务正在重启，请等待 1–3 分钟后刷新页面。\n'
       ;;
     GATEWAY_RESTART_DONE)
-      printf '✅ 小龙虾后台服务重启完成，继续检查安装结果\n'
+      printf '正在安装，请稍候。\n'
       ;;
     STEP_6_DONE|SUCCESS_ACTIVE|SUCCESS_AFTER_RECONNECT)
-      printf '✅ Step 6/6：安装完成\n'
+      printf '安装完成。\n下一步：绑定米家账号。\n'
       ;;
     ERROR:*|EXITED_BUT_INCOMPLETE)
-      printf '⚠️ 安装没有完整结束，请发送「查看安装进度」确认当前状态。\n'
+      printf '安装暂时无法继续，请联系工作人员处理。\n'
       ;;
     *)
       return 1
@@ -267,11 +252,7 @@ observe_background_progress() {
   local seen_file="$WORK_DIR/frontend-progress-seen.txt"
   : >"$seen_file"
 
-  cat <<EOF
-
-开始观察安装进度，最多观察 $((max_seconds / 60)) 分钟。
-只在关键步骤变化时播报，不会持续刷完整日志。
-EOF
+  printf '\n正在安装，请稍候。\n'
 
   while (( elapsed <= max_seconds )); do
     emit_progress_updates "$seen_file"
@@ -295,16 +276,13 @@ EOF
   if background_pid_running; then
     cat <<EOF
 
-安装仍在后台继续。
-我先不继续占用对话窗口。请稍后发送「查看安装进度」确认当前阶段。
-不要重复发送一键部署指令。
+正在安装，请稍候。
+稍后可发送「查看安装进度」。
 EOF
   else
     cat <<EOF
 
-后台任务当前没有继续运行，但安装状态还未确认完成。
-请发送「查看安装进度」查看当前步骤和下一步处理方式。
-不要重复发送一键部署指令。
+安装暂时无法确认，请发送「查看安装进度」。
 EOF
   fi
 }
@@ -338,34 +316,18 @@ launch_background_supervisor() {
     sleep 0.2
   done
 
-  cat <<EOF
-馨光 AI 设计灯光后台部署已启动
-脚本版本：$SCRIPT_VERSION
-后台任务：已启动
-进程 PID：${pid:-稍后写入 $PID_FILE}
-日志文件：$LOG_FILE
-状态文件：$STATE_FILE
-
-说明：
-部署任务已在服务器后台运行。
-如果页面稍后短暂异常，通常是小龙虾后台服务正在重启。
-请等待 1–3 分钟后刷新页面。
-如果刷新后出现空白对话框，直接发送「查看安装进度」。
-不要重复发送一键部署指令。
-EOF
+  printf '正在安装，请稍候。\n'
   observe_background_progress
 }
 
 die() {
-  printf '\nERROR: %s\n' "$*" >&2
-  printf 'Log file: %s\n' "$LOG_FILE" >&2
+  printf '\n安装暂时无法继续，请联系工作人员处理。\n' >&2
   exit 1
 }
 
 on_error() {
   local status=$?
-  printf '\nERROR: Script failed near line %s with exit code %s\n' "${BASH_LINENO[0]:-unknown}" "$status" >&2
-  printf 'Log file: %s\n' "$LOG_FILE" >&2
+  printf '\n安装暂时无法继续，请联系工作人员处理。\n' >&2
   print_incomplete_report "script exited with code $status" || true
 }
 
@@ -648,12 +610,12 @@ configure_openclaw_gateway() {
   fi
 
   if [[ "$gateway_ok" != 1 ]] && ss -ltn 2>/dev/null | grep -Eq ":${OPENCLAW_PORT}\\b"; then
-    log "OpenClaw gateway port $OPENCLAW_PORT is listening; continuing despite status probe warning"
+    log "小龙虾后台服务已就绪，继续后续安装"
     gateway_ok=1
   fi
 
   if [[ "$gateway_ok" != 1 ]]; then
-    log "WARNING: OpenClaw gateway is not confirmed ready yet. Miloco install will continue; final verification will report gateway status."
+    log "WARNING: 小龙虾后台服务暂未确认就绪，仍会继续安装灯光插件，最终验证会再次检查。"
   fi
 
   report_openclaw_versions || true
@@ -790,13 +752,13 @@ preload_miloco_bundle() {
   bundle_name="$(manifest_value "$manifest" ".bundles[\"$key\"].name")"
   bundle_sha="$(manifest_value "$manifest" ".bundles[\"$key\"].sha256")"
   bundle_size="$(manifest_value "$manifest" ".bundles[\"$key\"].size")"
-  [[ -n "$bundle_name" && "$bundle_name" != "null" ]] || die "No Miloco bundle for $key"
+  [[ -n "$bundle_name" && "$bundle_name" != "null" ]] || die "未找到当前系统可用的灯光插件组件"
 
   cache_dir="$MILOCO_HOME/.install-cache/$version"
   if compgen -G "$cache_dir/miloco-*.whl" >/dev/null &&
     compgen -G "$cache_dir/miloco-models-*.tar.gz" >/dev/null &&
     compgen -G "$cache_dir/*.tgz" >/dev/null; then
-    log "Miloco bundle cache already present: $cache_dir"
+    log "灯光插件组件缓存已就绪"
     return
   fi
 
@@ -808,27 +770,27 @@ preload_miloco_bundle() {
     local cached_sha
     cached_sha="$(sha256_file "$persistent_archive")"
     if [[ "$cached_sha" == "$bundle_sha" ]]; then
-      log "Using cached Miloco bundle archive: $persistent_archive"
+      log "使用已缓存的灯光插件组件"
       archive="$persistent_archive"
     else
-      log "Cached Miloco bundle SHA mismatch, redownloading"
+      log "灯光插件组件缓存校验不一致，重新下载"
       rm -f "$persistent_archive"
     fi
   fi
 
   if [[ "$archive" != "$persistent_archive" ]]; then
-    log "Preloading Miloco bundle $bundle_name (${bundle_size} bytes)"
-    mapfile -t urls < <(miloco_bundle_urls "$manifest" "$bundle_name" | rank_urls_by_speed "Miloco bundle" 1)
-    download_first "$archive" "${urls[@]}" || die "Failed to download Miloco bundle"
+    log "正在下载灯光插件组件"
+    mapfile -t urls < <(miloco_bundle_urls "$manifest" "$bundle_name" | rank_urls_by_speed "灯光插件组件" 1)
+    download_first "$archive" "${urls[@]}" || die "灯光插件组件下载失败"
 
     local actual_sha
     actual_sha="$(sha256_file "$archive")"
-    [[ "$actual_sha" == "$bundle_sha" ]] || die "Miloco bundle SHA mismatch: $actual_sha != $bundle_sha"
+    [[ "$actual_sha" == "$bundle_sha" ]] || die "灯光插件组件校验失败: $actual_sha != $bundle_sha"
 
     if [[ "$CACHE_MILOCO_BUNDLE" == 1 ]]; then
       mkdir -p "$persistent_dir"
       cp -f "$archive" "$persistent_archive"
-      log "Cached Miloco bundle archive: $persistent_archive"
+      log "已缓存灯光插件组件"
     fi
   fi
 
@@ -836,9 +798,9 @@ preload_miloco_bundle() {
   mkdir -p "$cache_dir"
   tar -xzf "$archive" -C "$cache_dir"
 
-  compgen -G "$cache_dir/miloco-*.whl" >/dev/null || die "Bundle missing miloco wheel"
-  compgen -G "$cache_dir/miloco-models-*.tar.gz" >/dev/null || die "Bundle missing model archive"
-  compgen -G "$cache_dir/*.tgz" >/dev/null || die "Bundle missing OpenClaw plugin package"
+  compgen -G "$cache_dir/miloco-*.whl" >/dev/null || die "灯光插件组件不完整"
+  compgen -G "$cache_dir/miloco-models-*.tar.gz" >/dev/null || die "灯光插件模型组件不完整"
+  compgen -G "$cache_dir/*.tgz" >/dev/null || die "灯光插件扩展包不完整"
 }
 
 ensure_uv() {
@@ -852,7 +814,7 @@ ensure_uv() {
 
 setup_wheelhouse_if_requested() {
   if [[ -z "$MILOCO_WHEELHOUSE_URL" ]]; then
-    log "No offline wheelhouse URL supplied; using Miloco bundle and PyPI/npm mirrors"
+    log "正在准备安装环境"
     return 0
   fi
   ensure_uv
@@ -929,7 +891,7 @@ select_pypi_index() {
   : >"$result_file"
   : >"$failed_file"
 
-  log "Benchmarking PyPI indexes"
+  log "正在准备安装环境"
   while IFS= read -r index; do
     [[ -n "$index" ]] || continue
     test_url="${index%/}/rich/"
@@ -1001,13 +963,13 @@ run_miloco_phase() {
   local index_url
   index_url="$(select_pypi_index)"
 
-  log "Running Miloco $phase with PyPI index: $index_url"
+  log "灯光插件安装中"
   if UV_DEFAULT_INDEX="$index_url" PIP_INDEX_URL="$index_url" bash "$installer" "$phase" </dev/null; then
     return 0
   fi
 
   if [[ "$PYPI_FALLBACK_OFFICIAL" == 1 && "$index_url" != "https://pypi.org/simple" ]]; then
-    log "Miloco $phase failed with mirror index; retrying official PyPI"
+    log "当前安装源暂不可用，正在使用备用安装源重试"
     UV_DEFAULT_INDEX="https://pypi.org/simple" PIP_INDEX_URL="https://pypi.org/simple" bash "$installer" "$phase" </dev/null
     return $?
   fi
@@ -1016,21 +978,19 @@ run_miloco_phase() {
 }
 
 wait_for_miloco_service() {
-  log "Waiting for Miloco service"
+  log "正在等待灯光服务启动"
   local status_file="$WORK_DIR/miloco-service-status.json"
   local attempt
   for attempt in {1..30}; do
     if miloco-cli service status >"$status_file" 2>/dev/null &&
       jq -e '.running == true' "$status_file" >/dev/null 2>&1; then
-      log "Miloco service is running"
-      cat "$status_file"
+      log "灯光服务已运行"
       return 0
     fi
     sleep 2
   done
 
-  log "Miloco service did not report running yet"
-  cat "$status_file" 2>/dev/null || true
+  log "灯光服务暂未确认运行"
   return 1
 }
 
@@ -1151,16 +1111,16 @@ miloco_base_ready() {
     return 0
   fi
 
-  log "Miloco service is running, but OpenClaw plugin is not confirmed yet"
+  log "灯光服务已运行，灯光插件仍在确认中"
   return 1
 }
 
 install_miloco() {
   local installer="$WORK_DIR/install-miloco.sh"
-  mapfile -t urls < <(miloco_installer_urls | rank_urls_by_speed "Miloco installer" 1)
+  mapfile -t urls < <(miloco_installer_urls | rank_urls_by_speed "灯光插件安装器" 1)
 
-  log "Downloading Miloco installer"
-  download_first "$installer" "${urls[@]}" || die "Failed to download Miloco installer"
+  log "正在下载灯光插件组件"
+  download_first "$installer" "${urls[@]}" || die "灯光插件安装器下载失败"
   chmod +x "$installer"
 
   if [[ "$PRELOAD_MILOCO_BUNDLE" == 1 ]]; then
@@ -1176,11 +1136,11 @@ install_miloco() {
   run_miloco_phase "$installer" --agent-prepare
 
   if ! run_miloco_phase "$installer" --agent-finish; then
-    log "WARNING: Miloco agent-finish returned non-zero; checking whether Miloco already completed"
+    log "WARNING: 灯光插件收尾步骤返回异常，正在确认是否已安装完成"
     if miloco_base_ready; then
-      log "Miloco service and OpenClaw plugin are present; continuing despite installer finalization warning"
+      log "灯光服务和灯光插件已就绪，继续后续步骤"
     else
-      die "Miloco agent-finish failed and Miloco is not confirmed ready"
+      die "灯光插件收尾失败，且未确认安装完成"
     fi
   fi
 
@@ -1233,20 +1193,38 @@ run_channel_guided_setup() {
 }
 
 verify_install() {
-  log "Verification"
+  log "灯光服务验证"
   setup_runtime_paths
-  printf 'Script version: %s\n' "$SCRIPT_VERSION"
+  printf '脚本版本: %s\n' "$SCRIPT_VERSION"
   if have openclaw; then
-    printf 'OpenClaw CLI version: %s\n' "$(openclaw_version_number || printf unknown)"
-    printf 'OpenClaw Gateway version: %s\n' "$(openclaw_gateway_version_number || printf unknown)"
+    printf '小龙虾环境: 已安装\n'
+  else
+    printf '小龙虾环境: 未确认\n'
   fi
-  miloco-cli service status || true
-  timeout 20s openclaw gateway status | sed -n '1,45p' || true
-  openclaw plugins list | grep -i -C 2 'miloco\|weixin' || true
+  if have miloco-cli; then
+    local service_status_file="$WORK_DIR/light-service-status.json"
+    if miloco-cli service status >"$service_status_file" 2>/dev/null &&
+      jq -e '.running == true' "$service_status_file" >/dev/null 2>&1; then
+      printf '灯光服务验证: 运行中\n'
+    else
+      printf '灯光服务验证: 已安装，等待启动确认\n'
+    fi
+  else
+    printf '灯光服务验证: 未安装\n'
+  fi
+  if have openclaw && openclaw plugins list >"$WORK_DIR/openclaw-plugins.txt" 2>/dev/null; then
+    if grep -qi 'miloco' "$WORK_DIR/openclaw-plugins.txt"; then
+      printf '灯光插件状态: 已安装\n'
+    else
+      printf '灯光插件状态: 未确认\n'
+    fi
+  else
+    printf '灯光插件状态: 暂未读取到\n'
+  fi
   if [[ -f /var/run/reboot-required ]]; then
-    log "Reboot recommended: the system installed a new kernel. Run 'sudo reboot' after this deployment if you want the new kernel active."
+    log "系统提示后续可重启服务器以启用新内核；不影响当前安装结果。"
   fi
-  df -h /
+  df -h / | awk 'NR==1 {next} NR==2 {printf "磁盘空间: 已用 %s / 总计 %s\n", $3, $2}'
 }
 
 print_header() {
@@ -1272,12 +1250,12 @@ print_menu_status() {
     local miloco_state
     miloco_state="$(miloco-cli service status 2>/dev/null | jq -r '.running // false' 2>/dev/null || printf false)"
     if [[ "$miloco_state" == true ]]; then
-      printf '  ✓ Miloco service: running 127.0.0.1:1810\n'
+      printf '  ✓ 灯光服务: 运行中\n'
     else
-      printf '  - Miloco service: installed, not running\n'
+      printf '  - 灯光服务: 已安装，未运行\n'
     fi
   else
-    printf '  - Miloco service: not installed\n'
+    printf '  - 灯光服务: 未安装\n'
   fi
 
   if have openclaw; then
@@ -1300,7 +1278,7 @@ show_main_menu() {
 
 请选择操作:
   1) 一键傻瓜式部署
-     依赖检查 -> OpenClaw 状态检查 -> Miloco 2.0 -> 平台/米家绑定提示
+     依赖检查 -> 小龙虾环境检查 -> 灯光插件 -> 平台/米家绑定提示
 
   2) 功能模块维护
      只维护某一个模块，不从头到尾重复部署
@@ -1338,15 +1316,15 @@ show_maintenance_menu() {
   1) OpenClaw 升级 / 网关配置
      显式更新 OpenClaw 并修复 gateway 配置
 
-  2) Miloco 2.0 安装 / 更新
-     只安装或更新 Miloco、插件和 allowlist
+  2) 灯光插件安装 / 更新
+     只安装或更新灯光插件和必要配置
 
   3) 核心模块更新 / 修复
      从状态文件继续，跳过系统大升级和 OpenClaw 主动升级
 
   4) 重启 OpenClaw gateway
 
-  5) 重启 Miloco service
+  5) 重启灯光服务
 
   6) 查看模块状态
 
@@ -1409,8 +1387,8 @@ restart_openclaw_gateway() {
 
 restart_miloco_service() {
   setup_runtime_paths
-  have miloco-cli || die "Miloco is not installed yet. Run one-click deploy or Miloco maintenance first."
-  log "Restarting Miloco service"
+  have miloco-cli || die "灯光服务尚未安装。请先执行一键傻瓜式部署或灯光插件维护。"
+  log "正在重启灯光服务"
   if miloco-cli service restart >/dev/null 2>&1; then
     :
   else
@@ -1441,25 +1419,7 @@ with_system_upgrade_disabled() {
 }
 
 print_mode_summary() {
-  local action_label="$1"
-  cat <<EOF
-
-Xingguang AI lighting installer
-Script version: $SCRIPT_VERSION
-Action: $action_label
-Mode:
-  - Ubuntu upgrade: $RUN_SYSTEM_UPGRADE
-  - OpenClaw update: $OPENCLAW_UPDATE
-  - Extra OpenClaw plugins: $INSTALL_EXTRA_PLUGINS
-  - Non-interactive prompts: $INSTALL_NONINTERACTIVE
-  - OpenClaw bind: $OPENCLAW_BIND:$OPENCLAW_PORT
-  - Miloco version: $MILOCO_VERSION
-  - WeChat plugin/login: $INSTALL_WEIXIN_PLUGIN
-  - Mi Home account: skipped by default
-  - MiMo API key: $([[ -n "$MIMO_API_KEY" ]] && printf configured || printf not-configured)
-Log file: $LOG_FILE
-State file: $STATE_FILE
-EOF
+  printf '\n正在安装，请稍候。\n'
 }
 
 account_bound_known() {
@@ -1489,35 +1449,33 @@ xinguang_skill_installed_known() {
 }
 
 print_next_actions() {
-  local next_title="绑定米家账号"
-  local next_reply="绑定米家账号"
-  local detail="绑定完成后，如果你的账号下有多个家庭，请选择馨光设备所在的家庭。家庭选择完成后，再继续安装馨光 Skill。"
-
   if xinguang_skill_installed_known; then
-    next_title="开始灯光测试"
-    next_reply="客厅设计一个马尔代夫灯光效果。"
-    detail="你也可以输入“二楼客厅来一个森林晨光”或“保存当前灯光效果到快照 3”。"
-  elif xinguang_home_selected_known; then
-    next_title="安装馨光 Skill"
-    next_reply="安装馨光 Skill"
-    detail="安装完成后，就可以直接用自然语言告诉小龙虾想要的灯光效果。"
-  elif account_bound_known; then
-    next_title="选择馨光设备所在家庭"
-    next_reply="选择米家家庭"
-    detail="如果你的账号下只有一个家庭，小龙虾可以继续；如果有多个家庭，请选择馨光设备所在的家庭。"
-  fi
+    cat <<'EOF'
 
-  cat <<EOF
+馨光 Skill 已安装，可以开始测试灯光。
 
-馨光 AI 设计灯光环境安装完成 ✅
-
-下一步：$next_title
-
-请继续回复：
-$next_reply
-
-$detail
+你还可以继续说：
+- 二楼客厅换成马尔代夫灯光效果。
+- 二楼客厅来一个森林晨光。
+- 保存当前灯光效果到快照 3。
 EOF
+  elif xinguang_home_selected_known; then
+    cat <<'EOF'
+
+安装完成。
+下一步：安装馨光 Skill。
+EOF
+  elif account_bound_known; then
+    cat <<'EOF'
+
+米家账号绑定成功，正在检查家庭列表。
+EOF
+  else
+    cat <<'EOF'
+
+安装完成，请绑定米家账号。
+EOF
+  fi
 }
 
 print_step_note() {
@@ -1589,27 +1547,23 @@ EOF
 prompt_mihome_binding() {
   setup_runtime_paths
   if ! have miloco-cli; then
-    log "Miloco CLI not found; skipping Mi Home binding prompt"
+    log "灯光服务工具未就绪，跳过米家账号绑定提示"
     return 0
   fi
 
   if [[ "$INSTALL_NONINTERACTIVE" == 1 || ! -t 0 ]]; then
     cat <<'EOF'
 
-Miloco 米家账号绑定需要打开授权链接或页面，本次无人值守部署自动跳过。
-后续在服务器上执行:
-  miloco-cli account bind
+安装完成，请绑定米家账号。
 EOF
     return 0
   fi
 
-  if ask_yes_no "是否现在生成 Miloco 米家账号绑定链接？" n; then
+  if ask_yes_no "是否现在生成米家账号绑定链接？" n; then
     miloco-cli account bind || true
   else
     cat <<'EOF'
-已跳过米家账号绑定。
-后续在服务器上执行:
-  miloco-cli account bind
+安装完成，请绑定米家账号。
 EOF
   fi
 }
@@ -1645,19 +1599,19 @@ run_full_deploy() {
   fi
 
   if state_has STEP_3_DONE; then
-    step_skip_msg 3 "Install and deploy Miloco 2.0" "state already has STEP_3_DONE"
+    step_skip_msg 3 "安装灯光插件" "state already has STEP_3_DONE"
   else
     step_start="$(date +%s)"
-    step_start_msg 3 "Install and deploy Miloco 2.0"
-    print_step_note "下载 Miloco 2.0、安装服务和项目必要插件；不默认安装 discord、slack、qqbot、whatsapp 等额外插件。"
+    step_start_msg 3 "安装灯光插件"
+    print_step_note "正在下载灯光插件组件，安装灯光服务和项目必要插件；不默认安装额外平台插件。"
     if miloco_base_ready; then
-      log "Miloco service and OpenClaw plugin are already present; completing Step 3 without reinstalling"
+      log "灯光服务和灯光插件已就绪，无需重复安装"
       restart_openclaw_gateway_best_effort
     else
       install_miloco
     fi
-    step_done_msg 3 "Install and deploy Miloco 2.0" "$step_start"
-    log_timing_since "Miloco" "$step_start"
+    step_done_msg 3 "安装灯光插件" "$step_start"
+    log_timing_since "灯光插件" "$step_start"
   fi
 
   if state_has STEP_4_DONE; then
@@ -1672,22 +1626,22 @@ run_full_deploy() {
   fi
 
   if state_has STEP_5_DONE; then
-    step_skip_msg 5 "Prompt Miloco Mi Home account binding" "state already has STEP_5_DONE"
+    step_skip_msg 5 "米家账号绑定提示" "state already has STEP_5_DONE"
   else
     step_start="$(date +%s)"
-    step_start_msg 5 "Prompt Miloco Mi Home account binding"
+    step_start_msg 5 "米家账号绑定提示"
     print_step_note "默认跳过米家账号绑定和 MiMo Key 写入；后续由人工在安全环境配置。"
     prompt_mihome_binding
-    step_done_msg 5 "Prompt Miloco Mi Home account binding" "$step_start"
-    log_timing_since "Miloco Mi Home binding prompt" "$step_start"
+    step_done_msg 5 "米家账号绑定提示" "$step_start"
+    log_timing_since "米家账号绑定提示" "$step_start"
   fi
 
   if state_has STEP_6_DONE; then
-    step_skip_msg 6 "Verify services and print next manual actions" "state already has STEP_6_DONE"
+    step_skip_msg 6 "灯光服务验证和下一步引导" "state already has STEP_6_DONE"
   else
     step_start="$(date +%s)"
-    step_start_msg 6 "Verify services and print next manual actions"
-    print_step_note "检查 Miloco 服务、OpenClaw 网关、插件状态和端口监听。"
+    step_start_msg 6 "灯光服务验证和下一步引导"
+    print_step_note "检查灯光服务、小龙虾后台服务和灯光插件状态。"
     restart_openclaw_gateway_best_effort
     verify_install
     log "Done"
@@ -1697,7 +1651,7 @@ run_full_deploy() {
     else
       state_mark SUCCESS_ACTIVE
     fi
-    step_done_msg 6 "Verify services and print next manual actions" "$step_start"
+    step_done_msg 6 "灯光服务验证和下一步引导" "$step_start"
   fi
   print_next_actions
 }
@@ -1721,9 +1675,9 @@ run_openclaw_upgrade() {
   step_done_msg 2 "OpenClaw update and gateway config" "$step_start"
 
   step_start="$(date +%s)"
-  step_start_msg 3 "Verify services and ports"
+  step_start_msg 3 "灯光服务验证"
   verify_install
-  step_done_msg 3 "Verify services and ports" "$step_start"
+  step_done_msg 3 "灯光服务验证" "$step_start"
   log_timing_since "OpenClaw action" "$action_start"
   OPENCLAW_UPDATE="$previous_update"
 }
@@ -1732,7 +1686,7 @@ run_miloco_deploy() {
   local step_start action_start previous_update
   TOTAL_STEPS=4
   action_start="$(date +%s)"
-  print_mode_summary "miloco"
+  print_mode_summary "灯光插件维护"
 
   step_start="$(date +%s)"
   step_start_msg 1 "Base packages check"
@@ -1748,17 +1702,17 @@ run_miloco_deploy() {
   step_done_msg 2 "OpenClaw gateway check" "$step_start"
 
   step_start="$(date +%s)"
-  step_start_msg 3 "Install or update Miloco 2.0"
+  step_start_msg 3 "安装或更新灯光插件"
   if miloco_base_ready; then
-    log "Miloco service and OpenClaw plugin are already present; skipping reinstall"
+    log "灯光服务和灯光插件已就绪，跳过重复安装"
     restart_openclaw_gateway_best_effort
   else
     install_miloco
   fi
-  step_done_msg 3 "Install or update Miloco 2.0" "$step_start"
+  step_done_msg 3 "安装或更新灯光插件" "$step_start"
 
   step_start="$(date +%s)"
-  step_start_msg 4 "Verify services and ports"
+  step_start_msg 4 "灯光服务验证"
   restart_openclaw_gateway_best_effort
   verify_install
   if state_has AGENTCHAT_RECONNECT_EXPECTED; then
@@ -1766,8 +1720,8 @@ run_miloco_deploy() {
   else
     state_mark SUCCESS_ACTIVE
   fi
-  step_done_msg 4 "Verify services and ports" "$step_start"
-  log_timing_since "Miloco action" "$action_start"
+  step_done_msg 4 "灯光服务验证" "$step_start"
+  log_timing_since "灯光插件维护" "$action_start"
   print_next_actions
 }
 
@@ -1792,19 +1746,10 @@ run_continue_deploy() {
 run_status_report() {
   state_init
   if state_has STEP_6_DONE || state_has SUCCESS_ACTIVE || state_has SUCCESS_AFTER_RECONNECT; then
-    printf '状态: FINISHED\n'
+    printf '安装完成，请绑定米家账号。\n'
   else
-    printf '状态: EXITED_BUT_INCOMPLETE\n'
+    printf '正在安装，请稍候。\n'
   fi
-  printf '脚本版本: %s\n' "$SCRIPT_VERSION"
-  printf '最后完成步骤: %s\n' "$(state_last_done)"
-  printf '下一步: %s\n' "$(state_next_step)"
-  printf '状态文件: %s\n' "$STATE_FILE"
-  printf '日志文件: %s\n' "$LOG_FILE"
-  if ! state_has STEP_6_DONE; then
-    printf '建议继续命令: %s\n' "$(recommended_continue_command)"
-  fi
-  verify_install
 }
 
 dispatch_action() {
