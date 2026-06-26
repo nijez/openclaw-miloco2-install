@@ -1,0 +1,132 @@
+请查看「馨光 Skill 安装」进度。只读取状态，不要重新安装，不要修改脚本，不要切换安装方法。全程必须使用中文回复。
+
+请只执行下面这些只读检查：
+
+```bash
+TARGET=/tmp/install-xinguang-skill.sh
+EXPECTED_VERSION=2026-06-26.2
+
+if [ ! -f "$TARGET" ] || ! grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$EXPECTED_VERSION\"" "$TARGET" 2>/dev/null; then
+  for URL in \
+    https://nijez.github.io/xingguang-ai-lighting-guide/install-xinguang-skill.sh \
+    https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/install-xinguang-skill.sh \
+    https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/install-xinguang-skill.sh
+  do
+    if curl -fsSL "$URL" -o "$TARGET" && grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$EXPECTED_VERSION\"" "$TARGET"; then
+      chmod +x "$TARGET"
+      break
+    fi
+  done
+fi
+
+grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$EXPECTED_VERSION\"" "$TARGET" || { echo "无法读取馨光 Skill 安装进度：安装脚本不存在或版本不正确"; exit 1; }
+
+INSTALL_ACTION=status bash "$TARGET"
+```
+
+然后用中文告诉我：
+
+1. 本次检查时间。
+2. 馨光 Skill 是否已准备好。
+3. 服务是否运行中。
+4. 是否发现馨光设备。
+5. 最近是否有错误。
+6. 是否需要继续等待。
+7. 当前家庭、检测到的家庭列表、目标家庭。
+8. 目标房间、目标设备名称、设备在线状态。
+9. model（如果有）、能力摘要、归一化识别结果。
+10. 下一步需要我做什么。
+
+如果发现馨光设备，使用这个模板：
+
+```text
+馨光 Skill 安装进度
+
+状态：已准备好
+馨光设备：已发现
+
+下一步：
+可以输入灯光测试语句，例如：
+吊顶灯带，设计个马尔代夫灯光效果。
+```
+
+如果没有发现馨光设备，使用这个模板：
+
+```text
+馨光 Skill 安装进度
+
+状态：需要继续配置
+馨光设备：未发现
+
+说明：
+未发现馨光设备，请先确认米家账号已绑定，并且馨光设备已出现在设备列表。
+```
+
+如果状态中出现 `HOME_SELECTION_REQUIRED`，使用这个模板：
+
+```text
+馨光 Skill 安装进度
+
+状态：需要选择米家家庭
+
+说明：
+检测到或无法确认多个米家家庭。请先选择馨光设备所在的家庭，不要自动使用第一个家庭。
+
+下一步：
+请选择馨光设备所在的家庭，然后发送继续安装指令。不要自动使用第一个家庭。
+```
+
+如果状态中出现 `TARGET_HOME_NOT_FOUND`，使用这个模板：
+
+```text
+馨光 Skill 安装进度
+
+状态：未找到指定家庭
+
+说明：
+未找到指定家庭，请检查家庭名称。
+```
+
+如果状态中出现 `DEVICE_SELECTION_REQUIRED`，使用这个模板：
+
+```text
+馨光 Skill 安装进度
+
+状态：需要选择具体设备
+
+说明：
+检测到多个候选灯光设备，请选择要控制的具体设备，不要自动选择第一个设备。
+```
+
+如果状态中出现 `TARGET_PRODUCT_NOT_FOUND`，使用这个模板：
+
+```text
+馨光 Skill 安装进度
+
+状态：未找到目标设备
+
+说明：
+请检查家庭、房间、设备名称，确认目标设备是馨光RGBCW幻彩灯带 / 灯膜设备。
+```
+
+如果状态中出现 `TARGET_DEVICE_OFFLINE`，使用这个模板：
+
+```text
+馨光 Skill 安装进度
+
+状态：目标设备离线
+
+说明：
+目标设备当前离线，请先确认设备已通电并联网。
+```
+
+如果状态中出现 `TARGET_DEVICE_NEEDS_CONFIRMATION` 或 `TARGET_DEVICE_READY`，使用这个模板：
+
+```text
+馨光 Skill 安装进度
+
+状态：目标设备已确认
+
+说明：
+已确认目标设备，可以进入灯光控制测试。安装过程不会自动控制灯光。
+```

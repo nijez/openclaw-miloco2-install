@@ -1,0 +1,43 @@
+请继续执行「馨光 Skill 安装与灯光测试准备」。全程必须使用中文回复。
+
+这次已经明确要控制的米家家庭和设备，请不要自动选择第一个家庭或第一个设备。
+
+本次目标：
+
+```text
+家庭：林坞店
+房间：测试
+设备：软膜
+目标产品：馨光RGBCW幻彩灯带
+```
+
+请只执行下面这份固定流程：
+
+```bash
+TARGET=/tmp/install-xinguang-skill.sh
+EXPECTED_VERSION=2026-06-26.2
+LOG=/tmp/xinguang-skill-install-current.log
+PIDFILE=/tmp/xinguang-skill-install.pid
+
+grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$EXPECTED_VERSION\"" "$TARGET" || { echo "馨光 Skill 安装脚本不存在或版本不正确"; exit 1; }
+chmod +x "$TARGET"
+
+nohup env \
+  XINGUANG_TARGET_HOME="林坞店" \
+  XINGUANG_TARGET_ROOM="测试" \
+  XINGUANG_TARGET_DEVICE_NAME="软膜" \
+  XINGUANG_TARGET_PRODUCT="馨光RGBCW幻彩灯带" \
+  INSTALL_ACTION=continue \
+  INSTALL_NONINTERACTIVE=1 \
+  bash "$TARGET" >> "$LOG" 2>&1 &
+
+echo $! > "$PIDFILE"
+
+echo "馨光 Skill 继续安装已启动"
+echo "目标家庭：林坞店"
+echo "目标房间：测试"
+echo "目标设备：软膜"
+echo "目标产品：馨光RGBCW幻彩灯带"
+echo "日志文件：$LOG"
+echo "下一步：请稍后发送「查看馨光 Skill 安装进度」。不要重复发送安装指令。"
+```
