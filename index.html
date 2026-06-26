@@ -191,7 +191,7 @@
           <div class="step"><div class="num">1</div><div><h3>准备小龙虾服务器</h3><p>购买腾讯云轻量应用服务器，并选择小龙虾应用模板。</p></div></div>
           <div class="step"><div class="num">2</div><div><h3>配置小龙虾</h3><p>开通小米 MiMo 大模型账号，获取并填写 MiMo API Key，绑定微信小龙虾。</p></div></div>
           <div class="step"><div class="num">3</div><div><h3>安装馨光 AI 设计灯光</h3><p>复制页面里的固定安装指令，发给小龙虾对话页。</p></div></div>
-          <div class="step"><div class="num">4</div><div><h3>配置并测试灯光效果</h3><p>配置灯光能力、绑定米家账号、确认馨光设备、安装馨光 Skill，并输入灯光需求测试效果。</p></div></div>
+          <div class="step"><div class="num">4</div><div><h3>配置并测试灯光效果</h3><p>配置灯光能力、绑定米家账号、选择要使用的米家家庭，安装馨光 Skill 后直接用自然语言控制灯光。</p></div></div>
         </div>
       </section>
 
@@ -208,12 +208,11 @@
         <h2>2. 配置小龙虾</h2>
         <p>进入小龙虾应用设置，填写 MiMo API Key。配置完成后，按页面提示绑定微信小龙虾。</p>
         <p>绑定完成后，可以先给小龙虾发一句简单测试：“你好，帮我确认你已经可以正常工作。”</p>
-        <p>在 MiMo 平台获取 API Key 后，回到小龙虾应用设置里填写。需要配置时，可参考 OpenClaw 配置 MiMo 说明。</p>
+        <p>在 MiMo 订阅管理页面获取 API Key 后，回到小龙虾应用设置里填写。</p>
         <div class="notice">这里配置的是小龙虾自己的 MiMo API Key，用于让小龙虾能够正常对话和执行任务。</div>
         <div class="notice">安装过程中不会要求填写你的 API Key。安装完成后，再按页面提示完成 MiMo API Key、米家账号和馨光设备配置。</div>
         <div class="grid">
-          <a class="card" href="https://platform.xiaomimimo.com/" target="_blank" rel="noreferrer"><h3>小米 MiMo 开放平台</h3><p>获取 MiMo API Key。</p></a>
-          <a class="card" href="https://mimo.mi.com/docs/zh-CN/tokenplan/integration/openclaw" target="_blank" rel="noreferrer"><h3>OpenClaw 配置 MiMo 说明</h3><p>查看小龙虾里填写 MiMo API Key 的说明。</p></a>
+          <a class="card" href="https://platform.xiaomimimo.com/console/plan-manage" target="_blank" rel="noreferrer"><h3>小米 MiMo 订阅管理 / 获取 API Key</h3><p>进入 MiMo 控制台获取 API Key。</p></a>
         </div>
       </section>
 
@@ -305,12 +304,12 @@ env \
       <section id="test">
         <h2>4. 配置并测试灯光效果</h2>
         <p>安装完成后，还需要把 MiMo API Key 配置给馨光 AI 设计灯光能力。如果前面已经获取过 MiMo API Key，这里可以继续使用同一个 Key。</p>
-        <p>然后按提示绑定米家账号，并确认馨光设备已经出现在设备列表里。如果你的米家账号下有多个家庭，或设备改过名称，请选择馨光设备所在的家庭和具体设备。完成前面步骤后，即可进入馨光 Skill 安装与灯光测试。</p>
+        <p>完成前面步骤后，可以继续安装馨光 Skill。安装完成后，请先选择要使用的米家家庭。之后你可以直接告诉小龙虾想要的灯光效果，例如“客厅设计一个马尔代夫灯光效果”。小龙虾会读取该家庭下的馨光设备，并通过馨光 Skill 执行灯光效果。</p>
         <div class="grid">
           <div class="card"><h3>1. 配置灯光能力 MiMo API Key</h3><p>用于馨光 AI 设计灯光能力。</p></div>
           <div class="card"><h3>2. 绑定米家账号</h3><p>用于读取并控制你的馨光设备。</p></div>
-          <div class="card"><h3>3. 确认馨光设备</h3><p>确认馨光设备已经出现在设备列表中。</p></div>
-          <div class="card"><h3>4. 安装馨光 Skill</h3><p>完成前面步骤后，即可进入馨光 Skill 安装与灯光测试。馨光 Skill 安装指令将继续补充。安装馨光 Skill 后，可以输入灯光需求测试效果。</p></div>
+          <div class="card"><h3>3. 选择米家家庭</h3><p>如果账号下有多个家庭，请选择馨光设备所在的家庭。</p></div>
+          <div class="card"><h3>4. 安装馨光 Skill</h3><p>安装完成后，直接用自然语言告诉小龙虾想要的灯光效果。</p></div>
         </div>
         <div class="notice">
           <p><strong>两个 MiMo API Key 配置位置：</strong></p>
@@ -322,10 +321,11 @@ env \
         </div>
         <h3>测试案例</h3>
         <div class="grid">
-          <div class="card">吊顶灯带，设计个马尔代夫灯光效果。</div>
-          <div class="card">客厅灯带，设计一个海边日落灯光效果。</div>
-          <div class="card">卧室灯光，设计一个适合睡前放松的灯光效果。</div>
-          <div class="card">茶室灯光，设计一个安静的东方禅意灯光效果。</div>
+          <div class="card">客厅设计一个马尔代夫灯光效果。</div>
+          <div class="card">二楼客厅来一个森林晨光。</div>
+          <div class="card">卧室做一个适合睡前放松的灯光。</div>
+          <div class="card">全屋灯带做一个朋友聚会氛围。</div>
+          <div class="card">保存当前灯光效果到快照 3。</div>
         </div>
         <div class="notice success">
           <p><strong>测试时只需要确认三件事：</strong></p>
@@ -436,11 +436,11 @@ grep -E 'SUCCESS|STEP_[0-9]+_DONE|ERROR|Failed|Traceback|timeout|timed out' "$ST
           <div class="card"><h3>刷新后是空白对话框怎么办？</h3><p>直接发送「查看安装进度」。</p></div>
           <div class="card"><h3>能不能重复发送一键部署指令？</h3><p>不要重复发送。后台任务启动后，需要确认状态时只发送「查看安装进度」。</p></div>
           <div class="card"><h3>怎么查看安装进度？</h3><p>复制本页「查看安装进度」内容，发给小龙虾。</p></div>
-          <div class="card"><h3>安装完成后下一步做什么？</h3><p>配置灯光能力所需的 MiMo API Key，绑定米家账号，确认馨光设备已经出现在设备列表中，然后安装馨光 Skill 并测试灯光效果。</p></div>
-          <div class="card"><h3>为什么还不能直接控制灯光？</h3><p>完成本页安装后，还需要继续完成 MiMo API Key、米家账号、馨光设备和馨光 Skill 配置，才能进行灯光控制测试。</p></div>
+          <div class="card"><h3>安装完成后下一步做什么？</h3><p>配置灯光能力所需的 MiMo API Key，绑定米家账号，选择要使用的米家家庭，然后安装馨光 Skill。</p></div>
+          <div class="card"><h3>为什么还不能直接控制灯光？</h3><p>完成本页安装后，还需要继续完成 MiMo API Key、米家账号、米家家庭选择和馨光 Skill 安装，才能进行灯光控制测试。</p></div>
           <div class="card"><h3>MiMo API Key 要配置几次？</h3><p>小龙虾本身需要配置一次。安装完成后，馨光 AI 设计灯光能力也需要配置一次。如果你使用的是同一个 Key，可以在两个位置填写同一个 Key。</p></div>
           <div class="card"><h3>米家账号什么时候绑定？</h3><p>安装完成后，在配置灯光效果前按提示绑定米家账号。</p></div>
-          <div class="card"><h3>馨光 Skill 什么时候安装？</h3><p>完成前面步骤后，即可进入馨光 Skill 安装与灯光测试。馨光 Skill 安装指令将继续补充。</p></div>
+          <div class="card"><h3>馨光 Skill 什么时候安装？</h3><p>完成前面步骤后，可以继续安装馨光 Skill。安装完成后，直接用自然语言告诉小龙虾想要的灯光效果。</p></div>
         </div>
         <div class="notice warn">如果多次刷新后仍无法查看进度，请联系技术人员处理。</div>
       </section>

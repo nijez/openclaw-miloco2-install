@@ -1,4 +1,4 @@
-请你执行「馨光 Skill 安装与灯光测试准备」。全程必须使用中文回复。
+请你执行「馨光 Skill 安装与家庭设备列表准备」。全程必须使用中文回复。
 
 重要要求：
 1. 不要重复执行第一阶段安装流程。
@@ -9,12 +9,10 @@
 6. 安装任务启动后，不要长时间占用对话。
 7. 不要重复发送本安装指令。
 8. 如果检测到多个米家家庭，请让我选择要控制馨光设备的家庭，不要自动使用第一个家庭。
-9. 如果设备列表里有多个灯，或设备改过名称，请让我选择要控制的具体设备，不要自动选择第一个设备。
-10. 本次测试目标可指定为：
-    家庭：林坞店
-    房间：测试
-    设备：软膜
-    目标产品：馨光RGBCW幻彩灯带
+9. 本次安装只做 Skill 安装、灯控服务启动、米家家庭选择和该家庭下设备列表读取，不要控制灯光。
+10. 如果只有一个米家家庭，可以直接继续。
+11. 如果有多个米家家庭，请让我选择要使用的家庭，不要自动使用第一个家庭。
+12. 不要让我选择产品类型、设备 DID 或具体设备。后续我会直接用自然语言告诉你灯光需求。
 
 请只执行下面这份固定流程：
 
@@ -23,7 +21,9 @@ TARGET=/tmp/install-xinguang-skill.sh
 LOG=/tmp/xinguang-skill-install-current.log
 STATE=/tmp/xinguang-skill-install.state
 PIDFILE=/tmp/xinguang-skill-install.pid
-EXPECTED_VERSION=2026-06-26.2
+EXPECTED_VERSION=2026-06-26.3
+REJECT_VERSION_1=2026-06-26.1
+REJECT_VERSION_2=2026-06-26.2
 
 if [ -f "$PIDFILE" ]; then
   OLD_PID="$(cat "$PIDFILE" 2>/dev/null || true)"
@@ -48,14 +48,12 @@ do
   echo "当前源失败或版本不匹配，继续尝试下一个源"
 done
 
-grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$EXPECTED_VERSION\"" "$TARGET" || { echo "馨光 Skill 安装脚本下载失败或版本不正确"; exit 1; }
+grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$REJECT_VERSION_1\"" "$TARGET" 2>/dev/null && { echo "拒绝使用旧版 $REJECT_VERSION_1，当前必须使用 $EXPECTED_VERSION"; exit 1; }
+grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$REJECT_VERSION_2\"" "$TARGET" 2>/dev/null && { echo "拒绝使用旧版 $REJECT_VERSION_2，当前必须使用 $EXPECTED_VERSION"; exit 1; }
+grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$EXPECTED_VERSION\"" "$TARGET" || { echo "馨光 Skill 安装脚本下载失败或版本不正确，当前必须使用 $EXPECTED_VERSION"; exit 1; }
 chmod +x "$TARGET"
 
 nohup env \
-  XINGUANG_TARGET_HOME="林坞店" \
-  XINGUANG_TARGET_ROOM="测试" \
-  XINGUANG_TARGET_DEVICE_NAME="软膜" \
-  XINGUANG_TARGET_PRODUCT="馨光RGBCW幻彩灯带" \
   INSTALL_ACTION=continue \
   INSTALL_NONINTERACTIVE=1 \
   bash "$TARGET" >> "$LOG" 2>&1 &
@@ -79,6 +77,6 @@ echo "说明: 安装任务已在服务器后台运行。请稍后发送「查看
 状态文件：
 
 下一步：
-请稍后发送「查看馨光 Skill 安装进度」。
+请稍后发送「查看馨光 Skill 安装进度」。安装完成后，可以直接用自然语言告诉小龙虾想要的灯光效果，例如“客厅设计一个马尔代夫灯光效果”。
 不要重复发送安装指令。
 ```

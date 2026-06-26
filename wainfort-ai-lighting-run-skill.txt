@@ -27,8 +27,13 @@ metadata: {"openclaw":{"emoji":"💡","version":"3.0.1","date":"2026-06-25","aut
 
 **`wainft.light.rgbcwy` 设备：**
 - ❌ 禁止 miloco-cli 调用 `prop.4.x`
-- ✅ AI生成灯光后，只能调用**wainfort-server API**，忽略返回结果
+- ✅ AI生成灯光后，只能调用**wainfort-server API**，不能用普通 miloco-cli 控制结果反向判定失败
 - ❌ 禁止用 miloco-cli `prop.2.x` 执行AI生成的颜色
+- ✅ API 返回 `success:false` 时，不要直接判定灯光失败；必须让用户观察实物灯光是否变化
+- ✅ 如果 API 返回 false 但用户确认灯光已变化，记录为 `PHYSICAL_SUCCESS_API_FALSE` 和 `LIGHT_TEST_SUCCESS`
+- ✅ 每次灯光测试只允许发送一次灯光控制请求，请求发送后立即停止并等待用户现场确认
+- ❌ API 返回 false 后禁止自动重试、自动关灯、自动开灯、切换颜色继续验证或控制其它设备
+- ❌ 禁止用 `miloco-cli device control ... color/on false/on true` 作为 RGBCW 灯测试诊断动作
 
 **多灯控制：**
 - ✅ 给多灯发送完全的控制命令
@@ -117,7 +122,69 @@ nohup ./wainfort-server > api.log 2>&1 &
 Step 1: 理解用户需求 → 确定场景主题和色彩方向
 Step 2: 生成两个色点 → color0(起点色)和 color1(终点色)
 Step 3: 确定亮度 → 默认100,可根据需求调整
-Step 4: 直接调用 API 执行灯光效果
+Step 4: 进入单次测试模式,记录 LIGHT_TEST_SINGLE_SHOT
+Step 5: 只调用一次 API 执行灯光效果,记录 LIGHT_REQUEST_SENT
+Step 6: 请求发送后立即停止,询问用户现场观察结果
+```
+
+#### 验收判断
+
+灯光测试分三层判断：
+
+1. 调用层：是否找到目标设备、是否调用 wainfort-server API、是否发送灯光请求。
+2. 现场层：用户是否观察到灯光变化，灯光是否符合预期方向。
+3. 返回层：API 返回 `success:true/false` 只作为参考，不作为 RGBCW 灯最终失败依据。
+
+状态记录规则：
+
+```text
+LIGHT_REQUEST_SENT
+LIGHT_API_RETURNED_FALSE
+WAITING_PHYSICAL_CONFIRMATION
+PHYSICAL_CHANGED
+PHYSICAL_NOT_CHANGED
+PHYSICAL_CONFIRMATION_REQUIRED
+PHYSICAL_SUCCESS_API_FALSE
+UNSTABLE_MULTIPLE_COMMANDS
+LIGHT_TEST_SUCCESS
+LIGHT_TEST_FAILED
+```
+
+执行灯光测试后必须回复：
+
+```text
+灯光请求已发送，请观察目标设备是否发生变化。
+如果灯光已变化，请回复“已变化”。
+如果没有变化，请回复“未变化”。
+```
+
+如果用户回复“已变化”，记录 `LIGHT_TEST_SUCCESS`。如果 API 返回 `success:false` 但用户回复“已变化”，同时记录 `PHYSICAL_SUCCESS_API_FALSE`，并说明“实际控制成功，API 返回状态需修复”。
+
+如果现场出现连续变色、关灯再亮、或多个效果叠加，应记录 `UNSTABLE_MULTIPLE_COMMANDS`。这表示控制链路已触达设备，但本轮测试不是稳定验收；下一轮必须改为单次请求测试。
+
+#### 单次测试禁止动作
+
+对 RGBCW 灯光测试，以下动作禁止执行：
+
+```text
+miloco-cli device control ... color
+miloco-cli device control ... on false
+miloco-cli device control ... on true
+重复调用 /api/generate
+用其他设备做对照控制
+API 返回 false 后自动重试
+API 返回 false 后自动关灯再开灯
+API 返回 false 后自动切换颜色继续验证
+```
+
+允许执行的只读检查：
+
+```text
+/api/status
+/api/devices
+设备列表查询
+Skill 是否安装
+服务是否运行
 ```
 
 #### 色点生成规则
@@ -163,7 +230,7 @@ curl -X POST http://127.0.0.1:1888/api/generate \
   }'
 ```
 
-**注意:** color0 和 color1 是灯带两端的颜色,必须不同才能形成渐变效果!
+**注意:** color0 和 color1 是灯带两端的颜色,必须不同才能形成渐变效果。API 返回 `success:false` 时仍要询问用户观察结果，不要自动重试，不要自动关灯或切换颜色，不要用 miloco-cli 直接控制结果反向判定 RGBCW 灯失败。
 
 ---
 
@@ -245,7 +312,9 @@ curl http://127.0.0.1:1888/api/devices \
    - color0: #FF9A76（温暖橙色）
    - color1: #FFEAA7（柔和黄色）
 3. 直接调用 API 执行
-4. 返回执行结果
+4. 记录 LIGHT_REQUEST_SENT
+5. 提示用户观察灯光是否变化
+6. 根据用户反馈记录 LIGHT_TEST_SUCCESS 或 LIGHT_TEST_FAILED
 ```
 
 ### 示例2:用户说"保存当前灯光到快照3"

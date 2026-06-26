@@ -19,7 +19,7 @@
 1. 准备小龙虾服务器：购买腾讯云轻量服务器，并选择小龙虾应用模板。
 2. 配置小龙虾：开通小米 MiMo 大模型账号，获取并填写 MiMo API Key，绑定微信小龙虾。
 3. 安装馨光 AI 设计灯光：把固定安装指令发给小龙虾对话页。
-4. 配置并测试灯光效果：配置灯光能力 MiMo API Key，绑定米家账号，选择馨光设备所在家庭和具体设备，安装馨光 Skill 并测试。
+4. 配置并测试灯光效果：配置灯光能力 MiMo API Key，绑定米家账号，选择要使用的米家家庭，安装馨光 Skill 后直接用自然语言控制灯光。
 
 ## 教程页面
 
@@ -30,8 +30,7 @@
 
 - 购买腾讯云小龙虾服务器：https://cloud.tencent.com/act/pro/openclaw
 - 查看腾讯云 OpenClaw 实践教程：https://cloud.tencent.com/document/product/1207/127874
-- 小米 MiMo 开放平台：https://platform.xiaomimimo.com/
-- OpenClaw 配置 MiMo 说明：https://mimo.mi.com/docs/zh-CN/tokenplan/integration/openclaw
+- 小米 MiMo 订阅管理 / 获取 API Key：https://platform.xiaomimimo.com/console/plan-manage
 
 ## MiMo API Key 说明
 
@@ -41,15 +40,16 @@
 - 灯光能力 MiMo API Key：用于馨光 AI 设计灯光能力。
 - 这两个位置可以使用同一个 MiMo API Key。
 
-安装过程中不会要求填写你的 API Key。安装完成后，再按页面提示完成 MiMo API Key、米家账号、家庭选择和馨光设备配置。
+安装过程中不会要求填写你的 API Key。安装完成后，再按页面提示完成 MiMo API Key、米家账号和米家家庭选择。
 
 ## 测试灯光示例
 
 ```text
-吊顶灯带，设计个马尔代夫灯光效果。
-客厅灯带，设计一个海边日落灯光效果。
-卧室灯光，设计一个适合睡前放松的灯光效果。
-茶室灯光，设计一个安静的东方禅意灯光效果。
+客厅设计一个马尔代夫灯光效果。
+二楼客厅来一个森林晨光。
+卧室做一个适合睡前放松的灯光。
+全屋灯带做一个朋友聚会氛围。
+保存当前灯光效果到快照 3。
 ```
 
 ## 异常处理
@@ -64,4 +64,4 @@
 
 ## 当前说明
 
-完成前面步骤后，即可进入馨光 Skill 安装与灯光测试。馨光 Skill 安装指令将继续补充。
+完成前面步骤后，可以继续安装馨光 Skill。安装完成后，请先选择要使用的米家家庭。之后你可以直接告诉小龙虾想要的灯光效果，例如“客厅设计一个马尔代夫灯光效果”。

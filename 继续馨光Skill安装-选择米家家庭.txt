@@ -1,32 +1,39 @@
-请继续执行「馨光 Skill 安装与灯光测试准备」。全程必须使用中文回复。
+请继续执行「馨光 Skill 安装与家庭设备列表准备」。全程必须使用中文回复。
 
-这次已经明确要控制的米家家庭和设备，请不要自动选择第一个家庭或第一个设备。
+这次已经明确要使用的米家家庭。请只切换到这个家庭，并读取该家庭下的设备列表。
 
-本次目标：
+重要要求：
+
+1. 不要自动使用第一个家庭。
+2. 不要让我选择产品类型。
+3. 不要让我选择设备 DID。
+4. 不要要求我指定具体设备。
+5. 不要控制灯光。
+6. 安装完成后，我会直接用自然语言告诉你灯光需求。
+
+本次选择的家庭：
 
 ```text
 家庭：林坞店
-房间：测试
-设备：软膜
-目标产品：馨光RGBCW幻彩灯带
 ```
 
 请只执行下面这份固定流程：
 
 ```bash
 TARGET=/tmp/install-xinguang-skill.sh
-EXPECTED_VERSION=2026-06-26.2
+EXPECTED_VERSION=2026-06-26.3
+REJECT_VERSION_1=2026-06-26.1
+REJECT_VERSION_2=2026-06-26.2
 LOG=/tmp/xinguang-skill-install-current.log
 PIDFILE=/tmp/xinguang-skill-install.pid
 
-grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$EXPECTED_VERSION\"" "$TARGET" || { echo "馨光 Skill 安装脚本不存在或版本不正确"; exit 1; }
+grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$REJECT_VERSION_1\"" "$TARGET" 2>/dev/null && { echo "拒绝使用旧版 $REJECT_VERSION_1，当前必须使用 $EXPECTED_VERSION"; exit 1; }
+grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$REJECT_VERSION_2\"" "$TARGET" 2>/dev/null && { echo "拒绝使用旧版 $REJECT_VERSION_2，当前必须使用 $EXPECTED_VERSION"; exit 1; }
+grep -q "XINGUANG_SKILL_INSTALLER_VERSION=\"$EXPECTED_VERSION\"" "$TARGET" || { echo "馨光 Skill 安装脚本不存在或版本不正确，当前必须使用 $EXPECTED_VERSION"; exit 1; }
 chmod +x "$TARGET"
 
 nohup env \
   XINGUANG_TARGET_HOME="林坞店" \
-  XINGUANG_TARGET_ROOM="测试" \
-  XINGUANG_TARGET_DEVICE_NAME="软膜" \
-  XINGUANG_TARGET_PRODUCT="馨光RGBCW幻彩灯带" \
   INSTALL_ACTION=continue \
   INSTALL_NONINTERACTIVE=1 \
   bash "$TARGET" >> "$LOG" 2>&1 &
@@ -35,9 +42,6 @@ echo $! > "$PIDFILE"
 
 echo "馨光 Skill 继续安装已启动"
 echo "目标家庭：林坞店"
-echo "目标房间：测试"
-echo "目标设备：软膜"
-echo "目标产品：馨光RGBCW幻彩灯带"
 echo "日志文件：$LOG"
 echo "下一步：请稍后发送「查看馨光 Skill 安装进度」。不要重复发送安装指令。"
 ```

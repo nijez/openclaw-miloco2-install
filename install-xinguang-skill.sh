@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-XINGUANG_SKILL_INSTALLER_VERSION="2026-06-26.2"
+XINGUANG_SKILL_INSTALLER_VERSION="2026-06-26.3"
 XINGUANG_SKILL_VERSION="3.0.1"
 SKILL_NAME="wainfort-ai-lighting-run"
 SKILL_COMPANY="深圳市馨光智能物联有限公司"
@@ -15,11 +15,14 @@ SERVER_URL="${SERVER_URL:-http://appagent.wainfort.com/download/wainfort-server}
 WAINFORT_SERVER_SHA256="${WAINFORT_SERVER_SHA256:-49bbd86dd064baf09d1914003638969a7a937a36a5a447ea6a28bde527e3df7c}"
 WAINFORT_API_PORT="${WAINFORT_API_PORT:-1888}"
 WAINFORT_MILOCO_URL="${WAINFORT_MILOCO_URL:-http://127.0.0.1:1810}"
+WAINFORT_DATA_DIR="${WAINFORT_DATA_DIR:-$INSTALL_DIR/data}"
+WAINFORT_LOG_DIR="${WAINFORT_LOG_DIR:-$INSTALL_DIR/logs}"
 ROTATE_WAINFORT_TOKEN="${ROTATE_WAINFORT_TOKEN:-0}"
 XINGUANG_TARGET_HOME="${XINGUANG_TARGET_HOME:-}"
-XINGUANG_TARGET_ROOM="${XINGUANG_TARGET_ROOM:-}"
-XINGUANG_TARGET_DEVICE_NAME="${XINGUANG_TARGET_DEVICE_NAME:-}"
-XINGUANG_TARGET_PRODUCT="${XINGUANG_TARGET_PRODUCT:-馨光RGBCW幻彩灯带}"
+LIGHT_API_SUCCESS="${LIGHT_API_SUCCESS:-unknown}"
+LIGHT_PHYSICAL_RESULT="${LIGHT_PHYSICAL_RESULT:-}"
+LIGHT_TEST_MODE="${LIGHT_TEST_MODE:-single-shot}"
+LIGHT_TEST_UNSTABLE="${LIGHT_TEST_UNSTABLE:-0}"
 
 SKILL_URLS="${SKILL_URLS:-https://nijez.github.io/xingguang-ai-lighting-guide/skills/wainfort-ai-lighting-run/SKILL.md https://nijez.github.io/xingguang-ai-lighting-guide/wainfort-ai-lighting-run-skill.txt https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/skills/wainfort-ai-lighting-run/SKILL.md https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/skills/wainfort-ai-lighting-run/SKILL.md}"
 
@@ -35,7 +38,6 @@ HOME_LIST_CACHE="$INSTALL_DIR/homes-last.json"
 CURRENT_HOME_CACHE="$INSTALL_DIR/current-home-last.txt"
 HOME_SWITCH_RESULT="$INSTALL_DIR/home-switch-result.txt"
 TARGET_HOME_FILE="$INSTALL_DIR/target-home.env"
-TARGET_DEVICE_FILE="$INSTALL_DIR/target-device.json"
 DEVICE_REPORT="$INSTALL_DIR/device-report.txt"
 
 mkdir -p "$(dirname "$LOG_FILE")" "$INSTALL_DIR"
@@ -111,12 +113,16 @@ WAINFORT_API_TOKEN=$token
 WAINFORT_MILOCO_URL=$WAINFORT_MILOCO_URL
 WAINFORT_MILOCO_TOKEN=${WAINFORT_MILOCO_TOKEN:-}
 WAINFORT_API_PORT=$WAINFORT_API_PORT
+WAINFORT_DATA_DIR=$WAINFORT_DATA_DIR
+WAINFORT_LOG_DIR=$WAINFORT_LOG_DIR
 EOF
   chmod 600 "$ENV_FILE" 2>/dev/null || true
   export WAINFORT_API_TOKEN="$token"
   export WAINFORT_MILOCO_URL
   export WAINFORT_MILOCO_TOKEN="${WAINFORT_MILOCO_TOKEN:-}"
   export WAINFORT_API_PORT
+  export WAINFORT_DATA_DIR
+  export WAINFORT_LOG_DIR
   state_mark TOKEN_CONFIGURED
 }
 
@@ -248,36 +254,65 @@ server_status_ok() {
     "http://127.0.0.1:$WAINFORT_API_PORT/api/status" >/dev/null 2>&1
 }
 
+server_data_dir_unsupported() {
+  [[ -f "$API_LOG" ]] || return 1
+  grep -Eq '/root/汤剑的文件夹|/root/.+AI设计灯光|/root/' "$API_LOG" || return 1
+  grep -Eiq 'permission denied|权限|denied|EACCES|operation not permitted' "$API_LOG"
+}
+
+fail_server_data_dir_unsupported() {
+  state_mark WAINFORT_SERVER_DATA_DIR_UNSUPPORTED
+  die "wainfort-server 当前版本写入了不可访问的 /root 路径，无法在当前用户下稳定运行。请更换支持用户目录的 wainfort-server 版本后再继续。"
+}
+
 start_server() {
   load_env_if_present
-  if server_status_ok || server_process_running; then
+  if server_status_ok; then
+    state_mark SERVER_ALREADY_RUNNING
+    state_mark WAINFORT_SERVER_READY
+    return 0
+  fi
+  if server_process_running; then
     state_mark SERVER_ALREADY_RUNNING
     return 0
   fi
 
+  mkdir -p "$WAINFORT_DATA_DIR" "$WAINFORT_LOG_DIR"
   : >"$API_LOG"
   nohup env \
     WAINFORT_API_TOKEN="$WAINFORT_API_TOKEN" \
     WAINFORT_MILOCO_URL="$WAINFORT_MILOCO_URL" \
     WAINFORT_MILOCO_TOKEN="${WAINFORT_MILOCO_TOKEN:-}" \
     WAINFORT_API_PORT="$WAINFORT_API_PORT" \
+    WAINFORT_DATA_DIR="$WAINFORT_DATA_DIR" \
+    WAINFORT_LOG_DIR="$WAINFORT_LOG_DIR" \
+    WAINFORT_HOME="$WAINFORT_DATA_DIR" \
     "$SERVER_BIN" >>"$API_LOG" 2>&1 &
   printf '%s\n' "$!" >"$SERVER_PID_FILE"
   state_mark SERVER_STARTED
 
   local i
   for i in $(seq 1 30); do
+    if server_data_dir_unsupported; then
+      fail_server_data_dir_unsupported
+    fi
     if server_status_ok; then
       state_mark SERVER_STATUS_OK
+      state_mark WAINFORT_SERVER_READY
       return 0
     fi
     sleep 2
   done
 
+  if server_data_dir_unsupported; then
+    fail_server_data_dir_unsupported
+  fi
+
   if server_process_running; then
     state_mark SERVER_PROCESS_RUNNING_STATUS_PENDING
     return 0
   fi
+  state_mark WAINFORT_SERVER_START_FAILED
   die "wainfort-server 未能启动"
 }
 
@@ -289,6 +324,7 @@ query_home_list() {
   if have miloco-cli; then
     local args
     for args in \
+      "scope home list" \
       "scope home list --json" \
       "scope homes list --json" \
       "home list --json" \
@@ -305,18 +341,8 @@ query_home_list() {
     done
   fi
 
-  local endpoint
-  for endpoint in homes families home-list family-list; do
-    if curl -fsS --max-time 12 \
-      -H "Authorization: Bearer ${WAINFORT_API_TOKEN:-}" \
-      "http://127.0.0.1:$WAINFORT_API_PORT/api/$endpoint" \
-      -o "$tmp" && [[ -s "$tmp" ]] && python3 -m json.tool "$tmp" >/dev/null 2>&1; then
-      mv "$tmp" "$HOME_LIST_CACHE"
-      return 0
-    fi
-  done
-
   rm -f "$tmp"
+  state_mark HOME_LIST_QUERY_FAILED
   return 1
 }
 
@@ -412,7 +438,9 @@ for index, item in enumerate(homes, 1):
         item.get("id") or ""
     )
     suffix = f"（{home_id}）" if home_id else ""
-    print(f"{index}. {name}{suffix}")
+    in_use = item.get("in_use", item.get("inUse", item.get("current", item.get("selected", False))))
+    active = "；当前启用" if str(in_use).lower() in ("1", "true", "yes", "已启用") else ""
+    print(f"{index}. {name}{suffix}{active}")
 PY
 }
 
@@ -468,29 +496,83 @@ raise SystemExit(1)
 PY
 }
 
+active_home_info() {
+  home_python active <<'PY'
+import json
+import sys
+
+path = sys.argv[1]
+data = json.load(open(path, "r", encoding="utf-8"))
+
+home_keys = {
+    "home_id", "homeId", "home_name", "homeName",
+    "family_id", "familyId", "family_name", "familyName",
+    "in_use", "inUse",
+}
+
+def candidates(value, parent_key=""):
+    if isinstance(value, list):
+        if value and all(isinstance(item, dict) for item in value):
+            parent = parent_key.lower()
+            if "home" in parent or "famil" in parent:
+                yield value
+            elif any(home_keys.intersection(item.keys()) for item in value):
+                yield value
+        for item in value:
+            yield from candidates(item, parent_key)
+    elif isinstance(value, dict):
+        for key, child in value.items():
+            yield from candidates(child, str(key))
+
+def field(item, *names):
+    for name in names:
+        value = item.get(name)
+        if value is not None and str(value) != "":
+            return str(value)
+    return ""
+
+def truthy(value):
+    if isinstance(value, bool):
+        return value
+    return str(value).lower() in ("1", "true", "yes", "y", "已启用", "当前")
+
+homes = []
+for group in candidates(data):
+    if len(group) > len(homes):
+        homes = group
+
+for item in homes:
+    active = item.get("in_use", item.get("inUse", item.get("is_in_use", item.get("current", item.get("selected", False)))))
+    if truthy(active):
+        name = field(item, "home_name", "homeName", "family_name", "familyName", "name")
+        home_id = field(item, "home_id", "homeId", "family_id", "familyId", "id")
+        print(f"{home_id}\t{name}")
+        raise SystemExit(0)
+
+raise SystemExit(1)
+PY
+}
+
 current_home_matches_target() {
   local target_id="$1"
   local target_name="$2"
   rm -f "$CURRENT_HOME_CACHE"
 
-  if have miloco-cli; then
-    local args
-    for args in \
-      "scope home current --json" \
-      "scope current --json" \
-      "scope home status --json" \
-      "scope status --json" \
-      "scope home current" \
-      "scope current"
-    do
-      if timeout 25s miloco-cli $args >"$CURRENT_HOME_CACHE" 2>/dev/null && [[ -s "$CURRENT_HOME_CACHE" ]]; then
-        if grep -Fq "$target_name" "$CURRENT_HOME_CACHE" || { [[ -n "$target_id" ]] && grep -Fq "$target_id" "$CURRENT_HOME_CACHE"; }; then
-          return 0
-        fi
-      fi
-    done
+  if ! query_home_list; then
+    state_mark HOME_CURRENT_DETECT_FAILED
+    return 1
   fi
 
+  local active_line active_id active_name
+  if ! active_line="$(active_home_info)"; then
+    state_mark HOME_CURRENT_DETECT_FAILED
+    return 1
+  fi
+  printf '%s\n' "$active_line" >"$CURRENT_HOME_CACHE"
+  IFS=$'\t' read -r active_id active_name <<<"$active_line"
+
+  [[ "$active_name" == "$target_name" ]] && return 0
+  [[ -n "$target_id" && "$active_id" == "$target_id" ]] && return 0
   return 1
 }
 
@@ -525,7 +607,7 @@ switch_to_target_home() {
     return 0
   fi
 
-  state_mark HOME_SWITCH_FAILED
+  state_mark HOME_SWITCH_VERIFY_FAILED
   die "家庭切换后未能确认当前启用家庭，请联系技术人员处理。"
 }
 
@@ -538,8 +620,7 @@ check_home_selection_before_install() {
   fi
 
   if ! query_home_list; then
-    state_mark HOME_SELECTION_REQUIRED
-    die "无法确认米家家庭列表，请先补充家庭列表查询和家庭选择功能后再继续。"
+    die "无法查询米家家庭列表，请确认米家账号已绑定后再继续。"
   fi
 
   local count
@@ -574,20 +655,18 @@ check_home_selection_before_install() {
   die "无法确认米家家庭列表，请先补充家庭列表查询和家庭选择功能后再继续。"
 }
 
-analyze_devices() {
-  python3 - "$DEVICE_CACHE" "$TARGET_DEVICE_FILE" "$DEVICE_REPORT" \
-    "$XINGUANG_TARGET_HOME" "$XINGUANG_TARGET_ROOM" "$XINGUANG_TARGET_DEVICE_NAME" "$XINGUANG_TARGET_PRODUCT" <<'PY'
+summarize_device_list() {
+  python3 - "$DEVICE_CACHE" "$DEVICE_REPORT" <<'PY'
 import json
 import sys
 
-device_path, target_path, report_path, target_home, target_room, target_name, target_product = sys.argv[1:8]
+device_path, report_path = sys.argv[1:3]
 
 try:
     raw = json.load(open(device_path, "r", encoding="utf-8"))
 except Exception as exc:
-    print(f"STATUS\tquery_failed")
-    print(f"MESSAGE\t设备列表解析失败：{exc}")
-    raise SystemExit
+    print(f"设备列表解析失败：{exc}")
+    raise SystemExit(0)
 
 def walk(value):
     if isinstance(value, dict):
@@ -605,240 +684,63 @@ def field(obj, *names):
             return str(value)
     return ""
 
-def online_state(obj):
+def online_text(obj):
     for key in ("online", "is_online", "isOnline", "isOnlineDevice", "available"):
         if key in obj:
             value = obj[key]
             if isinstance(value, bool):
-                return value
-            if str(value).lower() in ("1", "true", "online", "yes", "在线"):
-                return True
-            if str(value).lower() in ("0", "false", "offline", "no", "离线"):
-                return False
-    for key in ("status", "deviceStatus", "connect_status", "connectionStatus"):
-        if key in obj:
-            value = str(obj[key]).lower()
-            if value in ("online", "1", "true", "在线", "connected"):
-                return True
-            if value in ("offline", "0", "false", "离线", "disconnected"):
-                return False
-    return None
+                return "在线" if value else "离线"
+            lowered = str(value).lower()
+            if lowered in ("1", "true", "online", "yes", "在线"):
+                return "在线"
+            if lowered in ("0", "false", "offline", "no", "离线"):
+                return "离线"
+    return "未确认"
 
-def text_blob(obj):
-    return json.dumps(obj, ensure_ascii=False, sort_keys=True).lower()
-
-cap_groups = {
-    "开关": ("开关", "switch", "onoff", "power"),
-    "亮度": ("亮度", "brightness", "bright"),
-    "RGB 彩色": ("rgb", "彩色", "color", "colour"),
-    "色温": ("色温", "color_temp", "color temperature", "ct"),
-    "饱和度": ("饱和", "saturation", "saturat"),
-    "色彩模式": ("色彩模式", "color_mode", "colour_mode"),
-    "模式": ("模式", "mode"),
-}
-
-def caps(obj):
-    blob = text_blob(obj)
-    matched = []
-    for label, words in cap_groups.items():
-        if any(word.lower() in blob for word in words):
-            matched.append(label)
-    return matched
-
-def model_value(obj):
-    return field(obj, "model", "modelName", "model_name", "deviceModel", "productModel", "product_model")
-
-def normalize(obj):
-    name = field(obj, "name", "device_name", "deviceName", "displayName", "title")
-    did = field(obj, "did", "id", "device_id", "deviceId", "miotDid")
-    room = field(obj, "room", "room_name", "roomName", "room_name_cn", "parentRoomName", "area")
-    model = model_value(obj)
-    matched_caps = caps(obj)
-    online = online_state(obj)
-    blob = text_blob(obj)
-    model_match = model == "wainft.light.rgbcwy" or "wainft.light.rgbcwy" in blob
-    caps_match = len(matched_caps) >= 5 and all(label in matched_caps for label in ("开关", "亮度", "RGB 彩色"))
-    name_keyword = any(word in name.lower() for word in ("馨光", "xg", "rgbcw"))
-    return {
-        "name": name,
-        "did": did,
-        "room": room,
-        "model": model,
-        "online": online,
-        "caps": matched_caps,
-        "model_match": model_match,
-        "caps_match": caps_match,
-        "name_keyword": name_keyword,
-        "raw": obj,
-    }
-
-devices = []
+items = []
 seen = set()
 for obj in walk(raw):
     if not isinstance(obj, dict):
         continue
-    item = normalize(obj)
-    if not item["name"] and not item["did"] and not item["model"]:
+    name = field(obj, "name", "device_name", "deviceName", "displayName", "title")
+    room = field(obj, "room", "room_name", "roomName", "room_name_cn", "parentRoomName", "area")
+    model = field(obj, "model", "modelName", "model_name", "deviceModel", "productModel", "product_model")
+    did = field(obj, "did", "id", "device_id", "deviceId", "miotDid")
+    if not name and not model and not did:
         continue
-    key = item["did"] or f'{item["name"]}|{item["room"]}|{item["model"]}|{len(devices)}'
+    key = did or f"{name}|{room}|{model}|{len(items)}"
     if key in seen:
         continue
     seen.add(key)
-    devices.append(item)
+    items.append((name or "未命名", room or "未返回", online_text(obj), model or "未返回"))
 
-def online_text(value):
-    if value is True:
-        return "在线"
-    if value is False:
-        return "离线"
-    return "未确认"
-
-def result_name(item):
-    if item["model_match"]:
-        return "馨光RGBCW幻彩灯带 / 灯膜"
-    if item["caps_match"]:
-        return "疑似馨光RGBCW幻彩灯带 / 灯膜"
-    if item["name_keyword"]:
-        return "名称疑似馨光设备"
-    return "未归类"
-
-def report_items(items):
-    lines = []
-    for index, item in enumerate(items, 1):
-        caps_summary = "、".join(item["caps"]) if item["caps"] else "未识别"
-        model = item["model"] or "未返回"
-        room = item["room"] or "未返回"
-        lines.append(
-            f'{index}. 设备：{item["name"] or "未命名"}；房间：{room}；'
-            f'在线状态：{online_text(item["online"])}；model：{model}；'
-            f'能力摘要：{caps_summary}；识别结果：{result_name(item)}'
-        )
-    return "\n".join(lines)
-
-def save_target(item):
-    public = {
-        "name": item["name"],
-        "room": item["room"],
-        "model": item["model"],
-        "online": online_text(item["online"]),
-        "caps": item["caps"],
-        "result": result_name(item),
-        "target_home": target_home,
-        "target_product": target_product,
-    }
-    private = dict(public)
-    private["did"] = item["did"]
-    json.dump(private, open(target_path, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
-    with open(report_path, "w", encoding="utf-8") as handle:
-        handle.write(report_items([item]) + "\n")
-
-def emit_ready(item, explicit):
-    states = ["TARGET_DEVICE_FOUND"]
-    if target_room:
-        states.append("TARGET_ROOM_SET")
-    if target_name:
-        states.append("TARGET_DEVICE_NAME_SET")
-    if item["model_match"]:
-        states.append("TARGET_DEVICE_MODEL_MATCHED")
+with open(report_path, "w", encoding="utf-8") as handle:
+    if not items:
+        handle.write("该家庭下暂未读取到设备。\n")
     else:
-        states.append("TARGET_DEVICE_MODEL_UNAVAILABLE")
-    if item["caps_match"]:
-        states.append("TARGET_DEVICE_CAPS_MATCHED")
-    if explicit and item["caps_match"] and not item["model_match"]:
-        states.append("TARGET_DEVICE_NEEDS_CONFIRMATION")
-    states.append("TARGET_DEVICE_READY")
-    save_target(item)
-    for state in states:
-        print(f"STATE\t{state}")
-    print("STATUS\tready")
-    print(f'MESSAGE\t目标设备已确认：{item["name"] or "未命名"}，房间：{item["room"] or "未返回"}，状态：{online_text(item["online"])}，识别结果：{result_name(item)}')
+        for index, (name, room, online, model) in enumerate(items, 1):
+            handle.write(f"{index}. 设备：{name}；房间：{room}；在线状态：{online}；model：{model}\n")
 
-def fail(status, state, message, items=None):
-    if items:
-        with open(report_path, "w", encoding="utf-8") as handle:
-            handle.write(report_items(items) + "\n")
-        print("INFO\t候选设备列表：")
-        for line in report_items(items).splitlines():
-            print(f"INFO\t{line}")
-    print(f"STATE\t{state}")
-    print(f"STATUS\t{status}")
-    print(f"MESSAGE\t{message}")
-
-if target_room:
-    print("STATE\tTARGET_ROOM_SET")
-if target_name:
-    print("STATE\tTARGET_DEVICE_NAME_SET")
-
-scope = devices
-if target_room:
-    room_matches = [item for item in scope if item["room"] == target_room]
-    if room_matches:
-        scope = room_matches
-
-if target_name:
-    matches = [item for item in scope if item["name"] == target_name]
-    if not matches:
-        fail("not_found", "TARGET_PRODUCT_NOT_FOUND", "未找到指定设备，请检查房间和设备名称。", scope[:12])
-        raise SystemExit
-    if len(matches) > 1:
-        fail("selection_required", "DEVICE_SELECTION_REQUIRED", "找到多个同名设备，请选择具体设备，不要自动使用第一个设备。", matches)
-        raise SystemExit
-    selected = matches[0]
-    if selected["online"] is False:
-        fail("offline", "TARGET_DEVICE_OFFLINE", "目标设备当前离线，请先确认设备已通电并联网。", [selected])
-        raise SystemExit
-    if selected["model_match"] or selected["caps_match"]:
-        emit_ready(selected, True)
-        raise SystemExit
-    fail("cap_mismatch", "TARGET_PRODUCT_NOT_FOUND", "目标设备能力不匹配，请重新选择馨光RGBCW幻彩灯带 / 灯膜设备。", [selected])
-    raise SystemExit
-
-candidates = [item for item in scope if item["model_match"] or item["caps_match"]]
-candidates = [item for item in candidates if item["online"] is not False]
-
-if not candidates:
-    fail("not_found", "TARGET_PRODUCT_NOT_FOUND", "未发现可用的馨光RGBCW幻彩灯带 / 灯膜设备，请选择具体设备后再继续。", scope[:12])
-elif len(candidates) > 1:
-    fail("selection_required", "DEVICE_SELECTION_REQUIRED", "发现多个候选灯光设备，请选择具体设备，不要自动使用第一个设备。", candidates)
-else:
-    emit_ready(candidates[0], False)
+print(f"设备数量：{len(items)}")
 PY
 }
 
 query_devices() {
   load_env_if_present
-  rm -f "$DEVICE_CACHE" "$TARGET_DEVICE_FILE" "$DEVICE_REPORT"
+  rm -f "$DEVICE_CACHE" "$DEVICE_REPORT"
   state_mark DEVICE_DISCOVERY_STARTED
   if curl -fsS --max-time 20 \
     -H "Authorization: Bearer $WAINFORT_API_TOKEN" \
     "http://127.0.0.1:$WAINFORT_API_PORT/api/devices" \
     -o "$DEVICE_CACHE"; then
     state_mark DEVICE_QUERY_DONE
+    state_mark DEVICE_LIST_READY
+    if have python3; then
+      summarize_device_list || true
+    fi
     state_mark DEVICE_DISCOVERY_DONE
-
-    local status="" message="" kind value
-    while IFS=$'\t' read -r kind value; do
-      case "$kind" in
-        STATE) state_mark "$value" ;;
-        STATUS) status="$value" ;;
-        MESSAGE) message="$value" ;;
-        INFO) printf '%s\n' "$value" ;;
-      esac
-    done < <(analyze_devices)
-
-    case "$status" in
-      ready)
-        state_mark XINGUANG_DEVICE_FOUND
-        printf '\n%s\n' "$message"
-        return 0
-        ;;
-      selection_required|not_found|offline|cap_mismatch)
-        die "$message"
-        ;;
-      *)
-        die "设备识别失败，请联系技术人员处理。"
-        ;;
-    esac
+    printf '\n已读取当前米家家庭下的设备列表。\n'
+    return 0
   fi
 
   state_mark DEVICE_QUERY_FAILED
@@ -849,6 +751,60 @@ check_first_stage_ready() {
   have openclaw || die "请先完成第一阶段安装，再继续安装馨光 Skill。"
   have miloco-cli || die "请先完成第一阶段安装，并确认小龙虾相关命令可用。"
   state_mark FIRST_STAGE_READY
+}
+
+record_light_result() {
+  local api_result="unknown"
+  state_mark LIGHT_TEST_SINGLE_SHOT
+  state_mark LIGHT_REQUEST_SENT
+
+  case "$LIGHT_API_SUCCESS" in
+    false|False|FALSE|0|no|No|NO|failed|Failed|FAILED)
+      api_result="false"
+      state_mark LIGHT_API_RETURNED_FALSE
+      ;;
+    true|True|TRUE|1|yes|Yes|YES|ok|OK|success|Success|SUCCESS)
+      api_result="true"
+      state_mark LIGHT_API_RETURNED_TRUE
+      ;;
+    *)
+      state_mark LIGHT_API_RETURN_UNKNOWN
+      ;;
+  esac
+
+  if [[ "$LIGHT_TEST_UNSTABLE" == 1 ]]; then
+    state_mark UNSTABLE_MULTIPLE_COMMANDS
+    printf '灯光测试结果：检测到多条控制命令叠加，本轮不能作为稳定验收。\n'
+    return 0
+  fi
+
+  case "$LIGHT_PHYSICAL_RESULT" in
+    已变化|变化|changed|success|yes|true)
+      state_mark PHYSICAL_CHANGED
+      if [[ "$api_result" == "false" ]]; then
+        state_mark PHYSICAL_SUCCESS_API_FALSE
+        printf '实际控制成功，API 返回状态需修复。\n'
+      fi
+      state_mark LIGHT_TEST_SUCCESS
+      printf '灯光测试结果：现场已观察到灯光变化，记录为成功。\n'
+      ;;
+    未变化|没变化|not_changed|failed|no|false)
+      state_mark PHYSICAL_NOT_CHANGED
+      state_mark LIGHT_TEST_FAILED
+      printf '灯光测试结果：现场未观察到灯光变化，记录为失败。\n'
+      ;;
+    多次变化|连续变化|不稳定|unstable|multiple|multiple_commands)
+      state_mark UNSTABLE_MULTIPLE_COMMANDS
+      printf '灯光测试结果：控制链路已触达设备，但出现多条命令叠加，本轮不能作为稳定验收。\n'
+      ;;
+    *)
+      state_mark WAITING_PHYSICAL_CONFIRMATION
+      state_mark PHYSICAL_CONFIRMATION_REQUIRED
+      printf '灯光请求已发送，请观察目标设备是否发生变化。\n'
+      printf '如果灯光已变化，请回复“已变化”。\n'
+      printf '如果没有变化，请回复“未变化”。\n'
+      ;;
+  esac
 }
 
 print_status() {
@@ -902,34 +858,67 @@ print_status() {
     printf '\n家庭选择：未找到指定家庭，请检查家庭名称。\n'
   fi
 
-  printf '\n目标房间：%s\n' "${XINGUANG_TARGET_ROOM:-未指定}"
-  printf '目标设备名称：%s\n' "${XINGUANG_TARGET_DEVICE_NAME:-未指定}"
-  printf '目标产品：%s\n' "${XINGUANG_TARGET_PRODUCT:-馨光RGBCW幻彩灯带}"
+  if status_file_has DEVICE_LIST_READY; then
+    printf '\n设备列表：已读取当前家庭下的设备列表。\n'
+  fi
 
   if [[ -f "$DEVICE_REPORT" ]]; then
-    printf '\n设备识别结果：\n'
+    printf '\n设备列表摘要：\n'
     cat "$DEVICE_REPORT" || true
   fi
 
-  if status_file_has DEVICE_SELECTION_REQUIRED; then
-    printf '\n设备选择：发现多个候选灯光设备，请选择具体设备，不要自动使用第一个设备。\n'
+  if status_file_has HOME_LIST_QUERY_FAILED; then
+    printf '\n家庭列表：查询失败，请确认米家账号已绑定后再继续。\n'
   fi
-  if status_file_has TARGET_PRODUCT_NOT_FOUND; then
-    printf '\n设备选择：未找到符合条件的目标设备，请检查家庭、房间和设备名称。\n'
+  if status_file_has HOME_CURRENT_DETECT_FAILED; then
+    printf '\n当前家庭：无法确认当前启用家庭，请联系技术人员处理。\n'
   fi
-  if status_file_has TARGET_DEVICE_OFFLINE; then
-    printf '\n设备选择：目标设备当前离线，请先确认设备已通电并联网。\n'
+  if status_file_has HOME_SWITCH_VERIFY_FAILED; then
+    printf '\n家庭切换：已尝试切换，但未能确认目标家庭已启用。\n'
   fi
-  if status_file_has TARGET_DEVICE_NEEDS_CONFIRMATION; then
-    printf '\n设备识别：model 未返回，已按设备能力归类为疑似馨光RGBCW幻彩灯带 / 灯膜。\n'
+  if status_file_has WAINFORT_SERVER_DATA_DIR_UNSUPPORTED; then
+    printf '\n本地灯控服务：当前版本写入了不可访问的 /root 路径，无法在当前用户下稳定运行。请更换支持用户目录的 wainfort-server 版本后再继续。\n'
   fi
-  if status_file_has TARGET_DEVICE_READY; then
-    printf '\n设备选择：目标设备已确认，可以进入灯光控制测试。\n'
+  if status_file_has WAINFORT_SERVER_START_FAILED; then
+    printf '\n本地灯控服务：启动失败，请联系技术人员处理。\n'
+  fi
+  if status_file_has LIGHT_REQUEST_SENT; then
+    printf '\n灯光测试：灯光请求已发送。\n'
+  fi
+  if status_file_has LIGHT_TEST_SINGLE_SHOT; then
+    printf '灯光测试：单次测试模式已启用，请勿自动重试、关灯、切换颜色或控制其它设备。\n'
+  fi
+  if status_file_has LIGHT_API_RETURNED_FALSE; then
+    printf '灯光测试：API 返回 success:false，不能单独作为最终失败依据。\n'
+  fi
+  if status_file_has WAITING_PHYSICAL_CONFIRMATION; then
+    printf '灯光测试：等待用户现场确认灯光是否变化。\n'
+  fi
+  if status_file_has PHYSICAL_CONFIRMATION_REQUIRED; then
+    printf '灯光测试：需要用户现场确认灯光是否变化。\n'
+  fi
+  if status_file_has PHYSICAL_CHANGED; then
+    printf '灯光测试：现场已观察到灯光变化。\n'
+  fi
+  if status_file_has PHYSICAL_NOT_CHANGED; then
+    printf '灯光测试：现场未观察到灯光变化。\n'
+  fi
+  if status_file_has PHYSICAL_SUCCESS_API_FALSE; then
+    printf '灯光测试：现场已变化但 API 返回 false，记录为实际控制成功，API 返回状态需修复。\n'
+  fi
+  if status_file_has UNSTABLE_MULTIPLE_COMMANDS; then
+    printf '灯光测试：出现多条控制命令叠加，本轮不能作为稳定验收。下一轮必须只发送一次请求并等待现场确认。\n'
+  fi
+  if status_file_has LIGHT_TEST_SUCCESS; then
+    printf '灯光测试：已通过现场确认。\n'
+  fi
+  if status_file_has LIGHT_TEST_FAILED; then
+    printf '灯光测试：现场未变化，测试失败。\n'
   fi
 
   printf '馨光设备：'
-  if status_file_has TARGET_DEVICE_READY || status_file_has XINGUANG_DEVICE_FOUND; then
-    printf '已确认\n'
+  if status_file_has DEVICE_LIST_READY; then
+    printf '设备列表已读取，后续由小龙虾按自然语言需求在当前家庭内匹配\n'
   else
     printf '未确认\n'
   fi
@@ -941,6 +930,10 @@ print_status() {
 main() {
   if [[ "$INSTALL_ACTION" == "status" ]]; then
     print_status
+    return 0
+  fi
+  if [[ "$INSTALL_ACTION" == "record-light-result" || "$INSTALL_ACTION" == "light-result" ]]; then
+    record_light_result
     return 0
   fi
   if [[ "$INSTALL_ACTION" != "full" && "$INSTALL_ACTION" != "continue" ]]; then
@@ -961,16 +954,18 @@ main() {
   query_devices
 
   state_mark XINGUANG_SKILL_INSTALL_DONE
-  printf '\n馨光 Skill 安装流程已完成\n'
+  printf '\n馨光 Skill 已安装\n'
+  printf 'wainfort-server 已运行\n'
   printf '安装器版本：%s\n' "$XINGUANG_SKILL_INSTALLER_VERSION"
   printf 'Skill 版本：%s\n' "$XINGUANG_SKILL_VERSION"
-  [[ -n "$XINGUANG_TARGET_HOME" ]] && printf '当前家庭：%s\n' "$XINGUANG_TARGET_HOME"
-  [[ -n "$XINGUANG_TARGET_ROOM" ]] && printf '目标房间：%s\n' "$XINGUANG_TARGET_ROOM"
-  [[ -n "$XINGUANG_TARGET_DEVICE_NAME" ]] && printf '目标设备：%s\n' "$XINGUANG_TARGET_DEVICE_NAME"
-  [[ -f "$DEVICE_REPORT" ]] && { printf '\n设备识别结果：\n'; cat "$DEVICE_REPORT"; }
+  [[ -n "$XINGUANG_TARGET_HOME" ]] && printf '米家家庭：%s\n' "$XINGUANG_TARGET_HOME"
+  printf '设备列表已读取\n'
+  printf '可以直接用自然语言描述灯光需求\n'
+  [[ -f "$DEVICE_REPORT" ]] && { printf '\n设备列表摘要：\n'; cat "$DEVICE_REPORT"; }
   printf '日志文件：%s\n' "$LOG_FILE"
   printf '状态文件：%s\n' "$STATE_FILE"
-  printf '\n下一步：请确认后再发送灯光测试语句。安装流程不会自动控制灯光。\n'
+  printf '\n下一步：直接告诉小龙虾想要的灯光效果，例如“客厅设计一个马尔代夫灯光效果”。\n'
+  printf '小龙虾会在当前米家家庭范围内读取设备列表，并通过馨光 Skill 执行。\n'
 }
 
 main "$@"
