@@ -8,7 +8,7 @@ set -Eeuo pipefail
 # - WeChat channel installation/login is skipped.
 # - MiMo API key is configured only when MIMO_API_KEY is supplied.
 
-SCRIPT_VERSION="2026-06-25.24"
+SCRIPT_VERSION="2026-06-25.25"
 TOTAL_STEPS=6
 MILOCO_VERSION="${MILOCO_VERSION:-2026.6.18}"
 OPENCLAW_PORT="${OPENCLAW_PORT:-18789}"
@@ -41,8 +41,8 @@ NPM_REGISTRY="${NPM_REGISTRY:-auto}"
 MIMO_API_KEY="${MIMO_API_KEY:-}"
 LOG_FILE="${LOG_FILE:-$HOME/miloco-cloud-install.log}"
 STATE_FILE="${STATE_FILE:-/tmp/openclaw-miloco-install.state}"
-XINGUANG_SKILL_ENTRY_VERSION="${XINGUANG_SKILL_ENTRY_VERSION:-2026-06-26.12}"
-XINGUANG_SKILL_INSTALLER_VERSION="${XINGUANG_SKILL_INSTALLER_VERSION:-2026-06-26.12}"
+XINGUANG_SKILL_ENTRY_VERSION="${XINGUANG_SKILL_ENTRY_VERSION:-2026-06-26.13}"
+XINGUANG_SKILL_INSTALLER_VERSION="${XINGUANG_SKILL_INSTALLER_VERSION:-2026-06-26.13}"
 XINGUANG_LOCAL_INSTALL_DIR="${XINGUANG_LOCAL_INSTALL_DIR:-$HOME/xinguang-ai-light}"
 
 mkdir -p "$(dirname "$LOG_FILE")"
@@ -1495,6 +1495,12 @@ repair_openclaw_gateway_execstart_if_needed() {
   cat "$tmp" >"$unit_file"
 
   systemctl --user daemon-reload >/dev/null 2>&1 || return 1
+  local unit_for_restart
+  unit_for_restart="$(openclaw_gateway_unit || true)"
+  if [[ -n "$unit_for_restart" ]]; then
+    systemctl --user reset-failed "$unit_for_restart" >/dev/null 2>&1 || true
+    systemctl --user restart "$unit_for_restart" >/dev/null 2>&1 || true
+  fi
 }
 
 ensure_openclaw_gateway_service_running() {
@@ -2117,6 +2123,87 @@ download_versioned_file() {
   return 1
 }
 
+write_xinguang_workspace_rules() {
+  local workspace_dir="$HOME/.openclaw/workspace"
+  local user_md="$workspace_dir/USER.md"
+
+  [[ -d "$workspace_dir" ]] || return 0
+
+  cat >"$user_md" <<'USERMD'
+# USER.md - 馨光 AI 设计灯光
+
+## 当前用户
+
+馨光 AI 设计灯光内测用户。
+
+## 固定对话规则（最高优先级）
+
+### 用户说「绑定米家账号」时
+
+1. 生成米家授权链接，只回复：
+
+请点击下面链接完成米家授权：
+
+[点击打开米家授权链接](链接)
+
+授权完成后，把授权码复制回来。
+
+2. 收到授权码后直接完成绑定，不解释格式，不显示授权码内容。
+3. 绑定成功后先只回复：
+
+米家账号绑定成功。
+正在检查家庭列表。
+
+4. 如果只有一个家庭，只回复：
+
+米家账号绑定成功。
+
+下一步：
+请发送「安装馨光 Skill」。
+
+5. 如果有多个家庭，用编号列出，等用户选择：
+
+米家账号绑定成功。
+检测到多个家庭，请选择馨光设备所在家庭：
+
+1. 【家庭名称】
+2. 【家庭名称】
+
+6. 用户选择家庭后，后台静默执行：xinguang-set-home "【家庭名称】" "【家庭ID】"
+   只回复：
+
+已切换到【家庭名称】。
+
+下一步：
+请发送「安装馨光 Skill」。
+
+禁止：自动选第一个家庭、显示摄像头上限、显示裸露 URL、引导查看设备、显示内部命令。
+
+### 用户说「安装馨光 Skill」时
+
+1. 优先执行本地命令：xinguang-install-skill
+2. 如果本地命令不可用，执行：bash ~/xinguang-ai-light/install-xinguang-ai-skill.sh
+3. 只显示：
+
+正在安装馨光 Skill，请稍候。
+
+4. 安装成功后只回复：
+
+馨光 Skill 已安装，可以开始测试灯光。
+
+你可以说：
+客厅来个马尔代夫的海边日落
+
+5. 安装失败后只回复：
+
+馨光 Skill 暂时无法安装，请联系工作人员处理。
+
+禁止：搜索 ClawHub、询问 Skill 来源、新建 Skill、推荐普通米家灯控。
+USERMD
+
+  log "馨光对话规则已写入小龙虾工作区"
+}
+
 prepare_xinguang_skill_installer() {
   local install_dir="$XINGUANG_LOCAL_INSTALL_DIR"
   local bin_dir="$HOME/.local/bin"
@@ -2185,6 +2272,7 @@ EOF
   chmod +x "$home_shortcut"
   cp "$home_shortcut" "$path_home_shortcut" 2>/dev/null || true
 
+  write_xinguang_workspace_rules || log "警告：馨光对话规则写入失败，不影响主流程"
   state_mark XINGUANG_SKILL_INSTALLER_READY
 
   cat >"$install_dir/灯光测试提示.txt" <<'EOF'

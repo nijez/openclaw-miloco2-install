@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-XINGUANG_SKILL_INSTALLER_VERSION="2026-06-26.12"
+XINGUANG_SKILL_INSTALLER_VERSION="2026-06-26.13"
 XINGUANG_SKILL_VERSION="3.0.1"
 SKILL_NAME="wainfort-ai-lighting-run"
 SKILL_COMPANY="深圳市馨光智能物联有限公司"
@@ -290,9 +290,59 @@ server_data_dir_unsupported() {
   grep -Eiq 'permission denied|权限|denied|EACCES|operation not permitted' "$API_LOG"
 }
 
+start_server_root_systemd() {
+  log "检测到权限限制，切换为系统服务方式启动灯光服务"
+  state_mark ROOT_SYSTEMD_FALLBACK_STARTED
+
+  local service_name="xinguang-wainfort"
+  local service_file="/etc/systemd/system/${service_name}.service"
+  local env_file="/etc/${service_name}.env"
+
+  local ubuntu_path="/home/ubuntu/.local/bin:/home/ubuntu/.local/share/uv/tools/miloco-cli/bin"
+  if [[ -d "$HOME/.nvm/versions/node" ]]; then
+    local nvm_dir
+    nvm_dir="$(find "$HOME/.nvm/versions/node" -maxdepth 1 -type d -name 'v*' 2>/dev/null | sort -V | tail -1 || true)"
+    [[ -n "$nvm_dir" ]] && ubuntu_path="$nvm_dir/bin:$ubuntu_path"
+  fi
+  ubuntu_path="$ubuntu_path:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+  local token="${WAINFORT_API_TOKEN:-}"
+  [[ -z "$token" ]] && token="$(grep -E '^WAINFORT_API_TOKEN=' "$ENV_FILE" 2>/dev/null | tail -n 1 | cut -d= -f2- || true)"
+  [[ -z "$token" ]] && die "无法读取灯光服务 Token，请联系工作人员处理"
+
+  sudo mkdir -p "/root/汤剑的文件夹"
+
+  printf 'WAINFORT_API_TOKEN=%s\nWAINFORT_MILOCO_URL=%s\nWAINFORT_API_PORT=%s\nPATH=%s\n' \
+    "$token" "$WAINFORT_MILOCO_URL" "$WAINFORT_API_PORT" "$ubuntu_path" \
+    | sudo tee "$env_file" >/dev/null
+  sudo chmod 600 "$env_file"
+
+  printf '[Unit]\nDescription=馨光灯光控制服务\nAfter=network.target\n\n[Service]\nType=simple\nUser=root\nWorkingDirectory=%s\nEnvironmentFile=%s\nExecStart=%s\nRestart=always\nRestartSec=3\n\n[Install]\nWantedBy=multi-user.target\n' \
+    "$INSTALL_DIR" "$env_file" "$SERVER_BIN" \
+    | sudo tee "$service_file" >/dev/null
+
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now "${service_name}.service"
+
+  state_mark ROOT_SYSTEMD_SERVICE_ENABLED
+
+  local i
+  for i in $(seq 1 30); do
+    if server_status_ok; then
+      state_mark WAINFORT_SERVER_READY
+      printf '灯光服务已就绪。\n'
+      return 0
+    fi
+    sleep 2
+  done
+
+  die "灯光服务系统服务方式启动失败，请联系工作人员处理"
+}
+
 fail_server_data_dir_unsupported() {
   state_mark WAINFORT_SERVER_DATA_DIR_UNSUPPORTED
-  die "灯光服务暂时无法启动"
+  log "检测到 wainfort-server 需要 root 权限，尝试系统服务兜底"
+  start_server_root_systemd
 }
 
 server_debug() {
@@ -337,6 +387,13 @@ server_supported_args() {
 start_server() {
   load_env_if_present
   printf '正在准备灯光服务。\n'
+  if sudo systemctl is-active --quiet xinguang-wainfort 2>/dev/null; then
+    log "root systemd 灯光服务已在运行"
+    state_mark SERVER_ALREADY_RUNNING
+    state_mark WAINFORT_SERVER_READY
+    printf '灯光服务已就绪。\n'
+    return 0
+  fi
   if server_status_ok; then
     server_debug "health check: ok before start"
     state_mark SERVER_ALREADY_RUNNING
@@ -835,17 +892,39 @@ query_devices() {
     "http://127.0.0.1:$WAINFORT_API_PORT/api/devices" \
     -o "$DEVICE_CACHE"; then
     state_mark DEVICE_QUERY_DONE
-    state_mark DEVICE_LIST_READY
+    local devices_empty=0
     if have python3; then
-      summarize_device_list || true
+      if python3 -c “
+import json, sys
+try:
+    data = json.load(open('$DEVICE_CACHE', encoding='utf-8'))
+    devices = data.get('devices', None)
+    if devices == '' or devices is None or devices == [] or devices == {}:
+        sys.exit(1)
+except Exception:
+    sys.exit(1)
+“ 2>/dev/null; then
+        state_mark DEVICE_LIST_READY
+        summarize_device_list || true
+      else
+        devices_empty=1
+        state_mark DEVICE_LIST_EMPTY
+      fi
+    else
+      state_mark DEVICE_LIST_READY
     fi
     state_mark DEVICE_DISCOVERY_DONE
-    printf '\n已读取当前米家家庭下的设备列表。\n'
+    if [[ “$devices_empty” == 1 ]]; then
+      printf '\n灯光服务已就绪，当前家庭暂未读取到设备，不影响 Skill 安装。\n'
+    else
+      printf '\n已读取当前米家家庭下的设备列表。\n'
+    fi
     return 0
   fi
 
   state_mark DEVICE_QUERY_FAILED
-  die "暂时无法查询设备，请先确认米家账号已绑定，并且稍后发送“查看馨光 Skill 安装进度”。"
+  log “WARNING: 设备列表查询失败，继续后续流程”
+  printf '\n设备列表暂时无法读取，不影响 Skill 安装，可稍后再确认。\n'
 }
 
 check_first_stage_ready() {
