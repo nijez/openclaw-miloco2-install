@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-XINGUANG_SKILL_INSTALLER_VERSION="2026-06-26.9"
+XINGUANG_SKILL_INSTALLER_VERSION="2026-06-26.11"
 XINGUANG_SKILL_VERSION="3.0.1"
 SKILL_NAME="wainfort-ai-lighting-run"
 SKILL_COMPANY="深圳市馨光智能物联有限公司"
@@ -276,7 +276,22 @@ start_server() {
   fi
   if server_process_running; then
     state_mark SERVER_ALREADY_RUNNING
-    return 0
+    local i
+    for i in $(seq 1 15); do
+      if server_data_dir_unsupported; then
+        fail_server_data_dir_unsupported
+      fi
+      if server_status_ok; then
+        state_mark SERVER_STATUS_OK
+        state_mark WAINFORT_SERVER_READY
+        printf '灯光服务已就绪。\n'
+        return 0
+      fi
+      sleep 2
+    done
+    state_mark WAINFORT_SERVER_START_FAILED
+    printf '灯光服务暂时无法启动，请联系工作人员处理。\n' >&2
+    exit 1
   fi
 
   mkdir -p "$WAINFORT_DATA_DIR" "$WAINFORT_LOG_DIR"
@@ -311,10 +326,6 @@ start_server() {
     fail_server_data_dir_unsupported
   fi
 
-  if server_process_running; then
-    state_mark SERVER_PROCESS_RUNNING_STATUS_PENDING
-    return 0
-  fi
   state_mark WAINFORT_SERVER_START_FAILED
   printf '灯光服务暂时无法启动，请联系工作人员处理。\n' >&2
   exit 1
