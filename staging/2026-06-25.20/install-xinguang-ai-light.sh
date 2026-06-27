@@ -16,7 +16,7 @@ download_installer() {
 
   local url
   for url in \
-    "https://nijez.github.io/xingguang-ai-lighting-guide/install-miloco-openclaw-cloud.sh" \
+    "https://nijez.github.io/xingguang-ai-lighting-guide/staging/2026-06-25.20/install-miloco-openclaw-cloud.sh" \
     "https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/install-miloco-openclaw-cloud.sh" \
     "https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/install-miloco-openclaw-cloud.sh"
   do

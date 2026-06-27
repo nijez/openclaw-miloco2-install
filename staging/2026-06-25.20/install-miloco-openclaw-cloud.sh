@@ -1881,13 +1881,13 @@ preinstall_xinguang_skill() {
   mkdir -p "$install_dir" "$bin_dir"
 
   download_versioned_file "$entry" "ENTRY_VERSION=\"$XINGUANG_SKILL_ENTRY_VERSION\"" \
-    "https://nijez.github.io/xingguang-ai-lighting-guide/install-xinguang-ai-skill.sh" \
+    "https://nijez.github.io/xingguang-ai-lighting-guide/staging/2026-06-25.20/install-xinguang-ai-skill.sh" \
     "https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/install-xinguang-ai-skill.sh" \
     "https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/install-xinguang-ai-skill.sh" ||
     die
 
   download_versioned_file "$main" "XINGUANG_SKILL_INSTALLER_VERSION=\"$XINGUANG_SKILL_INSTALLER_VERSION\"" \
-    "https://nijez.github.io/xingguang-ai-lighting-guide/install-xinguang-skill.sh" \
+    "https://nijez.github.io/xingguang-ai-lighting-guide/staging/2026-06-25.20/install-xinguang-skill.sh" \
     "https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/install-xinguang-skill.sh" \
     "https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/install-xinguang-skill.sh" ||
     die

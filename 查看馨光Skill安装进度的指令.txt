@@ -1,5 +1,3 @@
-如果刷新后没有看到馨光 Skill 安装进度，复制下面这条指令，发送给小龙虾。
+灯光能力已在终端安装阶段安装完成。
 
-```bash
-bash install-xinguang-ai-skill.sh status
-```
+如果仍无法测试灯光，请联系工作人员处理。

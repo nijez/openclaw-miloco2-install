@@ -13,7 +13,7 @@ download_installer() {
 
   local url
   for url in \
-    "https://nijez.github.io/xingguang-ai-lighting-guide/install-xinguang-skill.sh" \
+    "https://nijez.github.io/xingguang-ai-lighting-guide/staging/2026-06-25.20/install-xinguang-skill.sh" \
     "https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/install-xinguang-skill.sh" \
     "https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/install-xinguang-skill.sh"
   do

@@ -24,7 +24,7 @@ LIGHT_PHYSICAL_RESULT="${LIGHT_PHYSICAL_RESULT:-}"
 LIGHT_TEST_MODE="${LIGHT_TEST_MODE:-single-shot}"
 LIGHT_TEST_UNSTABLE="${LIGHT_TEST_UNSTABLE:-0}"
 
-SKILL_URLS="${SKILL_URLS:-https://nijez.github.io/xingguang-ai-lighting-guide/skills/wainfort-ai-lighting-run/SKILL.md https://nijez.github.io/xingguang-ai-lighting-guide/wainfort-ai-lighting-run-skill.txt https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/skills/wainfort-ai-lighting-run/SKILL.md https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/skills/wainfort-ai-lighting-run/SKILL.md}"
+SKILL_URLS="${SKILL_URLS:-https://nijez.github.io/xingguang-ai-lighting-guide/staging/2026-06-25.20/skills/wainfort-ai-lighting-run/SKILL.md https://nijez.github.io/xingguang-ai-lighting-guide/staging/2026-06-25.20/wainfort-ai-lighting-run-skill.txt https://nijez.github.io/xingguang-ai-lighting-guide/staging/2026-06-25.20/skills/wainfort-ai-lighting-run/SKILL.md https://nijez.github.io/xingguang-ai-lighting-guide/staging/2026-06-25.20/skills/wainfort-ai-lighting-run/SKILL.md}"
 
 ENV_FILE="$INSTALL_DIR/.env"
 SERVER_BIN="$INSTALL_DIR/wainfort-server"

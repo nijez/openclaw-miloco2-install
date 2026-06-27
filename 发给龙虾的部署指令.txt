@@ -1,5 +1,7 @@
-```text
-请执行下面这段馨光 AI 设计灯光内测安装指令：
+腾讯云免密终端安装命令：
 
 curl -fsSL https://nijez.github.io/xingguang-ai-lighting-guide/install-xinguang-ai-light.sh -o install-xinguang-ai-light.sh && bash install-xinguang-ai-light.sh
-```
+
+安装完成后，回到小龙虾，发送：
+
+绑定米家账号

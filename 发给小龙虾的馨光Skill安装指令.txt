@@ -1,5 +1,3 @@
-```text
-请执行下面这段馨光 Skill 内测安装指令：
+灯光能力已在终端安装阶段安装完成。请直接测试灯光：
 
-curl -fsSL https://nijez.github.io/xingguang-ai-lighting-guide/install-xinguang-ai-skill.sh -o install-xinguang-ai-skill.sh && bash install-xinguang-ai-skill.sh
-```
+客厅来个马尔代夫的海边日落
