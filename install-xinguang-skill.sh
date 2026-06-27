@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-XINGUANG_SKILL_INSTALLER_VERSION="2026-06-26.11"
+XINGUANG_SKILL_INSTALLER_VERSION="2026-06-26.12"
 XINGUANG_SKILL_VERSION="3.0.1"
 SKILL_NAME="wainfort-ai-lighting-run"
 SKILL_COMPANY="深圳市馨光智能物联有限公司"
 
 INSTALL_ACTION="${INSTALL_ACTION:-full}"
+XINGUANG_BASE_DIR="${XINGUANG_BASE_DIR:-$HOME/xinguang-ai-light}"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/wainfort-light}"
 LOG_FILE="${LOG_FILE:-/tmp/xinguang-skill-install-current.log}"
 STATE_FILE="${STATE_FILE:-/tmp/xinguang-skill-install.state}"
@@ -15,8 +16,10 @@ SERVER_URL="${SERVER_URL:-http://appagent.wainfort.com/download/wainfort-server}
 WAINFORT_SERVER_SHA256="${WAINFORT_SERVER_SHA256:-49bbd86dd064baf09d1914003638969a7a937a36a5a447ea6a28bde527e3df7c}"
 WAINFORT_API_PORT="${WAINFORT_API_PORT:-1888}"
 WAINFORT_MILOCO_URL="${WAINFORT_MILOCO_URL:-http://127.0.0.1:1810}"
-WAINFORT_DATA_DIR="${WAINFORT_DATA_DIR:-$INSTALL_DIR/data}"
-WAINFORT_LOG_DIR="${WAINFORT_LOG_DIR:-$INSTALL_DIR/logs}"
+WAINFORT_DATA_DIR="${WAINFORT_DATA_DIR:-$XINGUANG_BASE_DIR/wainfort-data}"
+WAINFORT_CONFIG_DIR="${WAINFORT_CONFIG_DIR:-$XINGUANG_BASE_DIR/wainfort-config}"
+WAINFORT_CACHE_DIR="${WAINFORT_CACHE_DIR:-$XINGUANG_BASE_DIR/wainfort-cache}"
+WAINFORT_LOG_DIR="${WAINFORT_LOG_DIR:-$XINGUANG_BASE_DIR/wainfort-logs}"
 ROTATE_WAINFORT_TOKEN="${ROTATE_WAINFORT_TOKEN:-0}"
 XINGUANG_TARGET_HOME="${XINGUANG_TARGET_HOME:-}"
 LIGHT_API_SUCCESS="${LIGHT_API_SUCCESS:-unknown}"
@@ -29,7 +32,8 @@ SKILL_URLS="${SKILL_URLS:-https://nijez.github.io/xingguang-ai-lighting-guide/sk
 ENV_FILE="$INSTALL_DIR/.env"
 SERVER_BIN="$INSTALL_DIR/wainfort-server"
 SERVER_PID_FILE="$INSTALL_DIR/wainfort-server.pid"
-API_LOG="$INSTALL_DIR/api.log"
+API_LOG="$WAINFORT_LOG_DIR/api.log"
+SERVER_DEBUG_LOG="$WAINFORT_LOG_DIR/server-debug.log"
 PUBLIC_SKILL_DIR="$INSTALL_DIR/downloads/$SKILL_NAME"
 LOCAL_SKILL_DIR="${LOCAL_SKILL_DIR:-/tmp/xinguang-skill/$SKILL_NAME}"
 LOCAL_SKILL_FILE="$LOCAL_SKILL_DIR/SKILL.md"
@@ -37,10 +41,10 @@ DEVICE_CACHE="$INSTALL_DIR/devices-last.json"
 HOME_LIST_CACHE="$INSTALL_DIR/homes-last.json"
 CURRENT_HOME_CACHE="$INSTALL_DIR/current-home-last.txt"
 HOME_SWITCH_RESULT="$INSTALL_DIR/home-switch-result.txt"
-TARGET_HOME_FILE="$INSTALL_DIR/target-home.env"
+TARGET_HOME_FILE="${TARGET_HOME_FILE:-$XINGUANG_BASE_DIR/target-home.env}"
 DEVICE_REPORT="$INSTALL_DIR/device-report.txt"
 
-mkdir -p "$(dirname "$LOG_FILE")" "$INSTALL_DIR"
+mkdir -p "$(dirname "$LOG_FILE")" "$INSTALL_DIR" "$XINGUANG_BASE_DIR" "$WAINFORT_DATA_DIR" "$WAINFORT_CONFIG_DIR" "$WAINFORT_CACHE_DIR" "$WAINFORT_LOG_DIR"
 touch "$LOG_FILE"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
@@ -79,6 +83,27 @@ load_env_if_present() {
     . "$ENV_FILE"
     set +a
   fi
+  case "${WAINFORT_DATA_DIR:-}" in
+    ""|"$INSTALL_DIR/data") WAINFORT_DATA_DIR="$XINGUANG_BASE_DIR/wainfort-data" ;;
+  esac
+  case "${WAINFORT_LOG_DIR:-}" in
+    ""|"$INSTALL_DIR/logs") WAINFORT_LOG_DIR="$XINGUANG_BASE_DIR/wainfort-logs" ;;
+  esac
+  WAINFORT_CONFIG_DIR="${WAINFORT_CONFIG_DIR:-$XINGUANG_BASE_DIR/wainfort-config}"
+  WAINFORT_CACHE_DIR="${WAINFORT_CACHE_DIR:-$XINGUANG_BASE_DIR/wainfort-cache}"
+  API_LOG="$WAINFORT_LOG_DIR/api.log"
+  SERVER_DEBUG_LOG="$WAINFORT_LOG_DIR/server-debug.log"
+}
+
+load_target_home_if_present() {
+  if [[ -f "$TARGET_HOME_FILE" ]]; then
+    set -a
+    # shellcheck disable=SC1090
+    . "$TARGET_HOME_FILE"
+    set +a
+    XINGUANG_TARGET_HOME="${XINGUANG_TARGET_HOME:-}"
+    XINGUANG_TARGET_HOME_ID="${XINGUANG_TARGET_HOME_ID:-}"
+  fi
 }
 
 generate_token() {
@@ -96,8 +121,9 @@ generate_token() {
 }
 
 ensure_env_file() {
-  mkdir -p "$INSTALL_DIR"
+  mkdir -p "$INSTALL_DIR" "$XINGUANG_BASE_DIR" "$WAINFORT_DATA_DIR" "$WAINFORT_CONFIG_DIR" "$WAINFORT_CACHE_DIR" "$WAINFORT_LOG_DIR"
   chmod 700 "$INSTALL_DIR" 2>/dev/null || true
+  chmod 700 "$XINGUANG_BASE_DIR" "$WAINFORT_DATA_DIR" "$WAINFORT_CONFIG_DIR" "$WAINFORT_CACHE_DIR" "$WAINFORT_LOG_DIR" 2>/dev/null || true
 
   local token="${WAINFORT_API_TOKEN:-}"
   if [[ "$ROTATE_WAINFORT_TOKEN" != 1 && -f "$ENV_FILE" ]]; then
@@ -115,6 +141,8 @@ WAINFORT_MILOCO_TOKEN=${WAINFORT_MILOCO_TOKEN:-}
 WAINFORT_API_PORT=$WAINFORT_API_PORT
 WAINFORT_DATA_DIR=$WAINFORT_DATA_DIR
 WAINFORT_LOG_DIR=$WAINFORT_LOG_DIR
+WAINFORT_CONFIG_DIR=$WAINFORT_CONFIG_DIR
+WAINFORT_CACHE_DIR=$WAINFORT_CACHE_DIR
 EOF
   chmod 600 "$ENV_FILE" 2>/dev/null || true
   export WAINFORT_API_TOKEN="$token"
@@ -123,6 +151,8 @@ EOF
   export WAINFORT_API_PORT
   export WAINFORT_DATA_DIR
   export WAINFORT_LOG_DIR
+  export WAINFORT_CONFIG_DIR
+  export WAINFORT_CACHE_DIR
   state_mark TOKEN_CONFIGURED
 }
 
@@ -265,10 +295,50 @@ fail_server_data_dir_unsupported() {
   die "灯光服务暂时无法启动"
 }
 
+server_debug() {
+  mkdir -p "$(dirname "$SERVER_DEBUG_LOG")"
+  printf '[%s] %s\n' "$(date '+%F %T %Z')" "$*" >>"$SERVER_DEBUG_LOG"
+}
+
+capture_server_help() {
+  mkdir -p "$WAINFORT_LOG_DIR"
+  timeout 5s env \
+    HOME="$XINGUANG_BASE_DIR" \
+    XDG_DATA_HOME="$WAINFORT_DATA_DIR" \
+    XDG_CONFIG_HOME="$WAINFORT_CONFIG_DIR" \
+    XDG_CACHE_HOME="$WAINFORT_CACHE_DIR" \
+    TMPDIR="$XINGUANG_BASE_DIR/tmp" \
+    "$SERVER_BIN" --help >"$WAINFORT_LOG_DIR/wainfort-server-help.txt" 2>&1 || true
+}
+
+server_supported_args() {
+  local help_file="$WAINFORT_LOG_DIR/wainfort-server-help.txt"
+  local args=()
+  [[ -f "$help_file" ]] || {
+    printf '\n'
+    return
+  }
+
+  if grep -Eq -- '--data-dir|--data_dir' "$help_file"; then
+    args+=(--data-dir "$WAINFORT_DATA_DIR")
+  fi
+  if grep -Eq -- '--config-dir|--config_dir' "$help_file"; then
+    args+=(--config-dir "$WAINFORT_CONFIG_DIR")
+  fi
+  if grep -Eq -- '--cache-dir|--cache_dir' "$help_file"; then
+    args+=(--cache-dir "$WAINFORT_CACHE_DIR")
+  fi
+  if grep -Eq -- '--log-dir|--log_dir' "$help_file"; then
+    args+=(--log-dir "$WAINFORT_LOG_DIR")
+  fi
+  printf '%q ' "${args[@]}"
+}
+
 start_server() {
   load_env_if_present
   printf '正在准备灯光服务。\n'
   if server_status_ok; then
+    server_debug "health check: ok before start"
     state_mark SERVER_ALREADY_RUNNING
     state_mark WAINFORT_SERVER_READY
     printf '灯光服务已就绪。\n'
@@ -282,6 +352,7 @@ start_server() {
         fail_server_data_dir_unsupported
       fi
       if server_status_ok; then
+        server_debug "health check: ok from existing process"
         state_mark SERVER_STATUS_OK
         state_mark WAINFORT_SERVER_READY
         printf '灯光服务已就绪。\n'
@@ -294,17 +365,31 @@ start_server() {
     exit 1
   fi
 
-  mkdir -p "$WAINFORT_DATA_DIR" "$WAINFORT_LOG_DIR"
+  mkdir -p "$XINGUANG_BASE_DIR" "$WAINFORT_DATA_DIR" "$WAINFORT_CONFIG_DIR" "$WAINFORT_CACHE_DIR" "$WAINFORT_LOG_DIR" "$XINGUANG_BASE_DIR/tmp"
+  chmod 700 "$XINGUANG_BASE_DIR" "$WAINFORT_DATA_DIR" "$WAINFORT_CONFIG_DIR" "$WAINFORT_CACHE_DIR" "$WAINFORT_LOG_DIR" "$XINGUANG_BASE_DIR/tmp" 2>/dev/null || true
+  capture_server_help
   : >"$API_LOG"
+  local extra_args shell_args
+  shell_args="$(server_supported_args)"
+  server_debug "wainfort-server command: HOME=$XINGUANG_BASE_DIR XDG_DATA_HOME=$WAINFORT_DATA_DIR XDG_CONFIG_HOME=$WAINFORT_CONFIG_DIR XDG_CACHE_HOME=$WAINFORT_CACHE_DIR WAINFORT_DATA_DIR=$WAINFORT_DATA_DIR WAINFORT_CONFIG_DIR=$WAINFORT_CONFIG_DIR WAINFORT_CACHE_DIR=$WAINFORT_CACHE_DIR WAINFORT_LOG_DIR=$WAINFORT_LOG_DIR $SERVER_BIN $shell_args"
+  # shellcheck disable=SC2206
+  extra_args=($shell_args)
   nohup env \
+    HOME="$XINGUANG_BASE_DIR" \
+    XDG_DATA_HOME="$WAINFORT_DATA_DIR" \
+    XDG_CONFIG_HOME="$WAINFORT_CONFIG_DIR" \
+    XDG_CACHE_HOME="$WAINFORT_CACHE_DIR" \
+    TMPDIR="$XINGUANG_BASE_DIR/tmp" \
     WAINFORT_API_TOKEN="$WAINFORT_API_TOKEN" \
     WAINFORT_MILOCO_URL="$WAINFORT_MILOCO_URL" \
     WAINFORT_MILOCO_TOKEN="${WAINFORT_MILOCO_TOKEN:-}" \
     WAINFORT_API_PORT="$WAINFORT_API_PORT" \
     WAINFORT_DATA_DIR="$WAINFORT_DATA_DIR" \
+    WAINFORT_CONFIG_DIR="$WAINFORT_CONFIG_DIR" \
+    WAINFORT_CACHE_DIR="$WAINFORT_CACHE_DIR" \
     WAINFORT_LOG_DIR="$WAINFORT_LOG_DIR" \
     WAINFORT_HOME="$WAINFORT_DATA_DIR" \
-    "$SERVER_BIN" >>"$API_LOG" 2>&1 &
+    "$SERVER_BIN" "${extra_args[@]}" >>"$API_LOG" 2>&1 &
   printf '%s\n' "$!" >"$SERVER_PID_FILE"
   state_mark SERVER_STARTED
 
@@ -314,6 +399,7 @@ start_server() {
       fail_server_data_dir_unsupported
     fi
     if server_status_ok; then
+      server_debug "health check: ok after start"
       state_mark SERVER_STATUS_OK
       state_mark WAINFORT_SERVER_READY
       printf '灯光服务已就绪。\n'
@@ -327,6 +413,7 @@ start_server() {
   fi
 
   state_mark WAINFORT_SERVER_START_FAILED
+  server_debug "health check: failed after startup wait; see $API_LOG"
   printf '灯光服务暂时无法启动，请联系工作人员处理。\n' >&2
   exit 1
 }
@@ -453,9 +540,7 @@ for index, item in enumerate(homes, 1):
         item.get("id") or ""
     )
     suffix = f"（{home_id}）" if home_id else ""
-    in_use = item.get("in_use", item.get("inUse", item.get("current", item.get("selected", False))))
-    active = "；当前启用" if str(in_use).lower() in ("1", "true", "yes", "已启用") else ""
-    print(f"{index}. {name}{suffix}{active}")
+    print(f"{index}. {name}{suffix}")
 PY
 }
 
@@ -594,10 +679,11 @@ current_home_matches_target() {
 write_target_home_file() {
   local target_id="$1"
   local target_name="$2"
+  mkdir -p "$(dirname "$TARGET_HOME_FILE")"
   umask 077
   {
-    printf 'XINGUANG_TARGET_HOME=%s\n' "$target_name"
-    printf 'XINGUANG_TARGET_HOME_ID=%s\n' "$target_id"
+    printf 'XINGUANG_TARGET_HOME=%q\n' "$target_name"
+    printf 'XINGUANG_TARGET_HOME_ID=%q\n' "$target_id"
   } >"$TARGET_HOME_FILE"
   chmod 600 "$TARGET_HOME_FILE" 2>/dev/null || true
 }
@@ -627,6 +713,7 @@ switch_to_target_home() {
 }
 
 check_home_selection_before_install() {
+  load_target_home_if_present
   state_mark HOME_SELECTION_CHECK_START
 
   if ! have python3; then
@@ -659,9 +746,8 @@ check_home_selection_before_install() {
   fi
 
   if [[ "$count" =~ ^[0-9]+$ ]] && (( count > 1 )); then
-    printf '\n检测到多个米家家庭：\n'
+    printf '\n检测到多个家庭，请选择馨光设备所在家庭：\n'
     print_home_list
-    printf '\n请指定要控制馨光设备的家庭，例如：XINGUANG_TARGET_HOME="林坞店"\n'
     state_mark HOME_SELECTION_REQUIRED
     die "检测到多个米家家庭，请先选择要控制馨光设备的家庭，不要自动使用第一个家庭。"
   fi
@@ -884,6 +970,7 @@ EOF
 }
 
 main() {
+  load_target_home_if_present
   if [[ "$INSTALL_ACTION" == "status" ]]; then
     print_status
     return 0
