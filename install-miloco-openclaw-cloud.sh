@@ -8,7 +8,7 @@ set -Eeuo pipefail
 # - WeChat channel installation/login is skipped.
 # - MiMo API key is configured only when MIMO_API_KEY is supplied.
 
-SCRIPT_VERSION="2026-06-25.25"
+SCRIPT_VERSION="2026-06-25.26"
 TOTAL_STEPS=6
 MILOCO_VERSION="${MILOCO_VERSION:-2026.6.18}"
 OPENCLAW_PORT="${OPENCLAW_PORT:-18789}"
@@ -741,10 +741,10 @@ setup_runtime_paths() {
     nvm_node_dir="$(find "$HOME/.nvm/versions/node" -maxdepth 1 -type d -name 'v*' 2>/dev/null | sort -V | tail -1 || true)"
   fi
 
+  export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$HOME/.local/share/pnpm:$HOME/.local/share/pnpm/global/5/node_modules/.bin:$PATH"
   if [[ -n "$nvm_node_dir" && -d "$nvm_node_dir/bin" ]]; then
     export PATH="$nvm_node_dir/bin:$PATH"
   fi
-  export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$HOME/.local/share/pnpm:$HOME/.local/share/pnpm/global/5/node_modules/.bin:$PATH"
 
   append_path_once 'export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$HOME/.local/share/pnpm:$HOME/.local/share/pnpm/global/5/node_modules/.bin:$PATH"'
   append_path_once 'if [ -d "$HOME/.nvm/versions/node" ]; then NODE_DIR="$(find "$HOME/.nvm/versions/node" -maxdepth 1 -type d -name '\''v*'\'' 2>/dev/null | sort -V | tail -1)"; [ -n "$NODE_DIR" ] && export PATH="$NODE_DIR/bin:$PATH"; fi'
