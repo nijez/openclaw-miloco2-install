@@ -146,6 +146,29 @@
       main { padding: 28px 18px 56px; }
       .grid { grid-template-columns: 1fr; }
     }
+
+    .screenshot {
+      width: 100%;
+      max-width: 680px;
+      margin: 16px 0;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      display: block;
+    }
+
+    .screenshot-placeholder {
+      width: 100%;
+      max-width: 680px;
+      margin: 16px 0;
+      padding: 36px 0;
+      border: 2px dashed var(--line);
+      border-radius: 10px;
+      background: var(--code);
+      color: var(--muted);
+      text-align: center;
+      font-size: 14px;
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -196,6 +219,8 @@
       <section id="server">
         <h2>准备小龙虾服务器</h2>
         <p>购买腾讯云轻量应用服务器时，选择小龙虾（OpenClaw）应用模板。服务器创建完成后，先填写 MiMo 订阅 Key，再进入免密终端安装。</p>
+        <div class="screenshot-placeholder">screenshots/01-server-create.png</div>
+        <div class="screenshot-placeholder">screenshots/02-server-login.png</div>
         <div class="grid">
           <a class="card" href="https://cloud.tencent.com/act/pro/openclaw" target="_blank" rel="noreferrer"><h3>购买腾讯云小龙虾服务器</h3><p>打开腾讯云活动页。</p></a>
           <a class="card" href="https://cloud.tencent.com/document/product/1207/127874" target="_blank" rel="noreferrer"><h3>查看腾讯云 OpenClaw 实践教程</h3><p>查看腾讯云官方实践教程。</p></a>
@@ -206,6 +231,7 @@
         <h2>填写 MiMo 订阅 Key</h2>
         <p>进入腾讯云小龙虾应用设置，填写 MiMo 订阅 Key。填写完成后，再进行终端安装。</p>
         <div class="notice">不要在小龙虾对话里反复粘贴 MiMo 订阅 Key。</div>
+        <div class="screenshot-placeholder">screenshots/03-mimo-key.png</div>
         <div class="grid">
           <a class="card" href="https://platform.xiaomimimo.com/console/plan-manage" target="_blank" rel="noreferrer"><h3>小米 MiMo 订阅管理 / 获取订阅 Key</h3><p>进入 MiMo 控制台获取订阅 Key。</p></a>
         </div>
@@ -215,6 +241,8 @@
         <h2>推荐方式：腾讯云免密终端安装</h2>
         <p>在腾讯云服务器页面点击「免密码登录」，进入终端后粘贴下面这条命令。安装完成后，回到小龙虾对话窗口继续绑定米家账号。</p>
         <pre class="command"><code>curl -fsSL https://nijez.github.io/xingguang-ai-lighting-guide/install-xinguang-ai-light.sh -o install-xinguang-ai-light.sh && bash install-xinguang-ai-light.sh</code></pre>
+        <div class="screenshot-placeholder">screenshots/04-terminal-progress.png</div>
+        <div class="screenshot-placeholder">screenshots/05-terminal-done.png</div>
         <div class="copy-row">
           <button class="copy-btn" data-copy-textarea="terminalInstallCommand">复制终端安装命令</button>
           <button class="copy-btn secondary" data-copy-textarea="terminalStatusCommand">复制终端状态查询命令</button>
@@ -225,6 +253,8 @@
       <section id="mijia">
         <h2>绑定米家账号</h2>
         <p>安装完成后，回到小龙虾对话窗口，直接说：<strong>绑定米家账号</strong>。</p>
+        <div class="screenshot-placeholder">screenshots/06-bind-link.png</div>
+        <div class="screenshot-placeholder">screenshots/07-bind-code.png</div>
         <ol>
           <li>小龙虾给出米家授权链接。</li>
           <li>点击链接完成授权，复制授权码。</li>
@@ -239,18 +269,22 @@
       <section id="home">
         <h2>选择米家家庭</h2>
         <p>如果你的米家账号下有多个家庭，小龙虾会列出家庭。请选择馨光设备所在家庭，例如“林坞店”。</p>
+        <div class="screenshot-placeholder">screenshots/08-home-select.png</div>
         <div class="notice">选择家庭后，发送「安装馨光 Skill」。</div>
       </section>
 
       <section id="skill">
         <h2>安装馨光 Skill</h2>
         <p>家庭选择完成后，直接对小龙虾说：<strong>安装馨光 Skill</strong>。</p>
+        <div class="screenshot-placeholder">screenshots/09-skill-install.png</div>
+        <div class="screenshot-placeholder">screenshots/10-skill-done.png</div>
         <div class="notice">安装成功后，小龙虾会提示可以开始测试灯光。</div>
       </section>
 
       <section id="test">
         <h2>测试灯光效果</h2>
         <p>馨光 Skill 安装成功后，再告诉小龙虾想要的灯光效果。</p>
+        <div class="screenshot-placeholder">screenshots/11-light-command.png</div>
         <div class="grid">
           <div class="card">客厅来个马尔代夫的海边日落。</div>
           <div class="card">二楼客厅来一个森林晨光。</div>
