@@ -8,7 +8,7 @@ set -Eeuo pipefail
 # - WeChat channel installation/login is skipped.
 # - MiMo API key is configured only when MIMO_API_KEY is supplied.
 
-SCRIPT_VERSION="2026-06-25.30"
+SCRIPT_VERSION="2026-06-25.31"
 TOTAL_STEPS=6
 MILOCO_VERSION="${MILOCO_VERSION:-2026.6.18}"
 OPENCLAW_PORT="${OPENCLAW_PORT:-18789}"
@@ -2150,7 +2150,7 @@ write_xinguang_workspace_rules() {
 
 授权完成后，把授权码复制回来。
 
-步骤二：收到授权码后，执行 `miloco-cli account authorize <授权码>`，再执行 `miloco-cli home list` 获取家庭列表。在同一条回复中根据家庭数量输出：
+步骤二：收到授权码后，执行 `miloco-cli account authorize <授权码>`，再执行 `miloco-cli scope home list` 获取家庭列表（返回 JSON，从 data 数组读取 home_name 和 home_id）。在同一条回复中根据家庭数量输出：
 
 只有一个家庭时，回复：
 
@@ -2164,10 +2164,10 @@ write_xinguang_workspace_rules() {
 米家账号绑定成功。
 检测到多个家庭，请选择馨光设备所在家庭：
 
-1. 【家庭名称】（ID: 【家庭ID】）
-2. 【家庭名称】（ID: 【家庭ID】）
+1. 【家庭名称】
+2. 【家庭名称】
 
-步骤三：用户选择家庭后，后台静默执行 `xinguang-set-home "【家庭名称】" "【家庭ID】"`，只回复：
+步骤三：用户选择家庭后，后台静默执行 `miloco-cli scope home switch <home_id>`，只回复：
 
 已切换到【家庭名称】。
 

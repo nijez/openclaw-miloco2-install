@@ -2,6 +2,6 @@
 
 curl -fsSL https://nijez.github.io/xingguang-ai-lighting-guide/install-xinguang-ai-light.sh -o install-xinguang-ai-light.sh && bash install-xinguang-ai-light.sh
 
-安装完成后，回到小龙虾，发送：
+安装完成后，回到龙虾，发送：
 
 绑定米家账号

@@ -215,10 +215,10 @@ terminal_progress_message_for_marker() {
       printf '[20%%] 正在准备必要依赖...\n'
       ;;
     STEP_2_STARTED)
-      printf '[30%%] 正在检查小龙虾环境...\n'
+      printf '[30%%] 正在检查龙虾环境...\n'
       ;;
     STEP_2_DONE)
-      printf '[40%%] 正在更新小龙虾环境...\n'
+      printf '[40%%] 正在更新龙虾环境...\n'
       ;;
     STEP_3_STARTED)
       printf '[50%%] 正在安装灯光连接组件...\n'
@@ -242,7 +242,7 @@ terminal_progress_message_for_marker() {
       printf '[90%%] 正在验证安装结果...\n'
       ;;
     STEP_6_DONE|SUCCESS_ACTIVE|SUCCESS_AFTER_RECONNECT)
-      printf '[100%%] 安装完成。\n\n下一步：\n请回到小龙虾，发送「绑定米家账号」。\n'
+      printf '[100%%] 安装完成。\n\n下一步：\n请回到龙虾，发送「绑定米家账号」。\n'
       ;;
     ERROR:*|EXITED_BUT_INCOMPLETE)
       printf '安装未完成，请联系工作人员处理。\n'
@@ -260,7 +260,7 @@ terminal_heartbeat_message_for_marker() {
       printf '仍在准备安装环境，请稍候...\n'
       ;;
     STEP_2_STARTED|STEP_2_DONE)
-      printf '仍在检查小龙虾环境，请稍候...\n'
+      printf '仍在检查龙虾环境，请稍候...\n'
       ;;
     STEP_3_STARTED|LIGHT_COMPONENT_DOWNLOAD_STARTED)
       printf '仍在安装灯光连接组件，请稍候...\n'
@@ -296,8 +296,8 @@ progress_message_for_marker() {
       ;;
     GATEWAY_RESTART_SCHEDULED|AGENTCHAT_RECONNECT_EXPECTED)
       cat <<'EOF'
-小龙虾后台服务正在重启，请等待 1–3 分钟后刷新页面。
-如果刷新后没有看到进度，请复制状态查询指令发给小龙虾。
+龙虾后台服务正在重启，请等待 1–3 分钟后刷新页面。
+如果刷新后没有看到进度，请复制状态查询指令发给龙虾。
 不要重复发送一键安装指令。
 EOF
       ;;
@@ -330,20 +330,20 @@ status_complete_message() {
 4/4 安装完成
 
 下一步：
-请回到小龙虾，发送「绑定米家账号。绑定成功后不要自动选择家庭；如果有多个家庭，请列出家庭让我选择馨光设备所在家庭。」
+请回到龙虾，发送「绑定米家账号。绑定成功后不要自动选择家庭；如果有多个家庭，请列出家庭让我选择馨光设备所在家庭。」
 EOF
 }
 
 status_restart_message() {
   if [[ "${RUN_CONTEXT:-}" == agentchat* ]]; then
     cat <<'EOF'
-小龙虾后台服务正在重启，请等待 1–3 分钟后刷新页面。
-如果刷新后没有看到进度，请复制状态查询指令发给小龙虾。
+龙虾后台服务正在重启，请等待 1–3 分钟后刷新页面。
+如果刷新后没有看到进度，请复制状态查询指令发给龙虾。
 不要重复发送一键安装指令。
 EOF
   else
     cat <<'EOF'
-小龙虾后台服务正在重启，安装仍在继续。
+龙虾后台服务正在重启，安装仍在继续。
 请稍等 1–3 分钟后重新运行：
 
 bash install-xinguang-ai-light.sh status
@@ -359,7 +359,7 @@ terminal_status_report() {
 [100%] 安装完成。
 
 下一步：
-请回到小龙虾，发送「绑定米家账号」。
+请回到龙虾，发送「绑定米家账号」。
 EOF
     return
   fi
@@ -380,7 +380,7 @@ EOF
     elif state_has STEP_3_STARTED; then
       message='[50%] 正在安装灯光连接组件...'
     elif state_has STEP_2_STARTED; then
-      message='[30%] 正在检查小龙虾环境...'
+      message='[30%] 正在检查龙虾环境...'
     else
       message='[10%] 正在检查系统环境...'
     fi
@@ -549,14 +549,14 @@ observe_background_progress() {
     cat <<EOF
 
 安装还在继续，请稍候。
-如果超过 2 分钟没有新进度，请复制状态查询指令发给小龙虾。
+如果超过 2 分钟没有新进度，请复制状态查询指令发给龙虾。
 不要重复发送一键安装指令。
 EOF
   else
     cat <<EOF
 
 安装暂时无法确认。
-如果超过 2 分钟没有新进度，请复制状态查询指令发给小龙虾。
+如果超过 2 分钟没有新进度，请复制状态查询指令发给龙虾。
 不要重复发送一键安装指令。
 EOF
   fi
@@ -885,12 +885,12 @@ configure_openclaw_gateway() {
   fi
 
   if [[ "$gateway_ok" != 1 ]] && ss -ltn 2>/dev/null | grep -Eq ":${OPENCLAW_PORT}\\b"; then
-    log "小龙虾后台服务已就绪，继续后续安装"
+    log "龙虾后台服务已就绪，继续后续安装"
     gateway_ok=1
   fi
 
   if [[ "$gateway_ok" != 1 ]]; then
-    log "WARNING: 小龙虾后台服务暂未确认就绪，仍会继续安装灯光插件，最终验证会再次检查。"
+    log "WARNING: 龙虾后台服务暂未确认就绪，仍会继续安装灯光插件，最终验证会再次检查。"
   fi
 
   report_openclaw_versions || true
@@ -1476,9 +1476,9 @@ verify_install() {
   setup_runtime_paths
   printf '脚本版本: %s\n' "$SCRIPT_VERSION"
   if have openclaw; then
-    printf '小龙虾环境: 已安装\n'
+    printf '龙虾环境: 已安装\n'
   else
-    printf '小龙虾环境: 未确认\n'
+    printf '龙虾环境: 未确认\n'
   fi
   if have miloco-cli; then
     local service_status_file="$WORK_DIR/light-service-status.json"
@@ -1557,7 +1557,7 @@ show_main_menu() {
 
 请选择操作:
   1) 一键傻瓜式部署
-     依赖检查 -> 小龙虾环境检查 -> 灯光插件 -> 平台/米家绑定提示
+     依赖检查 -> 龙虾环境检查 -> 灯光插件 -> 平台/米家绑定提示
 
   2) 功能模块维护
      只维护某一个模块，不从头到尾重复部署
@@ -1986,7 +1986,7 @@ run_full_deploy() {
   else
     step_start="$(date +%s)"
     step_start_msg 6 "灯光服务验证和下一步引导"
-    print_step_note "检查灯光服务、小龙虾后台服务和灯光插件状态。"
+    print_step_note "检查灯光服务、龙虾后台服务和灯光插件状态。"
     restart_openclaw_gateway_best_effort
     verify_install
     log "Done"
