@@ -8,7 +8,7 @@ set -Eeuo pipefail
 # - WeChat channel installation/login is skipped.
 # - MiMo API key is configured only when MIMO_API_KEY is supplied.
 
-SCRIPT_VERSION="2026-06-25.29"
+SCRIPT_VERSION="2026-06-25.30"
 TOTAL_STEPS=6
 MILOCO_VERSION="${MILOCO_VERSION:-2026.6.18}"
 OPENCLAW_PORT="${OPENCLAW_PORT:-18789}"
@@ -2140,37 +2140,34 @@ write_xinguang_workspace_rules() {
 
 ### 用户说「绑定米家账号」时
 
-1. 生成米家授权链接，只回复：
+禁止输出任何思考过程、分析、工具调用说明、技能搜索过程。只输出最终回复用户的内容。
+
+步骤一：执行 `miloco-cli account bind`，从输出中提取 https:// 开头的授权 URL，只回复：
 
 请点击下面链接完成米家授权：
 
-[点击打开米家授权链接](链接)
+[点击打开米家授权链接](<URL>)
 
 授权完成后，把授权码复制回来。
 
-2. 收到授权码后直接完成绑定，不解释格式，不显示授权码内容。
-3. 绑定成功后先只回复：
+步骤二：收到授权码后，执行 `miloco-cli account authorize <授权码>`，再执行 `miloco-cli home list` 获取家庭列表。在同一条回复中根据家庭数量输出：
 
-米家账号绑定成功。
-正在检查家庭列表。
-
-4. 如果只有一个家庭，只回复：
+只有一个家庭时，回复：
 
 米家账号绑定成功。
 
 下一步：
 请发送「安装馨光 Skill」。
 
-5. 如果有多个家庭，用编号列出，等用户选择：
+有多个家庭时，回复：
 
 米家账号绑定成功。
 检测到多个家庭，请选择馨光设备所在家庭：
 
-1. 【家庭名称】
-2. 【家庭名称】
+1. 【家庭名称】（ID: 【家庭ID】）
+2. 【家庭名称】（ID: 【家庭ID】）
 
-6. 用户选择家庭后，后台静默执行：xinguang-set-home "【家庭名称】" "【家庭ID】"
-   只回复：
+步骤三：用户选择家庭后，后台静默执行 `xinguang-set-home "【家庭名称】" "【家庭ID】"`，只回复：
 
 已切换到【家庭名称】。
 
