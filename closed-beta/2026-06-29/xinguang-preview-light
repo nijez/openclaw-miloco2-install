@@ -1,10 +1,18 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-XINGUANG_PREVIEW_LIGHT_VERSION="2026-06-30.1"
+XINGUANG_PREVIEW_LIGHT_VERSION="2026-06-30.2"
 BASE_DIR="${XINGUANG_BASE_DIR:-$HOME/xinguang-ai-light}"
 PENDING_FILE="$BASE_DIR/pending-light-request.json"
 REQUEST_TTL_SECONDS="${XINGUANG_PREVIEW_TTL_SECONDS:-300}"
+
+direct_reply_begin() {
+  printf '<!-- XINGUANG_DIRECT_REPLY_BEGIN copy-exactly -->\n'
+}
+
+direct_reply_end() {
+  printf '<!-- XINGUANG_DIRECT_REPLY_END -->\n'
+}
 
 trim() {
   local s="$1"
@@ -74,13 +82,16 @@ PY
 
 confirm_request() {
   local request_id="$1"
+  direct_reply_begin
   if [[ -z "$request_id" ]]; then
     printf '确认信息不完整，未执行。\n'
     printf '请使用预览里的完整确认语。\n'
+    direct_reply_end
     return 0
   fi
   if [[ ! -f "$PENDING_FILE" ]]; then
     printf '没有找到待确认的灯光预览，未执行。\n'
+    direct_reply_end
     return 0
   fi
   python3 - "$PENDING_FILE" "$request_id" <<'PY'
@@ -112,6 +123,7 @@ if expires < now:
 print("已收到确认。")
 print("当前仍处于安全预览验收阶段，暂不执行真实灯光控制。")
 PY
+  direct_reply_end
 }
 
 main() {
@@ -131,22 +143,28 @@ main() {
   fi
 
   if [[ -z "$text" ]]; then
+    direct_reply_begin
     printf '请先说出要测试的灯光效果。\n'
     printf '例如：门市灯柱来个低亮度暖色。\n'
+    direct_reply_end
     return 0
   fi
 
   if contains_broad_scope "$text" && ! contains_target "$text"; then
+    direct_reply_begin
     printf '为避免误控，请先明确目标设备。\n'
     printf '请这样说：门市灯柱来个低亮度暖色。\n'
     printf '当前状态：尚未执行。\n'
+    direct_reply_end
     return 0
   fi
 
   if ! contains_target "$text"; then
+    direct_reply_begin
     printf '为避免误控，请先明确目标设备。\n'
     printf '请这样说：门市灯柱来个低亮度暖色。\n'
     printf '当前状态：尚未执行。\n'
+    direct_reply_end
     return 0
   fi
 
@@ -154,6 +172,7 @@ main() {
   request_id="$(new_request_id)"
   write_pending "$request_id" "$text" "$effect"
 
+  direct_reply_begin
   printf '我理解你的需求如下：\n\n'
   printf '确认编号：%s\n' "$request_id"
   printf '目标：门市 / 馨光RGBCW幻彩灯柱2\n'
@@ -163,6 +182,7 @@ main() {
   printf '当前状态：尚未执行\n\n'
   printf '如确认，请回复：\n'
   printf '确认执行 %s，只控制门市灯柱这一台\n' "$request_id"
+  direct_reply_end
 }
 
 main "$@"

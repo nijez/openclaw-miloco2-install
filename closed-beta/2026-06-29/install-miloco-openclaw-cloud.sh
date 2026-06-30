@@ -8,7 +8,7 @@ set -Eeuo pipefail
 # - WeChat channel installation/login is skipped.
 # - MiMo API key is configured only when MIMO_API_KEY is supplied.
 
-SCRIPT_VERSION="2026-06-25.35"
+SCRIPT_VERSION="2026-06-25.36"
 TOTAL_STEPS=6
 MILOCO_VERSION="${MILOCO_VERSION:-2026.6.18}"
 OPENCLAW_PORT="${OPENCLAW_PORT:-18789}"
@@ -2195,6 +2195,18 @@ write_xinguang_workspace_rules() {
 
 只回复该命令输出。未得到预览工具返回的确认编号前，禁止调用真实灯光控制，禁止调用 `xinguang-test-scene`，禁止直接调用 Skill，禁止请求其他工具执行灯光动作。
 
+如果命令输出中包含：
+
+`<!-- XINGUANG_DIRECT_REPLY_BEGIN copy-exactly -->`
+
+和：
+
+`<!-- XINGUANG_DIRECT_REPLY_END -->`
+
+最终用户可见回复只能使用这两个标记之间的内容。禁止总结、改写、补充、删减、重新组织。禁止自行生成 `xg-preview-` 确认编号。命令输出里没有确认编号时，最终回复也不能出现确认编号。
+
+如果命令输出是“为避免误控，请先明确目标设备”，最终回复必须保持拒绝，不得把它改写成预览，不得扩大目标到全店、全屋、其他房间或其他设备。
+
 禁止把预览说成执行结果。禁止回复“已为你调整”“正在执行”“灯光已切换”“已完成”。
 
 如果用户回复：
@@ -2205,7 +2217,7 @@ write_xinguang_workspace_rules() {
 
 `xinguang-preview-light '<用户原文>'`
 
-只回复该命令输出。当前封测阶段没有明确放行前，不要执行真实灯光控制。
+只回复该命令输出。当前封测阶段没有明确放行前，不要执行真实灯光控制。若命令输出包含 `XINGUANG_DIRECT_REPLY_BEGIN` / `XINGUANG_DIRECT_REPLY_END` 标记，仍按上面的直通规则处理。
 USERMD
 
   log "馨光对话规则已写入龙虾工作区"
@@ -2292,7 +2304,7 @@ prepare_xinguang_skill_installer() {
     "https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/closed-beta/2026-06-29/xinguang-export-diagnostics" \
     "https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/closed-beta/2026-06-29/xinguang-export-diagnostics" ||
     log "警告：xinguang-export-diagnostics 下载失败，不影响主流程"
-  download_versioned_file "$preview_light" 'XINGUANG_PREVIEW_LIGHT_VERSION="2026-06-30.1"' \
+  download_versioned_file "$preview_light" 'XINGUANG_PREVIEW_LIGHT_VERSION="2026-06-30.2"' \
     "https://nijez.github.io/xingguang-ai-lighting-guide/closed-beta/2026-06-29/xinguang-preview-light" \
     "https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/closed-beta/2026-06-29/xinguang-preview-light" \
     "https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/closed-beta/2026-06-29/xinguang-preview-light" ||

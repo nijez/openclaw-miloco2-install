@@ -18,6 +18,9 @@ metadata: {"openclaw":{"emoji":"💡","version":"4.0.1","date":"2026-06-29","aut
 4. 当前封测阶段，即使用户确认，也只回复预览工具的确认结果，不执行真实控灯。
 5. 禁止调用 `xinguang-test-scene` 作为自然语言链路的替代执行工具。
 6. 禁止把预览说成执行结果。
+7. 如果 `xinguang-preview-light` 输出包含 `XINGUANG_DIRECT_REPLY_BEGIN` / `XINGUANG_DIRECT_REPLY_END` 标记，最终回复只能使用标记之间的内容，禁止总结、改写、补充、删减、重新组织。
+8. 预览工具没有输出 `xg-preview-` 确认编号时，禁止自行生成确认编号。
+9. 预览工具返回“为避免误控，请先明确目标设备”时，必须保持拒绝，不得把拒绝改写成灯光预览。
 
 禁止回复：
 
