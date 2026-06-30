@@ -71,7 +71,12 @@ entry = {
     "effect": effect,
     "original_text": original,
     "confirmed": False,
+    "confirmed_at": None,
+    "execute_expires_at": None,
     "executed": False,
+    "executed_at": None,
+    "restored": False,
+    "restored_at": None,
 }
 os.makedirs(os.path.dirname(path), exist_ok=True)
 with open(path, "w", encoding="utf-8") as f:
@@ -132,8 +137,10 @@ main() {
   text="$(trim "$raw")"
 
   if [[ "$text" =~ ^确认执行[[:space:]]+([^[:space:]，,]+)[，,][[:space:]]*只控制门市灯柱这一台$ ]]; then
-    confirm_id="${BASH_REMATCH[1]}"
-    confirm_request "$confirm_id"
+    direct_reply_begin
+    printf '请使用确认入口处理该确认编号。\n'
+    printf '当前预览工具只生成预览，不执行确认或控灯。\n'
+    direct_reply_end
     return 0
   fi
 

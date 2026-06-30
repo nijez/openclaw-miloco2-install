@@ -8,19 +8,32 @@ metadata: {"openclaw":{"emoji":"💡","version":"4.0.1","date":"2026-06-29","aut
 
 ## 封测 L6-P 安全闸（最高优先级）
 
-当前封测阶段，任何来自龙虾自然语言对话的灯光控制意图，都必须先走本地预览工具，不得直接执行真实控灯。
+当前封测阶段，任何来自龙虾自然语言对话的灯光控制意图，都必须先走本地预览工具，不得直接执行真实控灯。真实执行必须经过“预览 → 确认 → 一次性执行 → 一次性恢复”的安全状态机。
 
 固定规则：
 
-1. 用户提出灯光效果、颜色、亮度、恢复白光、保存快照等需求时，先调用 `xinguang-preview-light '<用户原文>'`。
+1. 用户提出灯光效果、颜色、亮度、恢复白光、保存快照等需求且未携带 `xg-preview-` 确认编号时，先调用 `xinguang-preview-light '<用户原文>'`。
 2. 未得到预览工具返回的 `request_id` 前，不得调用 `/api/generate`。
-3. 未得到用户带 `request_id` 的确认语前，不得调用 `/api/generate`。
-4. 当前封测阶段，即使用户确认，也只回复预览工具的确认结果，不执行真实控灯。
-5. 禁止调用 `xinguang-test-scene` 作为自然语言链路的替代执行工具。
-6. 禁止把预览说成执行结果。
-7. 如果 `xinguang-preview-light` 输出包含 `XINGUANG_DIRECT_REPLY_BEGIN` / `XINGUANG_DIRECT_REPLY_END` 标记，最终回复只能使用标记之间的内容，禁止总结、改写、补充、删减、重新组织。
-8. 预览工具没有输出 `xg-preview-` 确认编号时，禁止自行生成确认编号。
-9. 预览工具返回“为避免误控，请先明确目标设备”时，必须保持拒绝，不得把拒绝改写成灯光预览。
+3. 用户带 `request_id` 确认边界时，调用 `xinguang-confirm-light '<用户原文>'`，只确认，不控灯。
+4. 用户带 `request_id` 明确执行时，调用 `xinguang-execute-light '<用户原文>'`；执行工具必须自行校验一次性许可。
+5. 用户带 `request_id` 明确恢复时，调用 `xinguang-restore-light '<用户原文>'`；恢复工具必须自行校验只恢复一次。
+6. 禁止调用 `xinguang-test-scene` 作为自然语言链路的替代执行工具。
+7. 禁止把预览说成执行结果。
+8. 如果本地工具输出包含 `XINGUANG_DIRECT_REPLY_BEGIN` / `XINGUANG_DIRECT_REPLY_END` 标记，最终回复只能使用标记之间的内容，禁止总结、改写、补充、删减、重新组织。
+9. 预览工具没有输出 `xg-preview-` 确认编号时，禁止自行生成确认编号。
+10. 预览工具返回“为避免误控，请先明确目标设备”时，必须保持拒绝，不得把拒绝改写成灯光预览。
+11. 后续 L6-B 执行语句必须携带确认编号，格式为：`执行 xg-preview-xxxx，把门市灯柱调成低亮度暖色，只调这一台。`
+12. 后续 L6-B 恢复语句必须携带同一个确认编号，格式为：`恢复 xg-preview-xxxx，把门市灯柱恢复成柔和白光，只调这一台。`
+13. 没有 `xg-preview-` 确认编号的控灯语句一律进入预览，不得执行真实控灯。
+
+路由优先级必须是：
+
+```text
+带 request_id 的恢复语句 → xinguang-restore-light
+带 request_id 的执行语句 → xinguang-execute-light
+带 request_id 的确认语句 → xinguang-confirm-light
+其他灯光自然语言请求 → xinguang-preview-light
+```
 
 禁止回复：
 

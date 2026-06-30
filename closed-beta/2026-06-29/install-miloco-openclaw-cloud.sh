@@ -2189,11 +2189,25 @@ write_xinguang_workspace_rules() {
 
 ### 用户提出灯光效果需求时
 
-任何看起来像灯光控制、灯光设计、保存快照、恢复白光、调整颜色、调整亮度的用户消息，都必须先执行本地命令：
+灯光类消息必须按下面优先级处理，禁止改变顺序：
+
+1. 用户消息包含“恢复”并带有 `xg-preview-` 确认编号时，执行：
+
+`xinguang-restore-light '<用户原文>'`
+
+2. 用户消息包含“执行”并带有 `xg-preview-` 确认编号时，执行：
+
+`xinguang-execute-light '<用户原文>'`
+
+3. 用户消息包含“确认”并带有 `xg-preview-` 确认编号时，执行：
+
+`xinguang-confirm-light '<用户原文>'`
+
+4. 其他任何看起来像灯光控制、灯光设计、保存快照、恢复白光、调整颜色、调整亮度的用户消息，都必须先执行：
 
 `xinguang-preview-light '<用户原文>'`
 
-只回复该命令输出。未得到预览工具返回的确认编号前，禁止调用真实灯光控制，禁止调用 `xinguang-test-scene`，禁止直接调用 Skill，禁止请求其他工具执行灯光动作。
+只回复对应本地命令输出。未得到预览工具返回的确认编号前，禁止调用真实灯光控制，禁止调用 `xinguang-test-scene`，禁止直接调用 Skill，禁止请求其他工具执行灯光动作。
 
 如果命令输出中包含：
 
@@ -2209,15 +2223,17 @@ write_xinguang_workspace_rules() {
 
 禁止把预览说成执行结果。禁止回复“已为你调整”“正在执行”“灯光已切换”“已完成”。
 
-如果用户回复：
+当前封测阶段，确认、执行、恢复必须都带 `xg-preview-` 确认编号。没有确认编号的执行类请求一律进入预览或拒绝，不得真实控灯。
 
-`确认执行 <预览确认编号>，只控制门市灯柱这一台`
+后续 L6-B 真实执行模板必须携带确认编号：
 
-仍然执行：
+`执行 xg-preview-xxxx，把门市灯柱调成低亮度暖色，只调这一台。`
 
-`xinguang-preview-light '<用户原文>'`
+后续 L6-B 恢复模板也必须携带同一个确认编号：
 
-只回复该命令输出。当前封测阶段没有明确放行前，不要执行真实灯光控制。若命令输出包含 `XINGUANG_DIRECT_REPLY_BEGIN` / `XINGUANG_DIRECT_REPLY_END` 标记，仍按上面的直通规则处理。
+`恢复 xg-preview-xxxx，把门市灯柱恢复成柔和白光，只调这一台。`
+
+没有 `xg-preview-` 确认编号的“把门市灯柱调成低亮度暖色，只调这一台”只能进入预览，不得执行。
 USERMD
 
   log "馨光对话规则已写入龙虾工作区"
@@ -2247,6 +2263,9 @@ prepare_xinguang_skill_installer() {
   local tail_logs="$install_dir/xinguang-tail-logs"
   local export_diag="$install_dir/xinguang-export-diagnostics"
   local preview_light="$install_dir/xinguang-preview-light"
+  local confirm_light="$install_dir/xinguang-confirm-light"
+  local execute_light="$install_dir/xinguang-execute-light"
+  local restore_light="$install_dir/xinguang-restore-light"
 
   mkdir -p "$install_dir" "$bin_dir"
 
@@ -2309,8 +2328,23 @@ prepare_xinguang_skill_installer() {
     "https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/closed-beta/2026-06-29/xinguang-preview-light" \
     "https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/closed-beta/2026-06-29/xinguang-preview-light" ||
     log "警告：xinguang-preview-light 下载失败，不影响主流程"
+  download_versioned_file "$confirm_light" 'XINGUANG_CONFIRM_LIGHT_VERSION="2026-06-30.1"' \
+    "https://nijez.github.io/xingguang-ai-lighting-guide/closed-beta/2026-06-29/xinguang-confirm-light" \
+    "https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/closed-beta/2026-06-29/xinguang-confirm-light" \
+    "https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/closed-beta/2026-06-29/xinguang-confirm-light" ||
+    log "警告：xinguang-confirm-light 下载失败，不影响主流程"
+  download_versioned_file "$execute_light" 'XINGUANG_EXECUTE_LIGHT_VERSION="2026-06-30.1"' \
+    "https://nijez.github.io/xingguang-ai-lighting-guide/closed-beta/2026-06-29/xinguang-execute-light" \
+    "https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/closed-beta/2026-06-29/xinguang-execute-light" \
+    "https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/closed-beta/2026-06-29/xinguang-execute-light" ||
+    log "警告：xinguang-execute-light 下载失败，不影响主流程"
+  download_versioned_file "$restore_light" 'XINGUANG_RESTORE_LIGHT_VERSION="2026-06-30.1"' \
+    "https://nijez.github.io/xingguang-ai-lighting-guide/closed-beta/2026-06-29/xinguang-restore-light" \
+    "https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/closed-beta/2026-06-29/xinguang-restore-light" \
+    "https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/closed-beta/2026-06-29/xinguang-restore-light" ||
+    log "警告：xinguang-restore-light 下载失败，不影响主流程"
 
-  for helper in "$doctor" "$panel" "$panel_sh" "$list_devices" "$test_scene" "$tail_logs" "$export_diag" "$preview_light"; do
+  for helper in "$doctor" "$panel" "$panel_sh" "$list_devices" "$test_scene" "$tail_logs" "$export_diag" "$preview_light" "$confirm_light" "$execute_light" "$restore_light"; do
     [[ -x "$helper" ]] && cp "$helper" "$bin_dir/$(basename "$helper")" 2>/dev/null || true
   done
 
