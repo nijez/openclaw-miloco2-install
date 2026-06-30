@@ -2148,7 +2148,20 @@ write_xinguang_workspace_rules() {
 
 `xinguang-bind-mijia`
 
-只回复该命令输出。
+最终用户可见回复必须包含该命令输出里的完整米家授权链接。
+
+优先逐字回复该命令输出。若平台没有把命令输出原样透传，必须从命令输出中提取 `https://account.xiaomi.com/oauth2/authorize...`，并按下面格式重新回复：
+
+请点击下面链接完成米家授权：
+
+[点击打开米家授权链接](提取到的完整授权链接)
+
+如果链接无法点击，请复制这个地址打开：
+提取到的完整授权链接
+
+授权完成后，把授权码复制回来。
+
+最终回复必须出现真实 `https://account.xiaomi.com/oauth2/authorize`。任何省略真实 URL、只用概括文字指代链接的回复，都视为失败。
 
 ### 用户发回米家授权码时
 
@@ -2329,6 +2342,8 @@ fi
 
 printf '请点击下面链接完成米家授权：\n\n'
 printf '[点击打开米家授权链接](%s)\n\n' "$url"
+printf '如果链接无法点击，请复制这个地址打开：\n'
+printf '%s\n\n' "$url"
 printf '授权完成后，把授权码复制回来。\n'
 EOF
   chmod +x "$bind_shortcut"
