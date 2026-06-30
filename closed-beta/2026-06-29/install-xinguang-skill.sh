@@ -377,6 +377,9 @@ WAINFORT_MILOCO_URL=$WAINFORT_MILOCO_URL
 WAINFORT_MILOCO_TOKEN=$miloco_token
 WAINFORT_API_PORT=$WAINFORT_API_PORT
 HOME=/home/ubuntu
+XDG_CONFIG_HOME=/home/ubuntu/.config
+XDG_DATA_HOME=/home/ubuntu/.local/share
+XDG_CACHE_HOME=/home/ubuntu/.cache
 EOF
   sudo chmod 600 "$env_file"
   sudo chown root:root "$env_file"
@@ -394,6 +397,9 @@ WorkingDirectory=$INSTALL_DIR
 EnvironmentFile=$env_file
 Environment=PATH=$ubuntu_path
 Environment=HOME=/home/ubuntu
+Environment=XDG_CONFIG_HOME=/home/ubuntu/.config
+Environment=XDG_DATA_HOME=/home/ubuntu/.local/share
+Environment=XDG_CACHE_HOME=/home/ubuntu/.cache
 ExecStart=$SERVER_BIN
 Restart=always
 RestartSec=3

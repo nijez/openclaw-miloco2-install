@@ -95,12 +95,38 @@ devices = raw.get("devices", raw) if isinstance(raw, dict) else raw
 if devices in ("", None, [], {}):
     print("设备列表为空。请确认米家家庭已选择，且馨光设备在线。")
     raise SystemExit(8)
+
+def mask_id(value):
+    value = str(value or "")
+    if not value:
+        return ""
+    return f"****{value[-4:]}" if len(value) > 4 else "****"
+
+def parse_text_devices(text):
+    rows = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = [part.strip() for part in line.split("|")]
+        if len(parts) < 5:
+            continue
+        did, name, room, category, online = parts[:5]
+        rows.append({
+            "did": mask_id(did),
+            "name": name or "未命名",
+            "room": room or "未返回",
+            "category": category or "未返回",
+            "online": online or "未返回",
+        })
+    return rows
+
 if isinstance(devices, str):
     try:
-        devices = json.loads(devices)
+        parsed = json.loads(devices)
     except Exception:
-        print("设备列表返回格式异常。")
-        raise SystemExit(7)
+        parsed = parse_text_devices(devices)
+    devices = parsed
 
 def walk(value):
     if isinstance(value, dict):
@@ -124,7 +150,8 @@ for obj in walk(devices):
         continue
     name = field(obj, "name", "device_name", "deviceName", "displayName", "title")
     room = field(obj, "room", "room_name", "roomName", "parentRoomName", "area")
-    model = field(obj, "model", "modelName", "model_name", "deviceModel", "productModel", "product_model")
+    model = field(obj, "model", "modelName", "model_name", "deviceModel", "productModel", "product_model", "category", "type")
+    online = field(obj, "online", "status", "state", "isOnline")
     did = field(obj, "did", "id", "device_id", "deviceId", "miotDid")
     if not (name or model or did):
         continue
@@ -132,15 +159,16 @@ for obj in walk(devices):
     if key in seen:
         continue
     seen.add(key)
-    items.append((name or "未命名", room or "未返回", model or "未返回"))
+    items.append((name or "未命名", room or "未返回", model or "未返回", online or "未返回", mask_id(did)))
 
 if not items:
     print("设备列表为空。请确认米家家庭已选择，且馨光设备在线。")
     raise SystemExit(8)
 
 print(f"设备数量：{len(items)}")
-for index, (name, room, model) in enumerate(items, 1):
-    print(f"{index}. {name}（房间：{room}，型号：{model}）")
+for index, (name, room, model, online, did) in enumerate(items, 1):
+    suffix = f"，ID：{did}" if did else ""
+    print(f"{index}. {name}（房间：{room}，类型：{model}，状态：{online}{suffix}）")
 PY
 }
 
