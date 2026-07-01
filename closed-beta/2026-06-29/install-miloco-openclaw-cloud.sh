@@ -8,7 +8,7 @@ set -Eeuo pipefail
 # - WeChat channel installation/login is skipped.
 # - MiMo API key is configured only when MIMO_API_KEY is supplied.
 
-SCRIPT_VERSION="2026-06-25.42"
+SCRIPT_VERSION="2026-06-25.43"
 TOTAL_STEPS=6
 MILOCO_VERSION="${MILOCO_VERSION:-2026.6.18}"
 OPENCLAW_PORT="${OPENCLAW_PORT:-18789}"
@@ -2202,6 +2202,8 @@ USERMD
 prepare_xinguang_skill_installer() {
   local install_dir="$XINGUANG_LOCAL_INSTALL_DIR"
   local bin_dir="$HOME/.local/bin"
+  local base_entry="$install_dir/install-xinguang-ai-light.sh"
+  local base_main="$install_dir/install-miloco-openclaw-cloud.sh"
   local entry="$install_dir/install-xinguang-ai-skill.sh"
   local main="$install_dir/install-xinguang-skill.sh"
   local shortcut="$install_dir/xinguang-install-skill"
@@ -2231,6 +2233,18 @@ prepare_xinguang_skill_installer() {
     rm -f "$cleanup_dir"/xinguang-*-target-* 2>/dev/null || true
     rm -f "$cleanup_dir"/xinguang-test-* 2>/dev/null || true
   done
+
+  download_versioned_file "$base_entry" "ENTRY_VERSION=\"$SCRIPT_VERSION\"" \
+    "https://nijez.github.io/xingguang-ai-lighting-guide/closed-beta/2026-06-29/install-xinguang-ai-light.sh" \
+    "https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/closed-beta/2026-06-29/install-xinguang-ai-light.sh" \
+    "https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/closed-beta/2026-06-29/install-xinguang-ai-light.sh" ||
+    die
+
+  download_versioned_file "$base_main" "SCRIPT_VERSION=\"$SCRIPT_VERSION\"" \
+    "https://nijez.github.io/xingguang-ai-lighting-guide/closed-beta/2026-06-29/install-miloco-openclaw-cloud.sh" \
+    "https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/closed-beta/2026-06-29/install-miloco-openclaw-cloud.sh" \
+    "https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/closed-beta/2026-06-29/install-miloco-openclaw-cloud.sh" ||
+    die
 
   download_versioned_file "$entry" "ENTRY_VERSION=\"$XINGUANG_SKILL_ENTRY_VERSION\"" \
     "https://nijez.github.io/xingguang-ai-lighting-guide/closed-beta/2026-06-29/install-xinguang-ai-skill.sh" \
