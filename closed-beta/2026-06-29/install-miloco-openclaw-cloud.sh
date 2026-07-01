@@ -2271,6 +2271,8 @@ prepare_xinguang_skill_installer() {
   local arm_l6b_real="$install_dir/xinguang-arm-l6b-real"
   local execute_light="$install_dir/xinguang-execute-light"
   local restore_light="$install_dir/xinguang-restore-light"
+  local lock_target_device="$install_dir/xinguang-lock-target-device"
+  local verify_target_device="$install_dir/xinguang-verify-target-device"
 
   mkdir -p "$install_dir" "$bin_dir"
 
@@ -2343,7 +2345,7 @@ prepare_xinguang_skill_installer() {
     "https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/closed-beta/2026-06-29/xinguang-arm-l6b-real" \
     "https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/closed-beta/2026-06-29/xinguang-arm-l6b-real" ||
     log "警告：xinguang-arm-l6b-real 下载失败，不影响主流程"
-  download_versioned_file "$execute_light" 'XINGUANG_EXECUTE_LIGHT_VERSION="2026-07-01.3"' \
+  download_versioned_file "$execute_light" 'XINGUANG_EXECUTE_LIGHT_VERSION="2026-07-01.4"' \
     "https://nijez.github.io/xingguang-ai-lighting-guide/closed-beta/2026-06-29/xinguang-execute-light" \
     "https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/closed-beta/2026-06-29/xinguang-execute-light" \
     "https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/closed-beta/2026-06-29/xinguang-execute-light" ||
@@ -2353,8 +2355,18 @@ prepare_xinguang_skill_installer() {
     "https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/closed-beta/2026-06-29/xinguang-restore-light" \
     "https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/closed-beta/2026-06-29/xinguang-restore-light" ||
     log "警告：xinguang-restore-light 下载失败，不影响主流程"
+  download_versioned_file "$lock_target_device" 'XINGUANG_LOCK_TARGET_DEVICE_VERSION="2026-07-01.1"' \
+    "https://nijez.github.io/xingguang-ai-lighting-guide/closed-beta/2026-06-29/xinguang-lock-target-device" \
+    "https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/closed-beta/2026-06-29/xinguang-lock-target-device" \
+    "https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/closed-beta/2026-06-29/xinguang-lock-target-device" ||
+    log "警告：xinguang-lock-target-device 下载失败，不影响主流程"
+  download_versioned_file "$verify_target_device" 'XINGUANG_VERIFY_TARGET_DEVICE_VERSION="2026-07-01.1"' \
+    "https://nijez.github.io/xingguang-ai-lighting-guide/closed-beta/2026-06-29/xinguang-verify-target-device" \
+    "https://raw.githubusercontent.com/nijez/xingguang-ai-lighting-guide/main/closed-beta/2026-06-29/xinguang-verify-target-device" \
+    "https://cdn.jsdelivr.net/gh/nijez/xingguang-ai-lighting-guide@main/closed-beta/2026-06-29/xinguang-verify-target-device" ||
+    log "警告：xinguang-verify-target-device 下载失败，不影响主流程"
 
-  for helper in "$doctor" "$panel" "$panel_sh" "$list_devices" "$test_scene" "$tail_logs" "$export_diag" "$preview_light" "$confirm_light" "$arm_l6b_real" "$execute_light" "$restore_light"; do
+  for helper in "$doctor" "$panel" "$panel_sh" "$list_devices" "$test_scene" "$tail_logs" "$export_diag" "$preview_light" "$confirm_light" "$arm_l6b_real" "$execute_light" "$restore_light" "$lock_target_device" "$verify_target_device"; do
     [[ -x "$helper" ]] && cp "$helper" "$bin_dir/$(basename "$helper")" 2>/dev/null || true
   done
 
