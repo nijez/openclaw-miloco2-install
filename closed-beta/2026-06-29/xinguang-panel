@@ -75,11 +75,10 @@ show_menu() {
 9. 启动 / 重启灯光服务
 10. 查看灯光服务状态
 11. 查询设备列表
-12. 执行本地测试场景
-13. 查看 Skill 安装状态
-14. 重新安装馨光 Skill
-15. 导出脱敏诊断包
-16. 退出
+12. 查看 Skill 安装状态
+13. 重新安装馨光 Skill
+14. 导出脱敏诊断包
+15. 退出
 
 请输入选项：
 EOF
@@ -256,24 +255,6 @@ list_devices() {
   fi
 }
 
-test_scene() {
-  printf '请输入房间（默认：客厅）：'
-  local room scene
-  IFS= read -r room || true
-  room="${room:-客厅}"
-  printf '请输入灯光效果（默认：马尔代夫海边日落）：'
-  IFS= read -r scene || true
-  scene="${scene:-马尔代夫海边日落}"
-  confirm "将发送一次灯光测试请求，是否继续？" || { printf '已取消。\n'; return 0; }
-  if have xinguang-test-scene; then
-    xinguang-test-scene "$room" "$scene"
-  elif [[ -x "$BASE_DIR/xinguang-test-scene" ]]; then
-    "$BASE_DIR/xinguang-test-scene" "$room" "$scene"
-  else
-    printf '未找到测试命令。\n'
-  fi
-}
-
 show_skill() {
   local base path
   base="$HOME/.openclaw/skills"
@@ -330,12 +311,11 @@ main() {
       9) restart_service; pause ;;
       10) show_service; pause ;;
       11) list_devices; pause ;;
-      12) test_scene; pause ;;
-      13) show_skill; pause ;;
-      14) reinstall_skill; pause ;;
-      15) export_diag; pause ;;
-      16) printf '已退出。\n'; exit 0 ;;
-      *) printf '请输入 1-16 之间的选项。\n'; pause ;;
+      12) show_skill; pause ;;
+      13) reinstall_skill; pause ;;
+      14) export_diag; pause ;;
+      15) printf '已退出。\n'; exit 0 ;;
+      *) printf '请输入 1-15 之间的选项。\n'; pause ;;
     esac
   done
 }

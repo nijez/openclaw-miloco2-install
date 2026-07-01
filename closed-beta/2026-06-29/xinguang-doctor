@@ -99,41 +99,6 @@ api_get() {
   curl -fsS --max-time 10 -H "Authorization: Bearer $API_TOKEN" "http://127.0.0.1:$API_PORT$path"
 }
 
-json_devices_count() {
-  local file="$1"
-  python3 - "$file" <<'PY' 2>/dev/null || printf 'parse_error'
-import json,sys
-raw=open(sys.argv[1],encoding="utf-8").read()
-data=json.loads(raw)
-devices=data.get("devices", data)
-if devices in ("", None, [], {}):
-    print("empty")
-    raise SystemExit
-if isinstance(devices,str):
-    try: devices=json.loads(devices)
-    except Exception:
-        print("parse_error"); raise SystemExit
-def walk(v):
-    if isinstance(v,dict):
-        yield v
-        for c in v.values(): yield from walk(c)
-    elif isinstance(v,list):
-        for i in v: yield from walk(i)
-items=[]
-seen=set()
-for obj in walk(devices):
-    if not isinstance(obj,dict): continue
-    name=str(obj.get("name") or obj.get("device_name") or obj.get("deviceName") or "")
-    did=str(obj.get("did") or obj.get("id") or obj.get("device_id") or "")
-    model=str(obj.get("model") or obj.get("modelName") or obj.get("productModel") or "")
-    if not (name or did or model): continue
-    key=did or f"{name}|{model}"
-    if key in seen: continue
-    seen.add(key); items.append(obj)
-print(len(items))
-PY
-}
-
 home_info() {
   local target_home="" target_home_id="" current_home="" source="unknown"
   if [[ -f "$BASE_DIR/target-home.env" ]]; then
@@ -230,7 +195,7 @@ main() {
   [[ -n "$MILOCO_TOKEN" && -n "$miloco_config_token" && "$MILOCO_TOKEN" != "$miloco_config_token" ]] && token_sync="false"
   env_perm="$(stat -c '%a' "$ENV_PRIMARY" 2>/dev/null || stat -f '%Lp' "$ENV_PRIMARY" 2>/dev/null || true)"
 
-  local service_active run_user root_fallback path_contains api_status api_devices devices_count devices_empty devices_state
+  local service_active run_user root_fallback path_contains api_status
   service_active="$(systemctl is-active xinguang-wainfort 2>/dev/null || true)"
   run_user="$(systemctl show xinguang-wainfort -p User --value 2>/dev/null || true)"
   [[ "$run_user" == "root" ]] && root_fallback=true || root_fallback=false
@@ -238,30 +203,18 @@ main() {
   service_env="$(systemctl show xinguang-wainfort -p EnvironmentFiles --value 2>/dev/null || true)"
   if [[ -r "$ENV_PRIMARY" ]] && grep -q '/home/ubuntu/.local/bin' "$ENV_PRIMARY"; then path_contains=true; else path_contains=false; fi
   if api_get /api/status >/tmp/xinguang-doctor-status.$$ 2>/dev/null; then api_status=200; else api_status=fail; fi
-  if api_get /api/devices >/tmp/xinguang-doctor-devices.$$ 2>/dev/null; then
-    api_devices=200
-    devices_count="$(json_devices_count /tmp/xinguang-doctor-devices.$$)"
-    [[ "$devices_count" == "empty" ]] && devices_empty=true || devices_empty=false
-  else
-    api_devices=fail
-    devices_count=""
-    devices_empty=false
-  fi
-  rm -f /tmp/xinguang-doctor-status.$$ /tmp/xinguang-doctor-devices.$$
+  rm -f /tmp/xinguang-doctor-status.$$
 
   local skill_installed skill_ready
   [[ -f "$skill_path" ]] && skill_installed=true || skill_installed=false
   [[ "$skill_installed" == true && "$skill_version" == "$expected_skill_file" ]] && skill_ready=true || skill_ready=false
 
-  local l1=PASS l2=PASS l3=PASS l4=PASS l5=WARN l6=WARN
+  local l1=PASS l2=PASS l3=PASS l4=PASS
   [[ -n "$openclaw_path" && "$gateway_active" == "active" ]] || l1=FAIL
   [[ "$miloco_bound" == "true" ]] || l2=WARN
   [[ -n "$target_home" || -n "$current_home" ]] || l2=WARN
   [[ "$service_active" == "active" && "$api_status" == 200 && "$token_sync" != "false" ]] || l3=FAIL
-  [[ "$api_devices" == 200 ]] || l4=FAIL
-  [[ "$api_devices" == 200 && "$devices_count" == "empty" ]] && l4=WARN
-  [[ "$api_devices" == 200 && "$devices_count" =~ ^[0-9]+$ && "$devices_count" -gt 0 ]] && l4=PASS
-  [[ "$skill_installer_skill" == "$expected_skill_file" && "$skill_version" == "$expected_skill_file" ]] || l3=FAIL
+  [[ "$skill_installer_skill" == "$expected_skill_file" && "$skill_version" == "$expected_skill_file" ]] || l4=FAIL
 
   cat <<EOF
 馨光 Doctor v$XINGUANG_DOCTOR_VERSION
@@ -302,28 +255,17 @@ root fallback：$root_fallback
 env 权限：${env_perm:-未确认}
 PATH 包含 ubuntu 工具目录：$path_contains
 /api/status：$api_status
-/api/devices：$api_devices
-devices 数量：${devices_count:-未确认}
-devices 为空：$devices_empty
 
 [Skill]
 $SKILL_NAME installed：$skill_installed
 ready：$skill_ready
 Skill 路径：$skill_path
 
-[自然语言链路]
-最近一次请求：暂未接入统一 request_id 追踪
-Skill 调用：待从日志关联
-本地服务调用：待从日志关联
-用户可见结果：由龙虾保持极简，Doctor 只做真实状态检查
-
 [分层结论]
 L1 基础环境：$(status_word "$l1")
 L2 米家绑定：$(status_word "$l2")
 L3 灯光服务：$(status_word "$l3")
-L4 设备发现：$(status_word "$l4")
-L5 本地控灯：$(status_word "$l5")
-L6 龙虾自然语言控灯：$(status_word "$l6")
+L4 Skill 安装：$(status_word "$l4")
 EOF
 
   python3 - "$STATE_JSON" <<PY 2>/dev/null || true
@@ -365,9 +307,6 @@ state = {
     "root_fallback": "$root_fallback" == "true",
     "path_contains_miloco_cli": "$path_contains" == "true",
     "api_status": "$api_status",
-    "api_devices_http": "$api_devices",
-    "devices_count": None if "$devices_count" in ("", "empty", "parse_error") else int("$devices_count"),
-    "devices_empty": "$devices_empty" == "true",
     "last_error": ""
   },
   "skill": {
@@ -377,14 +316,7 @@ state = {
     "ready": "$skill_ready" == "true",
     "last_install_status": ""
   },
-  "natural_language": {
-    "last_request_id": "",
-    "last_user_text": "",
-    "skill_called": None,
-    "service_called": None,
-    "miloco_called": None,
-    "user_visible_result": ""
-  }
+  "deployment_boundary": "installer_only"
 }
 os.makedirs(os.path.dirname(sys.argv[1]), exist_ok=True)
 json.dump(state, open(sys.argv[1],"w",encoding="utf-8"), ensure_ascii=False, indent=2)
